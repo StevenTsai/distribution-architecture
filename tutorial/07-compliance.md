@@ -233,20 +233,20 @@ ORDER BY create_time DESC;
 # 1. 创建合规记录
 curl -X POST \
      -H "Authorization: test-token-123" \
-     -H "x-biz: medical-chaperon" \
+     -H "x-biz: distribution-starter" \
      -H "Content-Type: application/json" \
      -d '{"bizType":"distributor","bizId":1,"recordType":"qualification","content":"资质审查"}' \
      http://localhost:9030/api/manage/distribution/compliance-records
 
 # 2. 查询待审核记录
 curl -H "Authorization: test-token-123" \
-     -H "x-biz: medical-chaperon" \
+     -H "x-biz: distribution-starter" \
      "http://localhost:9030/api/manage/distribution/compliance-records?status=pending"
 
 # 3. 审核通过
 curl -X POST \
      -H "Authorization: test-token-123" \
-     -H "x-biz: medical-chaperon" \
+     -H "x-biz: distribution-starter" \
      -H "Content-Type: application/json" \
      -d '{"status":"approved","remark":"资质合格"}' \
      http://localhost:9030/api/manage/distribution/compliance-records/1/review

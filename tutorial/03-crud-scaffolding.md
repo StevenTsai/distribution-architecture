@@ -360,13 +360,13 @@ http://localhost:9030/swagger-ui.html
 ```bash
 # 查询线索列表
 curl -H "Authorization: test-token-123" \
-     -H "x-biz: medical-chaperon" \
+     -H "x-biz: distribution-starter" \
      "http://localhost:9030/api/manage/distribution/leads?page=1&pageSize=10"
 
 # 创建线索
 curl -X POST \
      -H "Authorization: test-token-123" \
-     -H "x-biz: medical-chaperon" \
+     -H "x-biz: distribution-starter" \
      -H "Content-Type: application/json" \
      -d '{"sourceDistributorId":1,"patientName":"测试患者","patientPhone":"13900000001","intentProductLine":"gene"}' \
      http://localhost:9030/api/manage/distribution/leads

@@ -201,7 +201,7 @@ DistributionAuditLogDetailDTO detail = auditLogService.getLog(456L);
 
 ```bash
 curl -H "Authorization: test-token-123" \
-     -H "x-biz: medical-chaperon" \
+     -H "x-biz: distribution-starter" \
      "http://localhost:9030/api/manage/distribution/audit-logs?bizType=lead&bizId=1"
 ```
 

@@ -113,7 +113,7 @@ http://localhost:9030/swagger-ui.html
 curl http://localhost:9030/api/manage/distribution/distributors
 
 # 注意：大部分接口需要认证，需要先登录获取 token
-# 登录接口不在本服务中（在 medical-chaperon-server 的用户服务中）
+# 登录接口不在本服务中（在用户服务中）
 ```
 
 ### 需要准备测试数据
@@ -131,7 +131,7 @@ VALUES (1, '测试管理员', '13800138000', NOW(), NOW());
 
 -- 3. 插入登录 session
 INSERT INTO user_login_session (skey, openid, biz, login_source, expire_time, create_time)
-VALUES ('test-token-123', '1', 'medical-chaperon', 'MANAGE', DATE_ADD(NOW(), INTERVAL 7 DAY), NOW());
+VALUES ('test-token-123', '1', 'distribution-starter', 'MANAGE', DATE_ADD(NOW(), INTERVAL 7 DAY), NOW());
 
 -- 4. 插入分销成员
 INSERT INTO distribution_distributor_member
@@ -144,7 +144,7 @@ VALUES (NULL, 1, '测试管理员', '13800138000', 'DIST_SUPER_ADMIN', 'ALL', 'a
 ```bash
 # 查询渠道列表
 curl -H "Authorization: test-token-123" \
-     -H "x-biz: medical-chaperon" \
+     -H "x-biz: distribution-starter" \
      http://localhost:9030/api/manage/distribution/distributors
 ```
 
@@ -199,7 +199,7 @@ http://localhost:9030/swagger-ui.html
 需要在请求头中带上 `Authorization` 和 `x-biz`：
 ```
 Authorization: <token>
-x-biz: medical-chaperon
+x-biz: distribution-starter
 ```
 
 ### Q: Redis 连接失败
