@@ -2,7 +2,7 @@ package com.godzilla.distribution.dto.distribution.request;
 
 import lombok.Data;
 
-import javax.validation.constraints.Size;
+import jakarta.validation.constraints.Size;
 
 @Data
 public class RejectDistributionComplianceRecordRequestDTO {

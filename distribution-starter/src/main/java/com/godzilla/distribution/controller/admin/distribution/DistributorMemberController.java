@@ -10,7 +10,7 @@ import com.godzilla.distribution.dto.distribution.request.UpdateDistributorMembe
 import com.godzilla.distribution.dto.distribution.response.DistributionDistributorMemberDTO;
 import com.godzilla.distribution.dto.distribution.response.DistributionDistributorMemberDetailDTO;
 import com.godzilla.distribution.exception.BizException;
-import com.godzilla.distribution.service.distribution.DistributorMemberService;
+import com.godzilla.distribution.service.distribution.DistributionDistributorMemberService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -18,7 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 
 @Slf4j
 @RestController
@@ -28,7 +28,7 @@ import javax.validation.Valid;
 public class DistributorMemberController {
 
     @Autowired
-    private DistributorMemberService distributorMemberService;
+    private DistributionDistributorMemberService distributorMemberService;
 
     @GetMapping
     @SessionAuth

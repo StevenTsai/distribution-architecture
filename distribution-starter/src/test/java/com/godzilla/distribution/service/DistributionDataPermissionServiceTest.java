@@ -9,25 +9,25 @@ import com.godzilla.distribution.mapper.distribution.DistributionDistributorMapp
 import com.godzilla.distribution.mapper.distribution.DistributionDistributorMemberMapper;
 import com.godzilla.distribution.service.distribution.DistributionOperatorService;
 import com.godzilla.distribution.service.distribution.impl.DistributionDataPermissionService;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 /**
  * 数据权限服务测试
  * 验证 4 级数据权限模型的核心逻辑
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class DistributionDataPermissionServiceTest {
 
     @InjectMocks
@@ -45,8 +45,8 @@ public class DistributionDataPermissionServiceTest {
     private DistributionDistributorMemberEntity memberEntity;
     private DistributionDistributorEntity distributorEntity;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         memberEntity = new DistributionDistributorMemberEntity();
         memberEntity.setId(1L);
         memberEntity.setDistributorId(1L);
@@ -66,7 +66,7 @@ public class DistributionDataPermissionServiceTest {
      * 测试 ALL 权限：可以看到所有数据
      */
     @Test
-    public void testAllScope_AuthorizedDistributorIdsIsNull() {
+    void testAllScope_AuthorizedDistributorIdsIsNull() {
         memberEntity.setDataScope(DistributionDataScope.ALL.getCode());
         when(distributionOperatorService.getCurrentOperatorUserId()).thenReturn(2L);
         when(distributionDistributorMemberMapper.selectByUserId(2L)).thenReturn(memberEntity);
@@ -82,7 +82,7 @@ public class DistributionDataPermissionServiceTest {
      * 测试 OWN_DISTRIBUTOR 权限：只能看到本渠道数据
      */
     @Test
-    public void testOwnDistributorScope_ReturnsOwnDistributorId() {
+    void testOwnDistributorScope_ReturnsOwnDistributorId() {
         memberEntity.setDataScope(DistributionDataScope.OWN_DISTRIBUTOR.getCode());
         when(distributionOperatorService.getCurrentOperatorUserId()).thenReturn(2L);
         when(distributionDistributorMemberMapper.selectByUserId(2L)).thenReturn(memberEntity);
@@ -99,7 +99,7 @@ public class DistributionDataPermissionServiceTest {
      * 测试 SELF 权限：只能看到自己的数据
      */
     @Test
-    public void testSelfScope_ReturnsOwnDistributorId() {
+    void testSelfScope_ReturnsOwnDistributorId() {
         memberEntity.setDataScope(DistributionDataScope.SELF.getCode());
         when(distributionOperatorService.getCurrentOperatorUserId()).thenReturn(2L);
         when(distributionDistributorMemberMapper.selectByUserId(2L)).thenReturn(memberEntity);
@@ -115,7 +115,7 @@ public class DistributionDataPermissionServiceTest {
      * 测试 OWN_AND_CHILDREN 权限：可以看到本渠道及下级渠道数据
      */
     @Test
-    public void testOwnAndChildrenScope_ReturnsTreeIds() {
+    void testOwnAndChildrenScope_ReturnsTreeIds() {
         memberEntity.setDataScope(DistributionDataScope.OWN_AND_CHILDREN.getCode());
         when(distributionOperatorService.getCurrentOperatorUserId()).thenReturn(2L);
         when(distributionDistributorMemberMapper.selectByUserId(2L)).thenReturn(memberEntity);
@@ -147,7 +147,7 @@ public class DistributionDataPermissionServiceTest {
      * 测试单条数据权限校验：ALL 权限始终通过
      */
     @Test
-    public void testCheckAccessPermission_AllScope_AlwaysPasses() {
+    void testCheckAccessPermission_AllScope_AlwaysPasses() {
         memberEntity.setDataScope(DistributionDataScope.ALL.getCode());
         when(distributionOperatorService.getCurrentOperatorUserId()).thenReturn(2L);
         when(distributionDistributorMemberMapper.selectByUserId(2L)).thenReturn(memberEntity);
@@ -160,7 +160,7 @@ public class DistributionDataPermissionServiceTest {
      * 测试单条数据权限校验：SELF 权限只允许自己的数据
      */
     @Test
-    public void testCheckAccessPermission_SelfScope_OnlyOwnData() {
+    void testCheckAccessPermission_SelfScope_OnlyOwnData() {
         memberEntity.setDataScope(DistributionDataScope.SELF.getCode());
         when(distributionOperatorService.getCurrentOperatorUserId()).thenReturn(2L);
         when(distributionDistributorMemberMapper.selectByUserId(2L)).thenReturn(memberEntity);
@@ -172,24 +172,26 @@ public class DistributionDataPermissionServiceTest {
     /**
      * 测试单条数据权限校验：SELF 权限拒绝他人数据
      */
-    @Test(expected = BizException.class)
-    public void testCheckAccessPermission_SelfScope_RejectsOtherData() {
+    @Test
+    void testCheckAccessPermission_SelfScope_RejectsOtherData() {
         memberEntity.setDataScope(DistributionDataScope.SELF.getCode());
         when(distributionOperatorService.getCurrentOperatorUserId()).thenReturn(2L);
         when(distributionDistributorMemberMapper.selectByUserId(2L)).thenReturn(memberEntity);
 
         // 他人的数据被拒绝
-        dataPermissionService.checkAccessPermission(999L, 999L, 999L);
+        assertThrows(BizException.class, () ->
+                dataPermissionService.checkAccessPermission(999L, 999L, 999L));
     }
 
     /**
      * 测试未绑定成员时抛异常
      */
-    @Test(expected = BizException.class)
-    public void testResolveAccessScope_NoMember_ThrowsException() {
+    @Test
+    void testResolveAccessScope_NoMember_ThrowsException() {
         when(distributionOperatorService.getCurrentOperatorUserId()).thenReturn(999L);
         when(distributionDistributorMemberMapper.selectByUserId(999L)).thenReturn(null);
 
-        dataPermissionService.resolveCurrentAccessScope();
+        assertThrows(BizException.class, () ->
+                dataPermissionService.resolveCurrentAccessScope());
     }
 }

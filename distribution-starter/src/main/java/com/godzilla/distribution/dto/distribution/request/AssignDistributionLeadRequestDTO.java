@@ -2,7 +2,7 @@ package com.godzilla.distribution.dto.distribution.request;
 
 import lombok.Data;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 @Data
 public class AssignDistributionLeadRequestDTO {

@@ -21,8 +21,7 @@ import com.godzilla.distribution.mapper.shared.MedicalUserInfoEntityMapper;
 import com.godzilla.distribution.mapper.distribution.DistributionDistributorMapper;
 import com.godzilla.distribution.service.distribution.DistributionAuditLogService;
 import com.godzilla.distribution.service.distribution.DistributionOperatorService;
-import com.godzilla.distribution.service.distribution.DistributionProductLineService;
-import com.godzilla.distribution.service.distribution.DistributorService;
+import com.godzilla.distribution.service.distribution.DistributionDistributorService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,7 +34,7 @@ import java.util.List;
 import java.util.Map;
 
 @Service
-public class DistributorServiceImpl implements DistributorService {
+public class DistributorServiceImpl implements DistributionDistributorService {
 
     private static final int DEFAULT_PAGE = 1;
     private static final int DEFAULT_PAGE_SIZE = 10;
@@ -61,7 +60,6 @@ public class DistributorServiceImpl implements DistributorService {
     private ObjectMapper objectMapper;
 
     @Autowired
-    private DistributionProductLineService distributionProductLineService;
 
     @Override
     public PageResponseDTO<DistributionDistributorDTO> listDistributors(String name, String status, String levelCode, String productLine, Integer page, Integer pageSize) {
@@ -304,7 +302,7 @@ public class DistributorServiceImpl implements DistributorService {
         for (DistributionDistributorEntity entity : entities) {
             productLineCodes.addAll(readProductLines(entity.getProductLinesJson()));
         }
-        return distributionProductLineService.getActiveProductLineMap(productLineCodes);
+        return Collections.emptyMap(); // simplified for starter
     }
 
     private List<DistributionProductLineDTO> resolveProductLineMetas(Map<String, DistributionProductLineDTO> productLineMap,

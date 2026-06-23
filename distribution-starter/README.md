@@ -157,10 +157,11 @@ mapper.selectByCondition(...);
 
 ## 技术栈
 
-- Spring Boot 2.7.18
-- Java 8
-- MyBatis 2.3.1
-- MySQL 8.0
+- **Spring Boot 3.2.5**
+- **Java 17**
+- **MyBatis 3.0.3**
+- **MySQL 8.0**
+- **SpringDoc 2.3.0**（OpenAPI 3 / Swagger UI）
 - Redis（可选，当前版本未启用）
 
 ## 相关文档

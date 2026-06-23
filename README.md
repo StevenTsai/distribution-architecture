@@ -93,11 +93,12 @@
 
 ## 技术栈
 
-- **框架**：Spring Boot 2.7.18
-- **语言**：Java 8
-- **ORM**：MyBatis 2.3.1
+- **框架**：Spring Boot 3.2.5
+- **语言**：Java 17
+- **ORM**：MyBatis 3.0.3
 - **数据库**：MySQL 8.0
 - **缓存**：Redis
+- **API 文档**：SpringDoc 2.3.0（OpenAPI 3）
 
 ## License
 
@@ -143,8 +144,8 @@ mvn spring-boot:run
 
 ### Tech Stack
 
-- Spring Boot 2.7.18 / Java 8 / MyBatis 2.3.1 / MySQL 8.0
-- Spring Boot 3.x migration guide available at [guides/spring-boot-3-migration.md](guides/spring-boot-3-migration.md)
+- Spring Boot 3.2.5 / Java 17 / MyBatis 3.0.3 / MySQL 8.0 / SpringDoc 2.3.0
+- For Spring Boot 2.7 users, see [migration guide](guides/spring-boot-3-migration.md)
 
 ### Contributing
 
