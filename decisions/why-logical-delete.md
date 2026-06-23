@@ -1,5 +1,7 @@
 # ADR: 为什么选择逻辑删除而非物理删除
 
+中文 | [English](../en/decisions/why-logical-delete.md)
+
 > 状态：已采纳
 > 日期：项目初始设计阶段
 > 决策者：架构团队

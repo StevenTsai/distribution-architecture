@@ -1,5 +1,7 @@
 # Commission Pipeline: 佣金流转的状态机驱动流水线
 
+中文 | [English](../en/architecture/commission-pipeline.md)
+
 > 从线索到结算的全链路资金流转，通过事件驱动的状态机 + 规则快照 + 自动冲回机制，保证佣金计算的可追溯性和一致性。
 
 ---

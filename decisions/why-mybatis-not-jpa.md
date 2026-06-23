@@ -1,5 +1,7 @@
 # ADR: 为什么选择 MyBatis 而非 JPA
 
+中文 | [English](../en/decisions/why-mybatis-not-jpa.md)
+
 > 状态：已采纳
 > 日期：项目初始设计阶段（继承自 medical-chaperon-server）
 > 决策者：架构团队

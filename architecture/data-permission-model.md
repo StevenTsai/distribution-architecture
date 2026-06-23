@@ -1,5 +1,7 @@
 # Scoped Data Access: 行级数据权限模型
 
+中文 | [English](../en/architecture/data-permission-model.md)
+
 > 基于角色的数据范围控制，将权限校验下沉到 SQL 层，实现零业务代码侵入的行级数据过滤。
 
 ---

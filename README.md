@@ -1,5 +1,7 @@
 # Distribution Architecture
 
+中文 | [English](en/README.md)
+
 一套经过生产验证的分销管理系统架构设计文档，展示了数据权限、佣金流转、审计合规等通用模式在 Spring Boot + MyBatis 技术栈下的工程化落地方案。
 
 ## 这是什么
@@ -106,51 +108,18 @@
 
 ---
 
-## English Summary
+## English Documentation
 
-**Distribution Architecture** is a set of production-validated design documents for building a B2B distribution management system using Spring Boot + MyBatis. It includes architecture patterns, decision records, and a runnable starter project.
+English translations of the core documents are available in the [`en/`](en/) directory:
 
-### What's Included
+| Document | Description |
+|----------|-------------|
+| [en/README.md](en/README.md) | Full project overview |
+| [en/architecture/data-permission-model.md](en/architecture/data-permission-model.md) | Row-Level Data Permission Model |
+| [en/architecture/commission-pipeline.md](en/architecture/commission-pipeline.md) | Commission Pipeline: State-Machine-Driven Flow |
+| [en/decisions/why-logical-delete.md](en/decisions/why-logical-delete.md) | ADR: Why Logical Delete |
+| [en/decisions/why-mybatis-not-jpa.md](en/decisions/why-mybatis-not-jpa.md) | ADR: Why MyBatis over JPA |
+| [en/decisions/why-session-not-jwt.md](en/decisions/why-session-not-jwt.md) | ADR: Why Session Token over JWT |
+| [en/guides/quick-start.md](en/guides/quick-start.md) | Quick Start Guide |
 
-| Component | Description |
-|-----------|-------------|
-| [distribution-starter/](distribution-starter/) | Minimal runnable Spring Boot project with 8 database tables |
-| [architecture/](architecture/) | 4 core design patterns with code examples |
-| [decisions/](decisions/) | 3 Architecture Decision Records (ADRs) |
-| [tutorial/](tutorial/) | 7-step build-from-scratch guide |
-| [guides/](guides/) | Practical guides including Spring Boot 3.x migration |
-
-### Core Design Patterns
-
-1. **Row-Level Data Permissions** — SQL-layer filtering via MyBatis `<sql>` fragments, zero business code intrusion
-2. **Event-Driven Commission Pipeline** — State machine + rule snapshots + automatic reversal entries
-3. **Audit Logging** — JSON before/after snapshots with unified entry point
-4. **MyBatis Engineering** — 3-segment SQL fragments (BaseColumnList / ConditionWhere / ScopeCondition)
-
-### Quick Start
-
-```bash
-cd distribution-starter
-# Create MySQL database
-mysql -u root -p -e "CREATE DATABASE distribution_starter DEFAULT CHARSET utf8mb4;"
-# Initialize tables
-mysql -u root -p distribution_starter < src/main/script/sql/01_shared_tables.sql
-mysql -u root -p distribution_starter < src/main/script/sql/02_distribution_tables.sql
-# Update DB credentials in application-dev.properties
-# Start the application
-mvn spring-boot:run
-# Access Swagger UI: http://localhost:9030/swagger-ui.html
-```
-
-### Tech Stack
-
-- Spring Boot 3.2.5 / Java 17 / MyBatis 3.0.3 / MySQL 8.0 / SpringDoc 2.3.0
-- For Spring Boot 2.7 users, see [migration guide](guides/spring-boot-3-migration.md)
-
-### Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-
-### License
-
-[Apache License 2.0](LICENSE)
+For Spring Boot 2.7 users, see [migration guide](guides/spring-boot-3-migration.md).

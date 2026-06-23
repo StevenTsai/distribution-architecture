@@ -1,5 +1,7 @@
 # Quick Start: 5 分钟跑起来
 
+中文 | [English](../en/guides/quick-start.md)
+
 > 从零开始，让分销管理系统在本地跑起来。
 
 ---
