@@ -1,0 +1,18 @@
+.DS_Store
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+
+# Environment & credentials (prevent accidental commit)
+.env
+.env.*
+*.env
+application-local.properties
+application-*.local.properties
+*.key
+*.pem
+*.p12
+*.jks
+docker-compose.override.yml

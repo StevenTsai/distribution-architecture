@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.godzilla.distribution.mapper.distribution.DistributionAuditLogMapper">
+    <resultMap id="BaseResultMap" type="com.godzilla.distribution.entity.distribution.DistributionAuditLogEntity">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="biz_type" jdbcType="VARCHAR" property="bizType"/>
+        <result column="biz_id" jdbcType="BIGINT" property="bizId"/>
+        <result column="action" jdbcType="VARCHAR" property="action"/>
+        <result column="before_snapshot" jdbcType="LONGVARCHAR" property="beforeSnapshot"/>
+        <result column="after_snapshot" jdbcType="LONGVARCHAR" property="afterSnapshot"/>
+        <result column="operator_user_id" jdbcType="BIGINT" property="operatorUserId"/>
+        <result column="operator_name" jdbcType="VARCHAR" property="operatorName"/>
+        <result column="remark" jdbcType="VARCHAR" property="remark"/>
+        <result column="create_time" jdbcType="TIMESTAMP" property="createTime"/>
+    </resultMap>
+
+    <sql id="BaseColumnList">
+        id, biz_type, biz_id, action, before_snapshot, after_snapshot, operator_user_id, operator_name, remark, create_time
+    </sql>
+
+    <sql id="ConditionWhere">
+        where 1 = 1
+        <if test="bizType != null and bizType != ''">
+            and biz_type = #{bizType}
+        </if>
+        <if test="bizId != null">
+            and biz_id = #{bizId}
+        </if>
+        <if test="action != null and action != ''">
+            and action = #{action}
+        </if>
+    </sql>
+
+    <select id="countByCondition" resultType="java.lang.Long">
+        select count(*)
+        from distribution_audit_log
+        <include refid="ConditionWhere"/>
+    </select>
+
+    <select id="selectByCondition" resultMap="BaseResultMap">
+        select
+        <include refid="BaseColumnList"/>
+        from distribution_audit_log
+        <include refid="ConditionWhere"/>
+        order by create_time desc, id desc
+        limit #{offset}, #{limit}
+    </select>
+
+    <select id="selectByPrimaryKey" resultMap="BaseResultMap">
+        select
+        <include refid="BaseColumnList"/>
+        from distribution_audit_log
+        where id = #{id}
+    </select>
+
+    <insert id="insertSelective" parameterType="com.godzilla.distribution.entity.distribution.DistributionAuditLogEntity" useGeneratedKeys="true" keyProperty="id">
+        insert into distribution_audit_log
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="bizType != null">
+                biz_type,
+            </if>
+            <if test="bizId != null">
+                biz_id,
+            </if>
+            <if test="action != null">
+                action,
+            </if>
+            <if test="beforeSnapshot != null">
+                before_snapshot,
+            </if>
+            <if test="afterSnapshot != null">
+                after_snapshot,
+            </if>
+            <if test="operatorUserId != null">
+                operator_user_id,
+            </if>
+            <if test="operatorName != null">
+                operator_name,
+            </if>
+            <if test="remark != null">
+                remark,
+            </if>
+            <if test="createTime != null">
+                create_time,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="bizType != null">
+                #{bizType,jdbcType=VARCHAR},
+            </if>
+            <if test="bizId != null">
+                #{bizId,jdbcType=BIGINT},
+            </if>
+            <if test="action != null">
+                #{action,jdbcType=VARCHAR},
+            </if>
+            <if test="beforeSnapshot != null">
+                #{beforeSnapshot,jdbcType=LONGVARCHAR},
+            </if>
+            <if test="afterSnapshot != null">
+                #{afterSnapshot,jdbcType=LONGVARCHAR},
+            </if>
+            <if test="operatorUserId != null">
+                #{operatorUserId,jdbcType=BIGINT},
+            </if>
+            <if test="operatorName != null">
+                #{operatorName,jdbcType=VARCHAR},
+            </if>
+            <if test="remark != null">
+                #{remark,jdbcType=VARCHAR},
+            </if>
+            <if test="createTime != null">
+                #{createTime,jdbcType=TIMESTAMP},
+            </if>
+        </trim>
+    </insert>
+</mapper>

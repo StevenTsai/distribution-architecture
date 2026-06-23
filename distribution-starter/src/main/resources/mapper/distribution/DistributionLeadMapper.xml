@@ -1,0 +1,364 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.godzilla.distribution.mapper.distribution.DistributionLeadMapper">
+    <resultMap id="BaseResultMap" type="com.godzilla.distribution.entity.distribution.DistributionLeadEntity">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="lead_no" jdbcType="VARCHAR" property="leadNo"/>
+        <result column="patient_name" jdbcType="VARCHAR" property="patientName"/>
+        <result column="patient_phone" jdbcType="VARCHAR" property="patientPhone"/>
+        <result column="source_distributor_id" jdbcType="BIGINT" property="sourceDistributorId"/>
+        <result column="source_member_id" jdbcType="BIGINT" property="sourceMemberId"/>
+        <result column="intent_product_line" jdbcType="VARCHAR" property="intentProductLine"/>
+        <result column="source_region" jdbcType="VARCHAR" property="sourceRegion"/>
+        <result column="source_channel" jdbcType="VARCHAR" property="sourceChannel"/>
+        <result column="owner_user_id" jdbcType="BIGINT" property="ownerUserId"/>
+        <result column="stage" jdbcType="VARCHAR" property="stage"/>
+        <result column="is_duplicate" jdbcType="TINYINT" property="isDuplicate"/>
+        <result column="duplicate_lead_id" jdbcType="BIGINT" property="duplicateLeadId"/>
+        <result column="invalid_reason" jdbcType="VARCHAR" property="invalidReason"/>
+        <result column="remark" jdbcType="VARCHAR" property="remark"/>
+        <result column="latest_follow_up_at" jdbcType="TIMESTAMP" property="latestFollowUpAt"/>
+        <result column="created_by" jdbcType="BIGINT" property="createdBy"/>
+        <result column="updated_by" jdbcType="BIGINT" property="updatedBy"/>
+        <result column="create_time" jdbcType="TIMESTAMP" property="createTime"/>
+        <result column="modify_time" jdbcType="TIMESTAMP" property="modifyTime"/>
+        <result column="deleted" jdbcType="TINYINT" property="deleted"/>
+    </resultMap>
+
+    <sql id="BaseColumnList">
+        id, lead_no, patient_name, patient_phone, source_distributor_id, source_member_id, intent_product_line,
+        source_region, source_channel, owner_user_id, stage, is_duplicate, duplicate_lead_id, invalid_reason,
+        remark, latest_follow_up_at, created_by, updated_by, create_time, modify_time, deleted
+    </sql>
+
+    <sql id="ConditionWhere">
+        where deleted = 0
+        <if test="leadNo != null and leadNo != ''">
+            and lead_no = #{leadNo}
+        </if>
+        <if test="patientKeyword != null and patientKeyword != ''">
+            and (patient_name like concat('%', #{patientKeyword}, '%')
+            or patient_phone like concat('%', #{patientKeyword}, '%'))
+        </if>
+        <if test="sourceDistributorId != null">
+            and source_distributor_id = #{sourceDistributorId}
+        </if>
+        <if test="intentProductLine != null and intentProductLine != ''">
+            and intent_product_line = #{intentProductLine}
+        </if>
+        <if test="ownerUserId != null">
+            and owner_user_id = #{ownerUserId}
+        </if>
+        <if test="stage != null and stage != ''">
+            and stage = #{stage}
+        </if>
+    </sql>
+
+    <sql id="ScopeCondition">
+        <if test="authorizedDistributorIds != null and authorizedDistributorIds.size() > 0">
+            and source_distributor_id in
+            <foreach collection="authorizedDistributorIds" item="authorizedDistributorId" open="(" separator="," close=")">
+                #{authorizedDistributorId}
+            </foreach>
+        </if>
+        <if test="authorizedMemberId != null or authorizedOwnerUserId != null">
+            and (
+            <if test="authorizedMemberId != null">
+                source_member_id = #{authorizedMemberId}
+            </if>
+            <if test="authorizedMemberId != null and authorizedOwnerUserId != null">
+                or
+            </if>
+            <if test="authorizedOwnerUserId != null">
+                owner_user_id = #{authorizedOwnerUserId}
+            </if>
+            )
+        </if>
+    </sql>
+
+    <select id="countByCondition" resultType="java.lang.Long">
+        select count(*)
+        from distribution_lead
+        <include refid="ConditionWhere"/>
+    </select>
+
+    <select id="selectByCondition" resultMap="BaseResultMap">
+        select
+        <include refid="BaseColumnList"/>
+        from distribution_lead
+        <include refid="ConditionWhere"/>
+        order by create_time desc, id desc
+        limit #{offset}, #{limit}
+    </select>
+
+    <select id="countByConditionWithScope" resultType="java.lang.Long">
+        select count(*)
+        from distribution_lead
+        <include refid="ConditionWhere"/>
+        <include refid="ScopeCondition"/>
+    </select>
+
+    <select id="selectByConditionWithScope" resultMap="BaseResultMap">
+        select
+        <include refid="BaseColumnList"/>
+        from distribution_lead
+        <include refid="ConditionWhere"/>
+        <include refid="ScopeCondition"/>
+        order by create_time desc, id desc
+        limit #{offset}, #{limit}
+    </select>
+
+    <select id="selectByPrimaryKey" resultMap="BaseResultMap">
+        select
+        <include refid="BaseColumnList"/>
+        from distribution_lead
+        where id = #{id}
+          and deleted = 0
+    </select>
+
+    <select id="selectByIds" resultMap="BaseResultMap">
+        select
+        <include refid="BaseColumnList"/>
+        from distribution_lead
+        where deleted = 0
+          and id in
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+
+    <select id="selectByPatientPhone" resultMap="BaseResultMap">
+        select
+        <include refid="BaseColumnList"/>
+        from distribution_lead
+        where patient_phone = #{patientPhone}
+          and deleted = 0
+        <if test="excludeId != null">
+            and id != #{excludeId}
+        </if>
+        order by create_time asc, id asc
+        limit 1
+    </select>
+
+    <select id="selectByReferrerAndPatientPhone" resultMap="BaseResultMap">
+        select
+        <include refid="BaseColumnList"/>
+        from distribution_lead
+        where patient_phone = #{patientPhone}
+          and deleted = 0
+        <choose>
+            <when test="sourceMemberId != null">
+                and source_member_id = #{sourceMemberId}
+            </when>
+            <otherwise>
+                and source_member_id is null
+                <if test="sourceDistributorId != null">
+                    and source_distributor_id = #{sourceDistributorId}
+                </if>
+            </otherwise>
+        </choose>
+        <if test="excludeId != null">
+            and id != #{excludeId}
+        </if>
+        order by create_time asc, id asc
+        limit 1
+    </select>
+
+    <select id="selectDuplicateLead" resultMap="BaseResultMap">
+        select
+        <include refid="BaseColumnList"/>
+        from distribution_lead
+        where patient_phone = #{patientPhone}
+          and intent_product_line = #{intentProductLine}
+          and deleted = 0
+        <if test="excludeId != null">
+            and id != #{excludeId}
+        </if>
+        order by create_time asc, id asc
+        limit 1
+    </select>
+
+    <insert id="insertSelective" parameterType="com.godzilla.distribution.entity.distribution.DistributionLeadEntity" useGeneratedKeys="true" keyProperty="id">
+        insert into distribution_lead
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="leadNo != null">
+                lead_no,
+            </if>
+            <if test="patientName != null">
+                patient_name,
+            </if>
+            <if test="patientPhone != null">
+                patient_phone,
+            </if>
+            <if test="sourceDistributorId != null">
+                source_distributor_id,
+            </if>
+            <if test="sourceMemberId != null">
+                source_member_id,
+            </if>
+            <if test="intentProductLine != null">
+                intent_product_line,
+            </if>
+            <if test="sourceRegion != null">
+                source_region,
+            </if>
+            <if test="sourceChannel != null">
+                source_channel,
+            </if>
+            <if test="ownerUserId != null">
+                owner_user_id,
+            </if>
+            <if test="stage != null">
+                stage,
+            </if>
+            <if test="isDuplicate != null">
+                is_duplicate,
+            </if>
+            <if test="duplicateLeadId != null">
+                duplicate_lead_id,
+            </if>
+            <if test="invalidReason != null">
+                invalid_reason,
+            </if>
+            <if test="remark != null">
+                remark,
+            </if>
+            <if test="latestFollowUpAt != null">
+                latest_follow_up_at,
+            </if>
+            <if test="createdBy != null">
+                created_by,
+            </if>
+            <if test="updatedBy != null">
+                updated_by,
+            </if>
+            <if test="createTime != null">
+                create_time,
+            </if>
+            <if test="modifyTime != null">
+                modify_time,
+            </if>
+            <if test="deleted != null">
+                deleted,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="leadNo != null">
+                #{leadNo,jdbcType=VARCHAR},
+            </if>
+            <if test="patientName != null">
+                #{patientName,jdbcType=VARCHAR},
+            </if>
+            <if test="patientPhone != null">
+                #{patientPhone,jdbcType=VARCHAR},
+            </if>
+            <if test="sourceDistributorId != null">
+                #{sourceDistributorId,jdbcType=BIGINT},
+            </if>
+            <if test="sourceMemberId != null">
+                #{sourceMemberId,jdbcType=BIGINT},
+            </if>
+            <if test="intentProductLine != null">
+                #{intentProductLine,jdbcType=VARCHAR},
+            </if>
+            <if test="sourceRegion != null">
+                #{sourceRegion,jdbcType=VARCHAR},
+            </if>
+            <if test="sourceChannel != null">
+                #{sourceChannel,jdbcType=VARCHAR},
+            </if>
+            <if test="ownerUserId != null">
+                #{ownerUserId,jdbcType=BIGINT},
+            </if>
+            <if test="stage != null">
+                #{stage,jdbcType=VARCHAR},
+            </if>
+            <if test="isDuplicate != null">
+                #{isDuplicate,jdbcType=TINYINT},
+            </if>
+            <if test="duplicateLeadId != null">
+                #{duplicateLeadId,jdbcType=BIGINT},
+            </if>
+            <if test="invalidReason != null">
+                #{invalidReason,jdbcType=VARCHAR},
+            </if>
+            <if test="remark != null">
+                #{remark,jdbcType=VARCHAR},
+            </if>
+            <if test="latestFollowUpAt != null">
+                #{latestFollowUpAt,jdbcType=TIMESTAMP},
+            </if>
+            <if test="createdBy != null">
+                #{createdBy,jdbcType=BIGINT},
+            </if>
+            <if test="updatedBy != null">
+                #{updatedBy,jdbcType=BIGINT},
+            </if>
+            <if test="createTime != null">
+                #{createTime,jdbcType=TIMESTAMP},
+            </if>
+            <if test="modifyTime != null">
+                #{modifyTime,jdbcType=TIMESTAMP},
+            </if>
+            <if test="deleted != null">
+                #{deleted,jdbcType=TINYINT},
+            </if>
+        </trim>
+    </insert>
+
+    <update id="updateByPrimaryKeySelective" parameterType="com.godzilla.distribution.entity.distribution.DistributionLeadEntity">
+        update distribution_lead
+        <set>
+            <if test="patientName != null">
+                patient_name = #{patientName,jdbcType=VARCHAR},
+            </if>
+            <if test="patientPhone != null">
+                patient_phone = #{patientPhone,jdbcType=VARCHAR},
+            </if>
+            <if test="sourceDistributorId != null">
+                source_distributor_id = #{sourceDistributorId,jdbcType=BIGINT},
+            </if>
+            <if test="sourceMemberId != null">
+                source_member_id = #{sourceMemberId,jdbcType=BIGINT},
+            </if>
+            <if test="intentProductLine != null">
+                intent_product_line = #{intentProductLine,jdbcType=VARCHAR},
+            </if>
+            <if test="sourceRegion != null">
+                source_region = #{sourceRegion,jdbcType=VARCHAR},
+            </if>
+            <if test="sourceChannel != null">
+                source_channel = #{sourceChannel,jdbcType=VARCHAR},
+            </if>
+            <if test="ownerUserId != null">
+                owner_user_id = #{ownerUserId,jdbcType=BIGINT},
+            </if>
+            <if test="stage != null">
+                stage = #{stage,jdbcType=VARCHAR},
+            </if>
+            <if test="isDuplicate != null">
+                is_duplicate = #{isDuplicate,jdbcType=TINYINT},
+            </if>
+            <if test="duplicateLeadId != null">
+                duplicate_lead_id = #{duplicateLeadId,jdbcType=BIGINT},
+            </if>
+            <if test="invalidReason != null">
+                invalid_reason = #{invalidReason,jdbcType=VARCHAR},
+            </if>
+            <if test="remark != null">
+                remark = #{remark,jdbcType=VARCHAR},
+            </if>
+            <if test="latestFollowUpAt != null">
+                latest_follow_up_at = #{latestFollowUpAt,jdbcType=TIMESTAMP},
+            </if>
+            <if test="updatedBy != null">
+                updated_by = #{updatedBy,jdbcType=BIGINT},
+            </if>
+            <if test="deleted != null">
+                deleted = #{deleted,jdbcType=TINYINT},
+            </if>
+        </set>
+        where id = #{id,jdbcType=BIGINT}
+          and deleted = 0
+    </update>
+</mapper>

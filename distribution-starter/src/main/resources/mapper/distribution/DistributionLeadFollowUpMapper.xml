@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.godzilla.distribution.mapper.distribution.DistributionLeadFollowUpMapper">
+    <resultMap id="BaseResultMap" type="com.godzilla.distribution.entity.distribution.DistributionLeadFollowUpEntity">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="lead_id" jdbcType="BIGINT" property="leadId"/>
+        <result column="follow_up_type" jdbcType="VARCHAR" property="followUpType"/>
+        <result column="content" jdbcType="LONGVARCHAR" property="content"/>
+        <result column="next_action_at" jdbcType="TIMESTAMP" property="nextActionAt"/>
+        <result column="created_by" jdbcType="BIGINT" property="createdBy"/>
+        <result column="create_time" jdbcType="TIMESTAMP" property="createTime"/>
+    </resultMap>
+
+    <sql id="BaseColumnList">
+        id, lead_id, follow_up_type, content, next_action_at, created_by, create_time
+    </sql>
+
+    <select id="selectByLeadId" resultMap="BaseResultMap">
+        select
+        <include refid="BaseColumnList"/>
+        from distribution_lead_follow_up
+        where lead_id = #{leadId}
+        order by create_time desc, id desc
+    </select>
+
+    <insert id="insertSelective" parameterType="com.godzilla.distribution.entity.distribution.DistributionLeadFollowUpEntity" useGeneratedKeys="true" keyProperty="id">
+        insert into distribution_lead_follow_up
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="leadId != null">
+                lead_id,
+            </if>
+            <if test="followUpType != null">
+                follow_up_type,
+            </if>
+            <if test="content != null">
+                content,
+            </if>
+            <if test="nextActionAt != null">
+                next_action_at,
+            </if>
+            <if test="createdBy != null">
+                created_by,
+            </if>
+            <if test="createTime != null">
+                create_time,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="leadId != null">
+                #{leadId,jdbcType=BIGINT},
+            </if>
+            <if test="followUpType != null">
+                #{followUpType,jdbcType=VARCHAR},
+            </if>
+            <if test="content != null">
+                #{content,jdbcType=LONGVARCHAR},
+            </if>
+            <if test="nextActionAt != null">
+                #{nextActionAt,jdbcType=TIMESTAMP},
+            </if>
+            <if test="createdBy != null">
+                #{createdBy,jdbcType=BIGINT},
+            </if>
+            <if test="createTime != null">
+                #{createTime,jdbcType=TIMESTAMP},
+            </if>
+        </trim>
+    </insert>
+</mapper>

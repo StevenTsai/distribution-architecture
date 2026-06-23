@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.godzilla.distribution.mapper.distribution.DistributionComplianceRecordMapper">
+    <resultMap id="BaseResultMap" type="com.godzilla.distribution.entity.distribution.DistributionComplianceRecordEntity">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="biz_type" jdbcType="VARCHAR" property="bizType"/>
+        <result column="biz_id" jdbcType="BIGINT" property="bizId"/>
+        <result column="product_line_code" jdbcType="VARCHAR" property="productLineCode"/>
+        <result column="record_type" jdbcType="VARCHAR" property="recordType"/>
+        <result column="status" jdbcType="VARCHAR" property="status"/>
+        <result column="content" jdbcType="LONGVARCHAR" property="content"/>
+        <result column="attachments_json" jdbcType="LONGVARCHAR" property="attachmentsJson"/>
+        <result column="reviewed_by" jdbcType="BIGINT" property="reviewedBy"/>
+        <result column="reviewed_at" jdbcType="TIMESTAMP" property="reviewedAt"/>
+        <result column="remark" jdbcType="VARCHAR" property="remark"/>
+        <result column="created_by" jdbcType="BIGINT" property="createdBy"/>
+        <result column="updated_by" jdbcType="BIGINT" property="updatedBy"/>
+        <result column="create_time" jdbcType="TIMESTAMP" property="createTime"/>
+        <result column="modify_time" jdbcType="TIMESTAMP" property="modifyTime"/>
+        <result column="deleted" jdbcType="TINYINT" property="deleted"/>
+    </resultMap>
+
+    <sql id="BaseColumnList">
+        id, biz_type, biz_id, product_line_code, record_type, status, content, attachments_json,
+        reviewed_by, reviewed_at, remark, created_by, updated_by, create_time, modify_time, deleted
+    </sql>
+
+    <sql id="ConditionWhere">
+        where deleted = 0
+        <if test="bizType != null and bizType != ''">
+            and biz_type = #{bizType}
+        </if>
+        <if test="bizId != null">
+            and biz_id = #{bizId}
+        </if>
+        <if test="recordType != null and recordType != ''">
+            and record_type = #{recordType}
+        </if>
+        <if test="status != null and status != ''">
+            and status = #{status}
+        </if>
+    </sql>
+
+    <select id="countByCondition" resultType="java.lang.Long">
+        select count(*)
+        from distribution_compliance_record
+        <include refid="ConditionWhere"/>
+    </select>
+
+    <select id="selectByCondition" resultMap="BaseResultMap">
+        select
+        <include refid="BaseColumnList"/>
+        from distribution_compliance_record
+        <include refid="ConditionWhere"/>
+        order by create_time desc, id desc
+        limit #{offset}, #{limit}
+    </select>
+
+    <select id="selectByPrimaryKey" resultMap="BaseResultMap">
+        select
+        <include refid="BaseColumnList"/>
+        from distribution_compliance_record
+        where id = #{id}
+          and deleted = 0
+    </select>
+
+    <insert id="insertSelective" parameterType="com.godzilla.distribution.entity.distribution.DistributionComplianceRecordEntity" useGeneratedKeys="true" keyProperty="id">
+        insert into distribution_compliance_record
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="bizType != null">biz_type,</if>
+            <if test="bizId != null">biz_id,</if>
+            <if test="productLineCode != null">product_line_code,</if>
+            <if test="recordType != null">record_type,</if>
+            <if test="status != null">status,</if>
+            <if test="content != null">content,</if>
+            <if test="attachmentsJson != null">attachments_json,</if>
+            <if test="reviewedBy != null">reviewed_by,</if>
+            <if test="reviewedAt != null">reviewed_at,</if>
+            <if test="remark != null">remark,</if>
+            <if test="createdBy != null">created_by,</if>
+            <if test="updatedBy != null">updated_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="modifyTime != null">modify_time,</if>
+            <if test="deleted != null">deleted,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="bizType != null">#{bizType,jdbcType=VARCHAR},</if>
+            <if test="bizId != null">#{bizId,jdbcType=BIGINT},</if>
+            <if test="productLineCode != null">#{productLineCode,jdbcType=VARCHAR},</if>
+            <if test="recordType != null">#{recordType,jdbcType=VARCHAR},</if>
+            <if test="status != null">#{status,jdbcType=VARCHAR},</if>
+            <if test="content != null">#{content,jdbcType=LONGVARCHAR},</if>
+            <if test="attachmentsJson != null">#{attachmentsJson,jdbcType=LONGVARCHAR},</if>
+            <if test="reviewedBy != null">#{reviewedBy,jdbcType=BIGINT},</if>
+            <if test="reviewedAt != null">#{reviewedAt,jdbcType=TIMESTAMP},</if>
+            <if test="remark != null">#{remark,jdbcType=VARCHAR},</if>
+            <if test="createdBy != null">#{createdBy,jdbcType=BIGINT},</if>
+            <if test="updatedBy != null">#{updatedBy,jdbcType=BIGINT},</if>
+            <if test="createTime != null">#{createTime,jdbcType=TIMESTAMP},</if>
+            <if test="modifyTime != null">#{modifyTime,jdbcType=TIMESTAMP},</if>
+            <if test="deleted != null">#{deleted,jdbcType=TINYINT},</if>
+        </trim>
+    </insert>
+
+    <update id="updateByPrimaryKeySelective" parameterType="com.godzilla.distribution.entity.distribution.DistributionComplianceRecordEntity">
+        update distribution_compliance_record
+        <set>
+            <if test="bizType != null">biz_type = #{bizType,jdbcType=VARCHAR},</if>
+            <if test="bizId != null">biz_id = #{bizId,jdbcType=BIGINT},</if>
+            <if test="productLineCode != null">product_line_code = #{productLineCode,jdbcType=VARCHAR},</if>
+            <if test="recordType != null">record_type = #{recordType,jdbcType=VARCHAR},</if>
+            <if test="status != null">status = #{status,jdbcType=VARCHAR},</if>
+            <if test="content != null">content = #{content,jdbcType=LONGVARCHAR},</if>
+            <if test="attachmentsJson != null">attachments_json = #{attachmentsJson,jdbcType=LONGVARCHAR},</if>
+            <if test="reviewedBy != null">reviewed_by = #{reviewedBy,jdbcType=BIGINT},</if>
+            <if test="reviewedAt != null">reviewed_at = #{reviewedAt,jdbcType=TIMESTAMP},</if>
+            <if test="remark != null">remark = #{remark,jdbcType=VARCHAR},</if>
+            <if test="updatedBy != null">updated_by = #{updatedBy,jdbcType=BIGINT},</if>
+            <if test="modifyTime != null">modify_time = #{modifyTime,jdbcType=TIMESTAMP},</if>
+            <if test="deleted != null">deleted = #{deleted,jdbcType=TINYINT},</if>
+        </set>
+        where id = #{id,jdbcType=BIGINT}
+          and deleted = 0
+    </update>
+</mapper>

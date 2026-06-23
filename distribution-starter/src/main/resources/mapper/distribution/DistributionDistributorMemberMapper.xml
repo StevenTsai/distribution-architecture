@@ -1,0 +1,297 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.godzilla.distribution.mapper.distribution.DistributionDistributorMemberMapper">
+    <resultMap id="BaseResultMap" type="com.godzilla.distribution.entity.distribution.DistributionDistributorMemberEntity">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="distributor_id" jdbcType="BIGINT" property="distributorId"/>
+        <result column="user_id" jdbcType="BIGINT" property="userId"/>
+        <result column="name" jdbcType="VARCHAR" property="name"/>
+        <result column="phone" jdbcType="VARCHAR" property="phone"/>
+        <result column="role_code" jdbcType="VARCHAR" property="roleCode"/>
+        <result column="data_scope" jdbcType="VARCHAR" property="dataScope"/>
+        <result column="manager_member_id" jdbcType="BIGINT" property="managerMemberId"/>
+        <result column="product_lines_json" jdbcType="LONGVARCHAR" property="productLinesJson"/>
+        <result column="training_status" jdbcType="VARCHAR" property="trainingStatus"/>
+        <result column="status" jdbcType="VARCHAR" property="status"/>
+        <result column="last_active_at" jdbcType="TIMESTAMP" property="lastActiveAt"/>
+        <result column="remark" jdbcType="VARCHAR" property="remark"/>
+        <result column="created_by" jdbcType="BIGINT" property="createdBy"/>
+        <result column="updated_by" jdbcType="BIGINT" property="updatedBy"/>
+        <result column="create_time" jdbcType="TIMESTAMP" property="createTime"/>
+        <result column="modify_time" jdbcType="TIMESTAMP" property="modifyTime"/>
+        <result column="deleted" jdbcType="TINYINT" property="deleted"/>
+    </resultMap>
+
+    <sql id="BaseColumnList">
+        id, distributor_id, user_id, name, phone, role_code, data_scope, manager_member_id, product_lines_json,
+        training_status, status, last_active_at, remark, created_by, updated_by, create_time, modify_time, deleted
+    </sql>
+
+    <sql id="ConditionWhere">
+        where deleted = 0
+        <if test="distributorId != null">
+            and distributor_id = #{distributorId}
+        </if>
+        <if test="status != null and status != ''">
+            and status = #{status}
+        </if>
+        <if test="roleCode != null and roleCode != ''">
+            and role_code = #{roleCode}
+        </if>
+        <if test="phone != null and phone != ''">
+            and phone like concat('%', #{phone}, '%')
+        </if>
+    </sql>
+
+    <sql id="ScopeCondition">
+        <if test="authorizedDistributorIds != null and authorizedDistributorIds.size() > 0">
+            and distributor_id in
+            <foreach collection="authorizedDistributorIds" item="authorizedDistributorId" open="(" separator="," close=")">
+                #{authorizedDistributorId}
+            </foreach>
+        </if>
+        <if test="authorizedMemberId != null">
+            and id = #{authorizedMemberId}
+        </if>
+    </sql>
+
+    <select id="countByCondition" resultType="java.lang.Long">
+        select count(*)
+        from distribution_distributor_member
+        <include refid="ConditionWhere"/>
+    </select>
+
+    <select id="selectByCondition" resultMap="BaseResultMap">
+        select
+        <include refid="BaseColumnList"/>
+        from distribution_distributor_member
+        <include refid="ConditionWhere"/>
+        order by create_time desc, id desc
+        limit #{offset}, #{limit}
+    </select>
+
+    <select id="countByConditionWithScope" resultType="java.lang.Long">
+        select count(*)
+        from distribution_distributor_member
+        <include refid="ConditionWhere"/>
+        <include refid="ScopeCondition"/>
+    </select>
+
+    <select id="selectByConditionWithScope" resultMap="BaseResultMap">
+        select
+        <include refid="BaseColumnList"/>
+        from distribution_distributor_member
+        <include refid="ConditionWhere"/>
+        <include refid="ScopeCondition"/>
+        order by create_time desc, id desc
+        limit #{offset}, #{limit}
+    </select>
+
+    <select id="selectByPrimaryKey" resultMap="BaseResultMap">
+        select
+        <include refid="BaseColumnList"/>
+        from distribution_distributor_member
+        where id = #{id}
+          and deleted = 0
+    </select>
+
+    <select id="selectByUserId" resultMap="BaseResultMap">
+        select
+        <include refid="BaseColumnList"/>
+        from distribution_distributor_member
+        where user_id = #{userId}
+          and deleted = 0
+        limit 1
+    </select>
+
+    <select id="selectByDistributorAndPhone" resultMap="BaseResultMap">
+        select
+        <include refid="BaseColumnList"/>
+        from distribution_distributor_member
+        where distributor_id = #{distributorId}
+          and phone = #{phone}
+          and deleted = 0
+        limit 1
+    </select>
+
+    <select id="selectByDistributorAndName" resultMap="BaseResultMap">
+        select
+        <include refid="BaseColumnList"/>
+        from distribution_distributor_member
+        where distributor_id = #{distributorId}
+          and name = #{name}
+          and deleted = 0
+        limit 1
+    </select>
+
+    <select id="selectByIds" resultMap="BaseResultMap">
+        select
+        <include refid="BaseColumnList"/>
+        from distribution_distributor_member
+        where deleted = 0
+          and id in
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+
+    <insert id="insertSelective" parameterType="com.godzilla.distribution.entity.distribution.DistributionDistributorMemberEntity" useGeneratedKeys="true" keyProperty="id">
+        insert into distribution_distributor_member
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="distributorId != null">
+                distributor_id,
+            </if>
+            <if test="userId != null">
+                user_id,
+            </if>
+            <if test="name != null">
+                name,
+            </if>
+            <if test="phone != null">
+                phone,
+            </if>
+            <if test="roleCode != null">
+                role_code,
+            </if>
+            <if test="dataScope != null">
+                data_scope,
+            </if>
+            <if test="managerMemberId != null">
+                manager_member_id,
+            </if>
+            <if test="productLinesJson != null">
+                product_lines_json,
+            </if>
+            <if test="trainingStatus != null">
+                training_status,
+            </if>
+            <if test="status != null">
+                status,
+            </if>
+            <if test="lastActiveAt != null">
+                last_active_at,
+            </if>
+            <if test="remark != null">
+                remark,
+            </if>
+            <if test="createdBy != null">
+                created_by,
+            </if>
+            <if test="updatedBy != null">
+                updated_by,
+            </if>
+            <if test="createTime != null">
+                create_time,
+            </if>
+            <if test="modifyTime != null">
+                modify_time,
+            </if>
+            <if test="deleted != null">
+                deleted,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="distributorId != null">
+                #{distributorId,jdbcType=BIGINT},
+            </if>
+            <if test="userId != null">
+                #{userId,jdbcType=BIGINT},
+            </if>
+            <if test="name != null">
+                #{name,jdbcType=VARCHAR},
+            </if>
+            <if test="phone != null">
+                #{phone,jdbcType=VARCHAR},
+            </if>
+            <if test="roleCode != null">
+                #{roleCode,jdbcType=VARCHAR},
+            </if>
+            <if test="dataScope != null">
+                #{dataScope,jdbcType=VARCHAR},
+            </if>
+            <if test="managerMemberId != null">
+                #{managerMemberId,jdbcType=BIGINT},
+            </if>
+            <if test="productLinesJson != null">
+                #{productLinesJson,jdbcType=LONGVARCHAR},
+            </if>
+            <if test="trainingStatus != null">
+                #{trainingStatus,jdbcType=VARCHAR},
+            </if>
+            <if test="status != null">
+                #{status,jdbcType=VARCHAR},
+            </if>
+            <if test="lastActiveAt != null">
+                #{lastActiveAt,jdbcType=TIMESTAMP},
+            </if>
+            <if test="remark != null">
+                #{remark,jdbcType=VARCHAR},
+            </if>
+            <if test="createdBy != null">
+                #{createdBy,jdbcType=BIGINT},
+            </if>
+            <if test="updatedBy != null">
+                #{updatedBy,jdbcType=BIGINT},
+            </if>
+            <if test="createTime != null">
+                #{createTime,jdbcType=TIMESTAMP},
+            </if>
+            <if test="modifyTime != null">
+                #{modifyTime,jdbcType=TIMESTAMP},
+            </if>
+            <if test="deleted != null">
+                #{deleted,jdbcType=TINYINT},
+            </if>
+        </trim>
+    </insert>
+
+    <update id="updateByPrimaryKeySelective" parameterType="com.godzilla.distribution.entity.distribution.DistributionDistributorMemberEntity">
+        update distribution_distributor_member
+        <set>
+            <if test="distributorId != null">
+                distributor_id = #{distributorId,jdbcType=BIGINT},
+            </if>
+            <if test="userId != null">
+                user_id = #{userId,jdbcType=BIGINT},
+            </if>
+            <if test="name != null">
+                name = #{name,jdbcType=VARCHAR},
+            </if>
+            <if test="phone != null">
+                phone = #{phone,jdbcType=VARCHAR},
+            </if>
+            <if test="roleCode != null">
+                role_code = #{roleCode,jdbcType=VARCHAR},
+            </if>
+            <if test="dataScope != null">
+                data_scope = #{dataScope,jdbcType=VARCHAR},
+            </if>
+            <if test="managerMemberId != null">
+                manager_member_id = #{managerMemberId,jdbcType=BIGINT},
+            </if>
+            <if test="productLinesJson != null">
+                product_lines_json = #{productLinesJson,jdbcType=LONGVARCHAR},
+            </if>
+            <if test="trainingStatus != null">
+                training_status = #{trainingStatus,jdbcType=VARCHAR},
+            </if>
+            <if test="status != null">
+                status = #{status,jdbcType=VARCHAR},
+            </if>
+            <if test="lastActiveAt != null">
+                last_active_at = #{lastActiveAt,jdbcType=TIMESTAMP},
+            </if>
+            <if test="remark != null">
+                remark = #{remark,jdbcType=VARCHAR},
+            </if>
+            <if test="updatedBy != null">
+                updated_by = #{updatedBy,jdbcType=BIGINT},
+            </if>
+            <if test="deleted != null">
+                deleted = #{deleted,jdbcType=TINYINT},
+            </if>
+        </set>
+        where id = #{id,jdbcType=BIGINT}
+          and deleted = 0
+    </update>
+</mapper>

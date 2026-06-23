@@ -1,0 +1,314 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.godzilla.distribution.mapper.distribution.DistributionDistributorMapper">
+    <resultMap id="BaseResultMap" type="com.godzilla.distribution.entity.distribution.DistributionDistributorEntity">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="code" jdbcType="VARCHAR" property="code"/>
+        <result column="name" jdbcType="VARCHAR" property="name"/>
+        <result column="parent_id" jdbcType="BIGINT" property="parentId"/>
+        <result column="level_code" jdbcType="VARCHAR" property="levelCode"/>
+        <result column="owner_user_id" jdbcType="BIGINT" property="ownerUserId"/>
+        <result column="contact_name" jdbcType="VARCHAR" property="contactName"/>
+        <result column="contact_phone" jdbcType="VARCHAR" property="contactPhone"/>
+        <result column="province" jdbcType="VARCHAR" property="province"/>
+        <result column="city" jdbcType="VARCHAR" property="city"/>
+        <result column="settlement_type" jdbcType="VARCHAR" property="settlementType"/>
+        <result column="contract_status" jdbcType="VARCHAR" property="contractStatus"/>
+        <result column="qualification_status" jdbcType="VARCHAR" property="qualificationStatus"/>
+        <result column="product_lines_json" jdbcType="LONGVARCHAR" property="productLinesJson"/>
+        <result column="status" jdbcType="VARCHAR" property="status"/>
+        <result column="remark" jdbcType="VARCHAR" property="remark"/>
+        <result column="created_by" jdbcType="BIGINT" property="createdBy"/>
+        <result column="updated_by" jdbcType="BIGINT" property="updatedBy"/>
+        <result column="create_time" jdbcType="TIMESTAMP" property="createTime"/>
+        <result column="modify_time" jdbcType="TIMESTAMP" property="modifyTime"/>
+        <result column="deleted" jdbcType="TINYINT" property="deleted"/>
+    </resultMap>
+
+    <sql id="BaseColumnList">
+        id, code, name, parent_id, level_code, owner_user_id, contact_name, contact_phone, province, city,
+        settlement_type, contract_status, qualification_status, product_lines_json, status, remark,
+        created_by, updated_by, create_time, modify_time, deleted
+    </sql>
+
+    <sql id="ConditionWhere">
+        where deleted = 0
+        <if test="name != null and name != ''">
+            and name like concat('%', #{name}, '%')
+        </if>
+        <if test="status != null and status != ''">
+            and status = #{status}
+        </if>
+        <if test="levelCode != null and levelCode != ''">
+            and level_code = #{levelCode}
+        </if>
+        <if test="productLine != null and productLine != ''">
+            and product_lines_json like concat('%', #{productLine}, '%')
+        </if>
+    </sql>
+
+    <sql id="ScopeCondition">
+        <if test="authorizedDistributorIds != null and authorizedDistributorIds.size() > 0">
+            and id in
+            <foreach collection="authorizedDistributorIds" item="authorizedDistributorId" open="(" separator="," close=")">
+                #{authorizedDistributorId}
+            </foreach>
+        </if>
+    </sql>
+
+    <select id="countByCondition" resultType="java.lang.Long">
+        select count(*)
+        from distribution_distributor
+        <include refid="ConditionWhere"/>
+    </select>
+
+    <select id="selectByCondition" resultMap="BaseResultMap">
+        select
+        <include refid="BaseColumnList"/>
+        from distribution_distributor
+        <include refid="ConditionWhere"/>
+        order by create_time desc, id desc
+        limit #{offset}, #{limit}
+    </select>
+
+    <select id="countByConditionWithScope" resultType="java.lang.Long">
+        select count(*)
+        from distribution_distributor
+        <include refid="ConditionWhere"/>
+        <include refid="ScopeCondition"/>
+    </select>
+
+    <select id="selectByConditionWithScope" resultMap="BaseResultMap">
+        select
+        <include refid="BaseColumnList"/>
+        from distribution_distributor
+        <include refid="ConditionWhere"/>
+        <include refid="ScopeCondition"/>
+        order by create_time desc, id desc
+        limit #{offset}, #{limit}
+    </select>
+
+    <select id="selectByPrimaryKey" resultMap="BaseResultMap">
+        select
+        <include refid="BaseColumnList"/>
+        from distribution_distributor
+        where id = #{id}
+          and deleted = 0
+    </select>
+
+    <select id="selectByIds" resultMap="BaseResultMap">
+        select
+        <include refid="BaseColumnList"/>
+        from distribution_distributor
+        where deleted = 0
+          and id in
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+
+    <select id="selectByCode" resultMap="BaseResultMap">
+        select
+        <include refid="BaseColumnList"/>
+        from distribution_distributor
+        where code = #{code}
+          and deleted = 0
+        limit 1
+    </select>
+
+    <select id="selectByParentIds" resultMap="BaseResultMap">
+        select
+        <include refid="BaseColumnList"/>
+        from distribution_distributor
+        where deleted = 0
+          and parent_id in
+        <foreach collection="parentIds" item="parentId" open="(" separator="," close=")">
+            #{parentId}
+        </foreach>
+        order by id asc
+    </select>
+
+    <insert id="insertSelective" parameterType="com.godzilla.distribution.entity.distribution.DistributionDistributorEntity" useGeneratedKeys="true" keyProperty="id">
+        insert into distribution_distributor
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="code != null">
+                code,
+            </if>
+            <if test="name != null">
+                name,
+            </if>
+            <if test="parentId != null">
+                parent_id,
+            </if>
+            <if test="levelCode != null">
+                level_code,
+            </if>
+            <if test="ownerUserId != null">
+                owner_user_id,
+            </if>
+            <if test="contactName != null">
+                contact_name,
+            </if>
+            <if test="contactPhone != null">
+                contact_phone,
+            </if>
+            <if test="province != null">
+                province,
+            </if>
+            <if test="city != null">
+                city,
+            </if>
+            <if test="settlementType != null">
+                settlement_type,
+            </if>
+            <if test="contractStatus != null">
+                contract_status,
+            </if>
+            <if test="qualificationStatus != null">
+                qualification_status,
+            </if>
+            <if test="productLinesJson != null">
+                product_lines_json,
+            </if>
+            <if test="status != null">
+                status,
+            </if>
+            <if test="remark != null">
+                remark,
+            </if>
+            <if test="createdBy != null">
+                created_by,
+            </if>
+            <if test="updatedBy != null">
+                updated_by,
+            </if>
+            <if test="createTime != null">
+                create_time,
+            </if>
+            <if test="modifyTime != null">
+                modify_time,
+            </if>
+            <if test="deleted != null">
+                deleted,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="code != null">
+                #{code,jdbcType=VARCHAR},
+            </if>
+            <if test="name != null">
+                #{name,jdbcType=VARCHAR},
+            </if>
+            <if test="parentId != null">
+                #{parentId,jdbcType=BIGINT},
+            </if>
+            <if test="levelCode != null">
+                #{levelCode,jdbcType=VARCHAR},
+            </if>
+            <if test="ownerUserId != null">
+                #{ownerUserId,jdbcType=BIGINT},
+            </if>
+            <if test="contactName != null">
+                #{contactName,jdbcType=VARCHAR},
+            </if>
+            <if test="contactPhone != null">
+                #{contactPhone,jdbcType=VARCHAR},
+            </if>
+            <if test="province != null">
+                #{province,jdbcType=VARCHAR},
+            </if>
+            <if test="city != null">
+                #{city,jdbcType=VARCHAR},
+            </if>
+            <if test="settlementType != null">
+                #{settlementType,jdbcType=VARCHAR},
+            </if>
+            <if test="contractStatus != null">
+                #{contractStatus,jdbcType=VARCHAR},
+            </if>
+            <if test="qualificationStatus != null">
+                #{qualificationStatus,jdbcType=VARCHAR},
+            </if>
+            <if test="productLinesJson != null">
+                #{productLinesJson,jdbcType=LONGVARCHAR},
+            </if>
+            <if test="status != null">
+                #{status,jdbcType=VARCHAR},
+            </if>
+            <if test="remark != null">
+                #{remark,jdbcType=VARCHAR},
+            </if>
+            <if test="createdBy != null">
+                #{createdBy,jdbcType=BIGINT},
+            </if>
+            <if test="updatedBy != null">
+                #{updatedBy,jdbcType=BIGINT},
+            </if>
+            <if test="createTime != null">
+                #{createTime,jdbcType=TIMESTAMP},
+            </if>
+            <if test="modifyTime != null">
+                #{modifyTime,jdbcType=TIMESTAMP},
+            </if>
+            <if test="deleted != null">
+                #{deleted,jdbcType=TINYINT},
+            </if>
+        </trim>
+    </insert>
+
+    <update id="updateByPrimaryKeySelective" parameterType="com.godzilla.distribution.entity.distribution.DistributionDistributorEntity">
+        update distribution_distributor
+        <set>
+            <if test="name != null">
+                name = #{name,jdbcType=VARCHAR},
+            </if>
+            <if test="parentId != null">
+                parent_id = #{parentId,jdbcType=BIGINT},
+            </if>
+            <if test="levelCode != null">
+                level_code = #{levelCode,jdbcType=VARCHAR},
+            </if>
+            <if test="ownerUserId != null">
+                owner_user_id = #{ownerUserId,jdbcType=BIGINT},
+            </if>
+            <if test="contactName != null">
+                contact_name = #{contactName,jdbcType=VARCHAR},
+            </if>
+            <if test="contactPhone != null">
+                contact_phone = #{contactPhone,jdbcType=VARCHAR},
+            </if>
+            <if test="province != null">
+                province = #{province,jdbcType=VARCHAR},
+            </if>
+            <if test="city != null">
+                city = #{city,jdbcType=VARCHAR},
+            </if>
+            <if test="settlementType != null">
+                settlement_type = #{settlementType,jdbcType=VARCHAR},
+            </if>
+            <if test="contractStatus != null">
+                contract_status = #{contractStatus,jdbcType=VARCHAR},
+            </if>
+            <if test="qualificationStatus != null">
+                qualification_status = #{qualificationStatus,jdbcType=VARCHAR},
+            </if>
+            <if test="productLinesJson != null">
+                product_lines_json = #{productLinesJson,jdbcType=LONGVARCHAR},
+            </if>
+            <if test="status != null">
+                status = #{status,jdbcType=VARCHAR},
+            </if>
+            <if test="remark != null">
+                remark = #{remark,jdbcType=VARCHAR},
+            </if>
+            <if test="updatedBy != null">
+                updated_by = #{updatedBy,jdbcType=BIGINT},
+            </if>
+            <if test="deleted != null">
+                deleted = #{deleted,jdbcType=TINYINT},
+            </if>
+        </set>
+        where id = #{id,jdbcType=BIGINT}
+          and deleted = 0
+    </update>
+</mapper>
