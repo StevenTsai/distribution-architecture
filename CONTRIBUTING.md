@@ -68,7 +68,7 @@ cd distribution-architecture
 
 ```bash
 cd distribution-starter
-# 确保已安装 Java 8+ 和 Maven 3.6+
+# 确保已安装 Java 17+ 和 Maven 3.6+
 mvn clean compile
 mvn test
 ```
