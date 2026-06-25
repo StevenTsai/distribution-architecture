@@ -1,0 +1,114 @@
+# Sample Process Route Configuration
+#
+# This file demonstrates how to define process routes in YAML.
+# Routes define the ordered sequence of operations for a work order.
+#
+# In the original jewelry system, routes were stored as comma-separated
+# process IDs in the database (BaseProcessTemplate.processIds).
+# This YAML approach is more readable and version-control friendly.
+
+mto:
+  routes:
+    # Standard furniture production route
+    - name: "standard-furniture"
+      description: "Standard furniture production: cut → sand → assemble → finish → inspect"
+      processes:
+        - code: "CUT"
+          name: "Cutting"
+          sortOrder: 1
+          plannedHours: 2.0
+          needInspection: false
+          unitCost: 15.00
+          allowableLossRate: 0.03  # 3% material waste allowed
+
+        - code: "SAND"
+          name: "Sanding"
+          sortOrder: 2
+          plannedHours: 1.5
+          needInspection: false
+          unitCost: 10.00
+
+        - code: "ASSM"
+          name: "Assembly"
+          sortOrder: 3
+          plannedHours: 3.0
+          needInspection: false
+          unitCost: 25.00
+
+        - code: "FNSH"
+          name: "Finishing (painting/staining)"
+          sortOrder: 4
+          plannedHours: 2.0
+          needInspection: true
+          unitCost: 20.00
+
+        - code: "INSP"
+          name: "Final Inspection"
+          sortOrder: 5
+          plannedHours: 0.5
+          needInspection: true
+          unitCost: 8.00
+
+    # Express route — skips sanding for pre-finished components
+    - name: "express-furniture"
+      description: "Express furniture: assemble → finish → inspect"
+      processes:
+        - code: "ASSM"
+          name: "Assembly"
+          sortOrder: 1
+          plannedHours: 3.0
+          needInspection: false
+          unitCost: 25.00
+
+        - code: "FNSH"
+          name: "Finishing"
+          sortOrder: 2
+          plannedHours: 2.0
+          needInspection: true
+          unitCost: 20.00
+
+        - code: "INSP"
+          name: "Final Inspection"
+          sortOrder: 3
+          plannedHours: 0.5
+          needInspection: true
+          unitCost: 8.00
+
+    # Electronics assembly route
+    - name: "electronics-assembly"
+      description: "PCB assembly: SMT → reflow → inspection → packaging"
+      processes:
+        - code: "SMT"
+          name: "SMT Placement"
+          sortOrder: 1
+          plannedHours: 0.5
+          needInspection: false
+          unitCost: 5.00
+
+        - code: "RFLW"
+          name: "Reflow Soldering"
+          sortOrder: 2
+          plannedHours: 0.3
+          needInspection: false
+          unitCost: 3.00
+
+        - code: "AOI"
+          name: "Automated Optical Inspection"
+          sortOrder: 3
+          plannedHours: 0.2
+          needInspection: true
+          unitCost: 2.00
+
+        - code: "FUNC"
+          name: "Functional Testing"
+          sortOrder: 4
+          plannedHours: 0.5
+          needInspection: true
+          unitCost: 4.00
+
+        - code: "PACK"
+          name: "Packaging"
+          sortOrder: 5
+          plannedHours: 0.3
+          needInspection: false
+          unitCost: 1.50

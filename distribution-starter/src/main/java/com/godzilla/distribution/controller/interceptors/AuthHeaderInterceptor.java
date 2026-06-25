@@ -9,7 +9,6 @@ import com.godzilla.distribution.mapper.shared.AdminUserEntityMapper;
 import com.godzilla.distribution.mapper.shared.UserLoginSessionEntityMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
@@ -34,13 +33,20 @@ public class AuthHeaderInterceptor implements HandlerInterceptor {
     private static final String MANAGER_PATH_PATTERN = "/manage";
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
-    public static final ThreadLocal<String> CURRENT_USER_ID = new ThreadLocal<String>();
+    private static final ThreadLocal<String> CURRENT_USER_ID = new ThreadLocal<>();
 
-    @Autowired
-    private AdminUserEntityMapper adminUserDao;
+    private final AdminUserEntityMapper adminUserDao;
+    private final UserLoginSessionEntityMapper userLoginSessionDao;
 
-    @Autowired
-    private UserLoginSessionEntityMapper userLoginSessionDao;
+    public AuthHeaderInterceptor(AdminUserEntityMapper adminUserDao,
+                                 UserLoginSessionEntityMapper userLoginSessionDao) {
+        this.adminUserDao = adminUserDao;
+        this.userLoginSessionDao = userLoginSessionDao;
+    }
+
+    public static String getCurrentUserId() {
+        return CURRENT_USER_ID.get();
+    }
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
@@ -141,7 +147,7 @@ public class AuthHeaderInterceptor implements HandlerInterceptor {
         return sessions.get(0);
     }
 
-    private void writeResponse(HttpServletResponse response, Result result) {
+    private void writeResponse(HttpServletResponse response, Result<?> result) {
         response.setCharacterEncoding("UTF-8");
         response.setContentType("application/json; charset=utf-8");
         try (PrintWriter writer = response.getWriter()) {

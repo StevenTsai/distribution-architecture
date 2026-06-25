@@ -16,3 +16,4 @@ application-*.local.properties
 *.p12
 *.jks
 docker-compose.override.yml
+doc/open-source-strategy.md

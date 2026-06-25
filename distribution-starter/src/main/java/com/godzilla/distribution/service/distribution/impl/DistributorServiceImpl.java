@@ -59,8 +59,6 @@ public class DistributorServiceImpl implements DistributionDistributorService {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @Autowired
-
     @Override
     public PageResponseDTO<DistributionDistributorDTO> listDistributors(String name, String status, String levelCode, String productLine, Integer page, Integer pageSize) {
         int safePage = page == null || page < 1 ? DEFAULT_PAGE : page;
@@ -302,7 +300,8 @@ public class DistributorServiceImpl implements DistributionDistributorService {
         for (DistributionDistributorEntity entity : entities) {
             productLineCodes.addAll(readProductLines(entity.getProductLinesJson()));
         }
-        return Collections.emptyMap(); // simplified for starter
+        // TODO: implement product line metadata lookup (requires ProductLine service/mapper)
+        return Collections.emptyMap();
     }
 
     private List<DistributionProductLineDTO> resolveProductLineMetas(Map<String, DistributionProductLineDTO> productLineMap,
@@ -343,7 +342,7 @@ public class DistributorServiceImpl implements DistributionDistributorService {
     }
 
     private String trim(String value) {
-        return value == null ? null : value.trim();
+        return StringUtils.trimToNull(value);
     }
 
     private String defaultValue(String value, String defaultValue) {

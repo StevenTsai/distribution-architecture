@@ -380,6 +380,24 @@ When data involves multiple distributors (e.g., a lead from Distributor A is tra
 
 ---
 
+## Reusable Implementation
+
+The "data permissions at the SQL layer" pattern described in this document has been abstracted into an independent Spring Boot Starter library, ready to import and use:
+
+📦 **[spring-data-permission-starter](https://github.com/StevenTsai/spring-data-permission-starter)**
+
+| Comparison | This Document (distribution-starter) | Starter Library |
+|-----------|--------------------------------------|-----------------|
+| Purpose | Teaching example, showing full implementation | Production-ready reusable library |
+| Data Scopes | 4 levels (ALL / OWN_DISTRIBUTOR / OWN_AND_CHILDREN / SELF) | 4 standard scopes + extension points |
+| Permission Context | `DistributionDataAccessScope` immutable object | `DataPermissionContext` + Builder |
+| SQL Injection | Manual parameter passing + `<include refid="ScopeCondition"/>` | `DataPermissionHelper` auto-fills parameters |
+| Usage | Reference code and implement yourself | Maven dependency, ready to use |
+
+> If you want to use data permission capabilities directly in your project, the Starter library is recommended. If you want to understand "why it's designed this way," this document provides the complete design rationale.
+
+---
+
 *The pattern described in this document is implemented in the following code:*
 - *Core logic: `service/distribution/impl/DistributionDataPermissionService.java`*
 - *Data scope enum: `enums/distribution/DistributionDataScope.java`*

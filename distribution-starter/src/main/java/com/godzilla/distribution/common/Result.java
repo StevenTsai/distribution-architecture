@@ -40,11 +40,11 @@ public class Result<T> {
     }
 
     public static <T> Result<T> fail() {
-        return new Result(ResultCode.FAIL.getCode());
+        return new Result<>(ResultCode.FAIL.getCode());
     }
 
     public static <T> Result<T> authFail() {
-        return new Result(ResultCode.AUTH_FAIL.getCode(), ResultCode.AUTH_FAIL.getMsg());
+        return new Result<>(ResultCode.AUTH_FAIL.getCode(), ResultCode.AUTH_FAIL.getMsg());
     }
 
     public static <T> Result<T> loginFail() {

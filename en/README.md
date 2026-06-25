@@ -2,14 +2,28 @@
 
 [中文](../README.md) | English
 
-A set of production-validated design documents for building a B2B distribution management system using Spring Boot + MyBatis, showcasing engineering patterns for data permissions, commission flows, audit logging, and compliance.
+B2B enterprise architecture design pattern library — reusable architecture solutions refined from production systems. Includes design documents, a reusable Spring Boot Starter library, and production-validated architecture patterns.
 
 ## What Is This
 
-This is a collection of **design documents** + a **minimal runnable example**, documenting the complete process of building a distribution management system from scratch:
+This is a collection of **design documents** + a **reusable Starter library** + a **minimal runnable example**, documenting the complete process of building an enterprise system from scratch:
 
-- **4 Core Design Patterns**: Data permissions, commission pipeline, audit logging, MyBatis engineering
-- **3 Architecture Decision Records**: Session vs JWT, MyBatis vs JPA, Logical vs Physical Delete
+### Design Patterns (4)
+- Data permissions at the SQL layer
+- Event-driven state machine (commission pipeline)
+- Audit logging with JSON snapshots
+- MyBatis engineering patterns
+
+### Reusable Library
+- [spring-data-permission-starter](https://github.com/StevenTsai/spring-data-permission-starter) — Spring Boot Starter for data permissions, ready to import
+
+### Architecture Decision Records (3)
+- Session vs JWT, MyBatis vs JPA, Logical vs Physical Delete
+
+### Production-Validated Case Studies
+- [MTO Workflow Engine](../case-studies/mto-workflow-engine/) — Generic work order state machine extracted from a jewelry ERP, reusable across furniture/electronics/apparel industries
+
+### Tutorials & Guides
 - **7-Step Build-from-Scratch Tutorial**: Complete narrative from domain model to compliance checks
 - **4 Practical Guides**: Quick start, extending new modules, customizing permissions, Spring Boot 3 migration
 
@@ -18,9 +32,9 @@ This is a collection of **design documents** + a **minimal runnable example**, d
 | Role | What You'll Get |
 |------|----------------|
 | **Backend Architect** | Production-ready patterns for data permissions, commission flows, audit logging |
-| **Mid-level Java Developer** | How to build business systems that go beyond CRUD |
+| **Mid-level Java Developer** | How to build business systems that go beyond CRUD, and how to design a Starter library |
 | **Tech Lead** | Trade-off analysis for technology decisions (ADRs) |
-| **Startup CTO** | Domain model for distribution systems, shorter time-to-market |
+| **Developers needing data permissions** | Directly use [spring-data-permission-starter](https://github.com/StevenTsai/spring-data-permission-starter) |
 
 ## Document Structure
 
@@ -47,6 +61,9 @@ This is a collection of **design documents** + a **minimal runnable example**, d
 │   ├── customize-permission.md      How to customize the permission model
 │   └── spring-boot-3-migration.md   Spring Boot 3.x migration guide
 │
+├── case-studies/                    Production-validated case studies
+│   └── mto-workflow-engine/         MTO Workflow Engine (extracted from jewelry ERP)
+│
 ├── CONTRIBUTING.md                  Contribution guidelines
 │
 └── tutorial/                        Build-from-scratch series (recommended reading order)
@@ -58,6 +75,12 @@ This is a collection of **design documents** + a **minimal runnable example**, d
     ├── 06-settlement.md             Settlement process: aggregation → review → payment
     └── 07-compliance.md             Compliance checks: review process and business integration
 ```
+
+### Reusable Library (Separate Repository)
+
+| Library | Description | Repository |
+|---------|-------------|------------|
+| `spring-data-permission-starter` | Spring Boot Starter for data permissions, ready to import | [GitHub](https://github.com/StevenTsai/spring-data-permission-starter) |
 
 ## Recommended Reading
 
