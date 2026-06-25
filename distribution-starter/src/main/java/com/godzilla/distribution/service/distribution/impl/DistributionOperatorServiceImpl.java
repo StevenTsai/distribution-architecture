@@ -17,7 +17,7 @@ public class DistributionOperatorServiceImpl implements DistributionOperatorServ
     private MedicalUserInfoEntityMapper medicalUserInfoEntityMapper;
 
     private Long getCurrentOperatorUserIdFromContext() {
-        String userIdValue = AuthHeaderInterceptor.CURRENT_USER_ID.get();
+        String userIdValue = AuthHeaderInterceptor.getCurrentUserId();
         if (StringUtils.isBlank(userIdValue)) {
             throw new BizException("未登录或登录已过期", ResultCode.DISTRIBUTION_OPERATOR_NOT_LOGIN.getCode());
         }

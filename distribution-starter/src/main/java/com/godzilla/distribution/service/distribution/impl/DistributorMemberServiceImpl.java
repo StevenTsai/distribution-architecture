@@ -262,6 +262,6 @@ public class DistributorMemberServiceImpl implements DistributionDistributorMemb
         catch (JsonProcessingException e) { throw new IllegalStateException("解析失败", e); }
     }
 
-    private String trim(String value) { return value == null ? null : value.trim(); }
+    private String trim(String value) { return StringUtils.trimToNull(value); }
     private String defaultValue(String value, String defaultValue) { return StringUtils.isBlank(value) ? defaultValue : value; }
 }

@@ -296,10 +296,11 @@ public class DistributionLeadServiceImpl implements DistributionLeadService {
     }
 
     private String generateLeadNo() {
-        return "LEAD-" + new java.text.SimpleDateFormat("yyyyMMdd").format(new Date()) + "-" + RandomStringUtils.randomNumeric(3);
+        return "LEAD-" + java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.BASIC_ISO_DATE)
+                + "-" + RandomStringUtils.randomNumeric(3);
     }
 
     private String trim(String value) {
-        return value == null ? null : value.trim();
+        return StringUtils.trimToNull(value);
     }
 }
