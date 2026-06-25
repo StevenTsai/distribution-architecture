@@ -21,6 +21,7 @@ This is a collection of **design documents** + a **reusable Starter library** + 
 - Session vs JWT, MyBatis vs JPA, Logical vs Physical Delete
 
 ### Production-Validated Case Studies
+- [Spring Events Decoupling](../case-studies/spring-events-decoupling/) — Event-driven cross-module decoupling: delivery→receivable / work order→inventory / quality→rework
 - [MTO Workflow Engine](../case-studies/mto-workflow-engine/) — Generic work order state machine extracted from a jewelry ERP, reusable across furniture/electronics/apparel industries
 
 ### Tutorials & Guides

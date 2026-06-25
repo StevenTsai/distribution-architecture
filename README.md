@@ -21,6 +21,7 @@ B2B 企业级架构设计模式库，从生产系统中提炼的可复用架构�
 - Session vs JWT、MyBatis vs JPA、逻辑删除 vs 物理删除
 
 ### 生产验证案例（Case Studies）
+- [Spring Events 跨模块联动](case-studies/spring-events-decoupling/) — 事件驱动解耦：发货→应收 / 工单→库存 / 质检→返工
 - [MTO 工作流引擎](case-studies/mto-workflow-engine/) — 从珠宝 ERP 提取的通用工单状态机，可复用到服装/家具/电子加工等行业
 
 ### 教程与指南
