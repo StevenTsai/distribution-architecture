@@ -20,6 +20,9 @@ This is a collection of **design documents** + a **reusable Starter library** + 
 ### Architecture Decision Records (3)
 - Session vs JWT, MyBatis vs JPA, Logical vs Physical Delete
 
+### Production-Validated Case Studies
+- [MTO Workflow Engine](../case-studies/mto-workflow-engine/) — Generic work order state machine extracted from a jewelry ERP, reusable across furniture/electronics/apparel industries
+
 ### Tutorials & Guides
 - **7-Step Build-from-Scratch Tutorial**: Complete narrative from domain model to compliance checks
 - **4 Practical Guides**: Quick start, extending new modules, customizing permissions, Spring Boot 3 migration
@@ -57,6 +60,9 @@ This is a collection of **design documents** + a **reusable Starter library** + 
 │   ├── extend-new-module.md         How to extend a new module
 │   ├── customize-permission.md      How to customize the permission model
 │   └── spring-boot-3-migration.md   Spring Boot 3.x migration guide
+│
+├── case-studies/                    Production-validated case studies
+│   └── mto-workflow-engine/         MTO Workflow Engine (extracted from jewelry ERP)
 │
 ├── CONTRIBUTING.md                  Contribution guidelines
 │

@@ -20,6 +20,9 @@ B2B 企业级架构设计模式库，从生产系统中提炼的可复用架构�
 ### 架构决策记录（3 个）
 - Session vs JWT、MyBatis vs JPA、逻辑删除 vs 物理删除
 
+### 生产验证案例（Case Studies）
+- [MTO 工作流引擎](case-studies/mto-workflow-engine/) — 从珠宝 ERP 提取的通用工单状态机，可复用到服装/家具/电子加工等行业
+
 ### 教程与指南
 - **7 步从零构建教程**：从领域模型到合规检查的完整叙事线
 - **4 个实操指南**：快速开始、扩展新模块、定制权限、Spring Boot 3 迁移
@@ -57,6 +60,9 @@ B2B 企业级架构设计模式库，从生产系统中提炼的可复用架构�
 │   ├── extend-new-module.md         如何扩展新模块
 │   ├── customize-permission.md      如何定制权限模型
 │   └── spring-boot-3-migration.md   Spring Boot 3.x 迁移指南
+│
+├── case-studies/                    生产验证案例
+│   └── mto-workflow-engine/         MTO 工作流引擎（从珠宝 ERP 提取）
 │
 ├── CONTRIBUTING.md                  贡献指南
 │
