@@ -2,25 +2,36 @@
 
 中文 | [English](en/README.md)
 
-一套经过生产验证的分销管理系统架构设计文档，展示了数据权限、佣金流转、审计合规等通用模式在 Spring Boot + MyBatis 技术栈下的工程化落地方案。
+B2B 企业级架构设计模式库，从生产系统中提炼的可复用架构方案。包含设计文档、可复用的 Spring Boot Starter 库，以及经过生产验证的架构模式。
 
 ## 这是什么
 
-这是一套**设计文档** + **最小可运行示例**，记录了一个分销管理系统从零构建的完整过程，包含：
+这是一套**设计文档** + **可复用 Starter 库** + **最小可运行示例**，记录了一个企业级系统从零构建的完整过程，包含：
 
-- **4 个核心设计模式**：数据权限、佣金流转、审计日志、MyBatis 工程化
-- **3 个架构决策记录**：Session vs JWT、MyBatis vs JPA、逻辑删除 vs 物理删除
+### 设计模式（4 个）
+- 数据权限下沉到 SQL 层
+- 事件驱动状态机（佣金流转）
+- 审计日志 JSON 快照
+- MyBatis 工程化
+
+### 可复用库
+- [spring-data-permission-starter](https://github.com/StevenTsai/spring-data-permission-starter) — 数据权限的 Spring Boot Starter 实现，可直接导入使用
+
+### 架构决策记录（3 个）
+- Session vs JWT、MyBatis vs JPA、逻辑删除 vs 物理删除
+
+### 教程与指南
 - **7 步从零构建教程**：从领域模型到合规检查的完整叙事线
-- **3 个实操指南**：快速开始、扩展新模块、定制权限
+- **4 个实操指南**：快速开始、扩展新模块、定制权限、Spring Boot 3 迁移
 
 ## 适合谁看
 
 | 角色 | 你能得到什么 |
 |------|------------|
 | **后端架构师** | 数据权限、佣金流转、审计日志等通用模式的落地方案 |
-| **中级 Java 开发者** | "不只是 CRUD"的业务系统怎么写 |
+| **中级 Java 开发者** | "不只是 CRUD"的业务系统怎么写，以及如何设计一个 Starter 库 |
 | **技术负责人** | 技术选型的 trade-off 分析（ADR） |
-| **创业团队 CTO** | 分销系统的领域模型，缩短自研周期 |
+| **需要数据权限的开发者** | 直接使用 [spring-data-permission-starter](https://github.com/StevenTsai/spring-data-permission-starter) |
 
 ## 文档结构
 
@@ -58,6 +69,12 @@
     ├── 06-settlement.md             结算流程：归集 → 审核 → 打款
     └── 07-compliance.md             合规检查：审查流程与业务嵌入
 ```
+
+### 可复用库（独立仓库）
+
+| 库 | 说明 | 仓库 |
+|---|------|------|
+| `spring-data-permission-starter` | 数据权限 Spring Boot Starter，可直接导入使用 | [GitHub](https://github.com/StevenTsai/spring-data-permission-starter) |
 
 ## 阅读建议
 

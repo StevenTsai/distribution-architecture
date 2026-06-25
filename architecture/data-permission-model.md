@@ -380,6 +380,24 @@ AND (member_id = #{authorizedMemberId} OR owner_user_id = #{authorizedOwnerUserI
 
 ---
 
+## 可复用实现
+
+本文档描述的"数据权限下沉到 SQL 层"模式，已抽象为独立的 Spring Boot Starter 库，可直接导入使用：
+
+📦 **[spring-data-permission-starter](https://github.com/StevenTsai/spring-data-permission-starter)**
+
+| 对比 | 本文档（distribution-starter） | Starter 库 |
+|------|-------------------------------|-----------|
+| 定位 | 教学示例，展示完整实现 | 生产可用的可复用库 |
+| 数据范围 | 4 级（ALL / OWN_DISTRIBUTOR / OWN_AND_CHILDREN / SELF） | 4 标准范围 + 扩展点 |
+| 权限上下文 | `DistributionDataAccessScope` 不可变对象 | `DataPermissionContext` + Builder |
+| SQL 注入 | 手动传参 + `<include refid="ScopeCondition"/>` | `DataPermissionHelper` 自动补齐参数 |
+| 使用方式 | 参考代码自行实现 | Maven 依赖引入即可 |
+
+> 如果你想直接在项目中使用数据权限能力，推荐使用 Starter 库；如果你想理解"为什么这样设计"，本文档是完整的设计思路。
+
+---
+
 *本文档描述的模式在以下代码中实现：*
 - *核心逻辑：`service/distribution/impl/DistributionDataPermissionService.java`*
 - *数据范围枚举：`enums/distribution/DistributionDataScope.java`*
