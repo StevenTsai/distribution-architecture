@@ -11,7 +11,9 @@ import com.godzilla.distribution.entity.distribution.DistributionAuditLogEntity;
 import com.godzilla.distribution.enums.distribution.DistributionAuditBizType;
 import com.godzilla.distribution.exception.BizException;
 import com.godzilla.distribution.mapper.distribution.DistributionAuditLogMapper;
+import com.godzilla.distribution.enums.distribution.DistributionDataScope;
 import com.godzilla.distribution.service.distribution.DistributionAuditLogService;
+import com.godzilla.distribution.service.distribution.impl.DistributionDataPermissionService;
 import com.godzilla.distribution.service.distribution.DistributionOperatorService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
@@ -34,6 +36,9 @@ public class DistributionAuditLogServiceImpl implements DistributionAuditLogServ
 
     @Autowired
     private DistributionOperatorService distributionOperatorService;
+
+    @Autowired
+    private DistributionDataPermissionService distributionDataPermissionService;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -59,6 +64,7 @@ public class DistributionAuditLogServiceImpl implements DistributionAuditLogServ
         if (entity == null) {
             throw new BizException("审计日志不存在", ResultCode.DISTRIBUTION_AUDIT_LOG_NOT_FOUND.getCode());
         }
+        validateAuditLogAccess(entity);
         DistributionAuditLogDetailDTO detailDTO = new DistributionAuditLogDetailDTO();
         BeanUtils.copyProperties(entity, detailDTO);
         return detailDTO;
@@ -89,6 +95,18 @@ public class DistributionAuditLogServiceImpl implements DistributionAuditLogServ
         } catch (JsonProcessingException e) {
             throw new IllegalStateException("审计快照序列化失败", e);
         }
+    }
+
+    private void validateAuditLogAccess(DistributionAuditLogEntity entity) {
+        if (entity == null) return;
+        DistributionDataPermissionService.DistributionDataAccessScope accessScope = distributionDataPermissionService.resolveCurrentAccessScope();
+        if (accessScope.isAllScope()) return;
+        List<Long> authorizedDistributorIds = accessScope.getAuthorizedDistributorIds();
+        if (entity.getBizId() != null && authorizedDistributorIds != null
+                && authorizedDistributorIds.contains(entity.getBizId())) {
+            return; // authorized
+        }
+        throw new BizException("无权访问该数据", ResultCode.DISTRIBUTION_DATA_ACCESS_DENIED.getCode());
     }
 
     private void validateOptionalBizType(String bizType) {

@@ -11,10 +11,12 @@ import com.godzilla.distribution.entity.distribution.DistributionComplianceRecor
 import com.godzilla.distribution.enums.distribution.DistributionAuditBizType;
 import com.godzilla.distribution.enums.distribution.DistributionComplianceRecordType;
 import com.godzilla.distribution.enums.distribution.DistributionComplianceStatus;
+import com.godzilla.distribution.enums.distribution.DistributionDataScope;
 import com.godzilla.distribution.exception.BizException;
 import com.godzilla.distribution.mapper.distribution.DistributionComplianceRecordMapper;
 import com.godzilla.distribution.service.distribution.DistributionAuditLogService;
 import com.godzilla.distribution.service.distribution.DistributionComplianceService;
+import com.godzilla.distribution.service.distribution.DistributionDataPermissionService;
 import com.godzilla.distribution.service.distribution.DistributionOperatorService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
@@ -40,6 +42,8 @@ public class DistributionComplianceServiceImpl implements DistributionCompliance
     private DistributionOperatorService distributionOperatorService;
     @Autowired
     private DistributionAuditLogService distributionAuditLogService;
+    @Autowired
+    private DistributionDataPermissionService distributionDataPermissionService;
 
     @Override
     public PageResponseDTO<DistributionComplianceRecordDTO> listRecords(String bizType, Long bizId, String recordType, String status, Integer page, Integer pageSize) {
@@ -54,6 +58,7 @@ public class DistributionComplianceServiceImpl implements DistributionCompliance
     @Override
     public DistributionComplianceRecordDetailDTO getRecord(Long id) {
         DistributionComplianceRecordEntity entity = getRecordEntity(id);
+        validateComplianceAccess(entity);
         DistributionComplianceRecordDetailDTO detailDTO = new DistributionComplianceRecordDetailDTO();
         BeanUtils.copyProperties(entity, detailDTO);
         return detailDTO;
@@ -63,6 +68,7 @@ public class DistributionComplianceServiceImpl implements DistributionCompliance
     @Transactional(rollbackFor = Exception.class)
     public Long createRecord(CreateDistributionComplianceRecordRequestDTO request) {
         validateRecordType(request.getRecordType());
+        validateCreateScope(request.getBizId());
         Long operatorUserId = distributionOperatorService.getCurrentOperatorUserId();
         DistributionComplianceRecordEntity entity = new DistributionComplianceRecordEntity();
         entity.setBizType(trim(request.getBizType()));
@@ -85,6 +91,7 @@ public class DistributionComplianceServiceImpl implements DistributionCompliance
     @Transactional(rollbackFor = Exception.class)
     public void approveRecord(Long id, ApproveDistributionComplianceRecordRequestDTO request) {
         DistributionComplianceRecordEntity existing = getRecordEntity(id);
+        validateComplianceAccess(existing);
         validateStatusTransition(existing.getStatus());
         Long operatorUserId = distributionOperatorService.getCurrentOperatorUserId();
         DistributionComplianceRecordEntity update = new DistributionComplianceRecordEntity();
@@ -101,6 +108,7 @@ public class DistributionComplianceServiceImpl implements DistributionCompliance
     @Transactional(rollbackFor = Exception.class)
     public void rejectRecord(Long id, RejectDistributionComplianceRecordRequestDTO request) {
         DistributionComplianceRecordEntity existing = getRecordEntity(id);
+        validateComplianceAccess(existing);
         validateStatusTransition(existing.getStatus());
         Long operatorUserId = distributionOperatorService.getCurrentOperatorUserId();
         DistributionComplianceRecordEntity update = new DistributionComplianceRecordEntity();
@@ -131,6 +139,30 @@ public class DistributionComplianceServiceImpl implements DistributionCompliance
             list.add(dto);
         }
         return list;
+    }
+
+    private void validateCreateScope(Long bizId) {
+        if (bizId == null) return;
+        DistributionDataPermissionService.DistributionDataAccessScope accessScope = distributionDataPermissionService.resolveCurrentAccessScope();
+        if (accessScope.isAllScope()) return;
+        List<Long> authorizedDistributorIds = accessScope.getAuthorizedDistributorIds();
+        if (authorizedDistributorIds == null || !authorizedDistributorIds.contains(bizId)) {
+            throw new BizException("无权在该渠道下创建数据", ResultCode.DISTRIBUTION_DATA_ACCESS_DENIED.getCode());
+        }
+    }
+
+    private void validateComplianceAccess(DistributionComplianceRecordEntity entity) {
+        if (entity == null) return;
+        DistributionDataPermissionService.DistributionDataAccessScope accessScope = distributionDataPermissionService.resolveCurrentAccessScope();
+        if (accessScope.isAllScope()) return;
+        List<Long> authorizedDistributorIds = accessScope.getAuthorizedDistributorIds();
+        // Check ownership: for distributor-type records, bizId is the distributorId;
+        // for member/lead records, we require ALL scope to access cross-distributor data
+        if (entity.getBizId() != null && authorizedDistributorIds != null
+                && authorizedDistributorIds.contains(entity.getBizId())) {
+            return; // authorized
+        }
+        throw new BizException("无权访问该数据", ResultCode.DISTRIBUTION_DATA_ACCESS_DENIED.getCode());
     }
 
     private void validateRecordType(String recordType) {
