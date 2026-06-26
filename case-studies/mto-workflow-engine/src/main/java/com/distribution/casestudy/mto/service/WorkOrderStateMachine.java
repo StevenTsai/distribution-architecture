@@ -61,10 +61,8 @@ public class WorkOrderStateMachine {
         wo.setStatus(WorkOrderStatus.PENDING);
 
         // Build processes from YAML route config
+        // Note: workOrderId will be null until persisted. Callers must set it after saving.
         List<WorkOrderProcess> processes = processRouteConfig.buildProcesses(routeName);
-        for (WorkOrderProcess p : processes) {
-            p.setWorkOrderId(wo.getId());
-        }
         wo.setProcesses(processes);
 
         log.info("Created work order: {} with route '{}'", workOrderNo, routeName);
@@ -78,8 +76,8 @@ public class WorkOrderStateMachine {
         WorkOrder wo = new WorkOrder();
         wo.setWorkOrderNo(workOrderNo);
         wo.setStatus(WorkOrderStatus.PENDING);
+        // Note: workOrderId will be null until persisted. Callers must set it after saving.
         for (int i = 0; i < processes.size(); i++) {
-            processes.get(i).setWorkOrderId(wo.getId());
             processes.get(i).setSortOrder(i + 1);
         }
         wo.setProcesses(processes);

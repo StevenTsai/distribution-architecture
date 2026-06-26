@@ -79,6 +79,7 @@ public class DistributorMemberServiceImpl implements DistributionDistributorMemb
     @Override
     public DistributionDistributorMemberDetailDTO getMember(Long id) {
         DistributionDistributorMemberEntity entity = getMemberEntity(id);
+        validateMemberAccess(entity.getDistributorId(), entity.getId());
         DistributionDistributorMemberDetailDTO detailDTO = new DistributionDistributorMemberDetailDTO();
         BeanUtils.copyProperties(toDTO(entity, loadDistributorNameMap(Collections.singletonList(entity)), loadManagerNameMap(Collections.singletonList(entity))), detailDTO);
         detailDTO.setCreatedBy(entity.getCreatedBy());
@@ -90,6 +91,7 @@ public class DistributorMemberServiceImpl implements DistributionDistributorMemb
     @Transactional(rollbackFor = Exception.class)
     public Long createMember(CreateDistributorMemberRequestDTO request) {
         validateDistributor(request.getDistributorId());
+        validateCreateScope(request.getDistributorId());
         validateRoleCode(request.getRoleCode());
         validateDataScope(request.getDataScope());
         validateMemberPhone(request.getDistributorId(), request.getPhone(), null);
@@ -120,6 +122,7 @@ public class DistributorMemberServiceImpl implements DistributionDistributorMemb
     @Transactional(rollbackFor = Exception.class)
     public void updateMember(Long id, UpdateDistributorMemberRequestDTO request) {
         DistributionDistributorMemberEntity existing = getMemberEntity(id);
+        validateMemberAccess(existing.getDistributorId(), existing.getId());
         validateDistributor(request.getDistributorId());
         validateRoleCode(request.getRoleCode());
         validateDataScope(request.getDataScope());
@@ -148,6 +151,7 @@ public class DistributorMemberServiceImpl implements DistributionDistributorMemb
     public void updateMemberStatus(Long id, UpdateDistributorMemberStatusRequestDTO request) {
         validateMemberStatus(request.getStatus());
         DistributionDistributorMemberEntity existing = getMemberEntity(id);
+        validateMemberAccess(existing.getDistributorId(), existing.getId());
         DistributionDistributorMemberEntity update = new DistributionDistributorMemberEntity();
         update.setId(id);
         update.setStatus(trim(request.getStatus()));
@@ -209,6 +213,33 @@ public class DistributorMemberServiceImpl implements DistributionDistributorMemb
         DistributionDistributorEntity distributor = distributionDistributorMapper.selectByPrimaryKey(distributorId);
         if (distributor == null || (distributor.getDeleted() != null && distributor.getDeleted() == 1)) {
             throw new BizException("所属渠道不存在", ResultCode.DISTRIBUTOR_MEMBER_DISTRIBUTOR_NOT_FOUND.getCode());
+        }
+    }
+
+    private void validateCreateScope(Long distributorId) {
+        DistributionDataPermissionService.DistributionDataAccessScope accessScope = distributionDataPermissionService.resolveCurrentAccessScope();
+        if (accessScope.isAllScope()) return;
+        List<Long> authorizedDistributorIds = accessScope.getAuthorizedDistributorIds();
+        if (authorizedDistributorIds == null || !authorizedDistributorIds.contains(distributorId)) {
+            throw new BizException("无权在该渠道下创建数据", ResultCode.DISTRIBUTION_DATA_ACCESS_DENIED.getCode());
+        }
+    }
+
+    private void validateMemberAccess(Long distributorId, Long memberId) {
+        DistributionDataPermissionService.DistributionDataAccessScope accessScope = distributionDataPermissionService.resolveCurrentAccessScope();
+        if (accessScope.isAllScope()) {
+            return;
+        }
+        // SELF scope: can only access own member record
+        if (accessScope.isSelfScope()) {
+            if (memberId == null || !accessScope.getMemberId().equals(memberId)) {
+                throw new BizException("无权访问该数据", ResultCode.DISTRIBUTION_DATA_ACCESS_DENIED.getCode());
+            }
+            return;
+        }
+        List<Long> authorizedDistributorIds = accessScope.getAuthorizedDistributorIds();
+        if (authorizedDistributorIds == null || !authorizedDistributorIds.contains(distributorId)) {
+            throw new BizException("无权访问该数据", ResultCode.DISTRIBUTION_DATA_ACCESS_DENIED.getCode());
         }
     }
 

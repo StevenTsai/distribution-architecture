@@ -8,13 +8,19 @@ import com.godzilla.distribution.dto.distribution.request.RejectDistributionComp
 import com.godzilla.distribution.dto.distribution.response.DistributionComplianceRecordDTO;
 import com.godzilla.distribution.dto.distribution.response.DistributionComplianceRecordDetailDTO;
 import com.godzilla.distribution.entity.distribution.DistributionComplianceRecordEntity;
+import com.godzilla.distribution.entity.distribution.DistributionDistributorMemberEntity;
+import com.godzilla.distribution.entity.distribution.DistributionLeadEntity;
 import com.godzilla.distribution.enums.distribution.DistributionAuditBizType;
 import com.godzilla.distribution.enums.distribution.DistributionComplianceRecordType;
 import com.godzilla.distribution.enums.distribution.DistributionComplianceStatus;
+import com.godzilla.distribution.enums.distribution.DistributionDataScope;
 import com.godzilla.distribution.exception.BizException;
 import com.godzilla.distribution.mapper.distribution.DistributionComplianceRecordMapper;
+import com.godzilla.distribution.mapper.distribution.DistributionDistributorMemberMapper;
+import com.godzilla.distribution.mapper.distribution.DistributionLeadMapper;
 import com.godzilla.distribution.service.distribution.DistributionAuditLogService;
 import com.godzilla.distribution.service.distribution.DistributionComplianceService;
+import com.godzilla.distribution.service.distribution.DistributionDataPermissionService;
 import com.godzilla.distribution.service.distribution.DistributionOperatorService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
@@ -40,20 +46,32 @@ public class DistributionComplianceServiceImpl implements DistributionCompliance
     private DistributionOperatorService distributionOperatorService;
     @Autowired
     private DistributionAuditLogService distributionAuditLogService;
+    @Autowired
+    private DistributionDataPermissionService distributionDataPermissionService;
+    @Autowired
+    private DistributionDistributorMemberMapper distributionDistributorMemberMapper;
+    @Autowired
+    private DistributionLeadMapper distributionLeadMapper;
 
     @Override
     public PageResponseDTO<DistributionComplianceRecordDTO> listRecords(String bizType, Long bizId, String recordType, String status, Integer page, Integer pageSize) {
         int safePage = page == null || page < 1 ? DEFAULT_PAGE : page;
         int safePageSize = pageSize == null || pageSize < 1 ? DEFAULT_PAGE_SIZE : Math.min(pageSize, MAX_PAGE_SIZE);
-        long total = distributionComplianceRecordMapper.countByCondition(trim(bizType), bizId, trim(recordType), trim(status));
-        List<DistributionComplianceRecordEntity> entities = distributionComplianceRecordMapper.selectByCondition(
-                trim(bizType), bizId, trim(recordType), trim(status), (safePage - 1) * safePageSize, safePageSize);
+        DistributionDataPermissionService.DistributionDataAccessScope accessScope = distributionDataPermissionService.resolveCurrentAccessScope();
+        List<Long> authorizedDistributorIds = accessScope.isAllScope() ? null : accessScope.getAuthorizedDistributorIds();
+        if (!accessScope.isAllScope() && (authorizedDistributorIds == null || authorizedDistributorIds.isEmpty())) {
+            return new PageResponseDTO<DistributionComplianceRecordDTO>(Collections.emptyList(), 0, safePage, safePageSize);
+        }
+        long total = distributionComplianceRecordMapper.countByConditionWithScope(trim(bizType), bizId, trim(recordType), trim(status), authorizedDistributorIds);
+        List<DistributionComplianceRecordEntity> entities = distributionComplianceRecordMapper.selectByConditionWithScope(
+                trim(bizType), bizId, trim(recordType), trim(status), authorizedDistributorIds, (safePage - 1) * safePageSize, safePageSize);
         return new PageResponseDTO<DistributionComplianceRecordDTO>(buildRecordDTOList(entities), total, safePage, safePageSize);
     }
 
     @Override
     public DistributionComplianceRecordDetailDTO getRecord(Long id) {
         DistributionComplianceRecordEntity entity = getRecordEntity(id);
+        validateComplianceAccess(entity);
         DistributionComplianceRecordDetailDTO detailDTO = new DistributionComplianceRecordDetailDTO();
         BeanUtils.copyProperties(entity, detailDTO);
         return detailDTO;
@@ -63,6 +81,7 @@ public class DistributionComplianceServiceImpl implements DistributionCompliance
     @Transactional(rollbackFor = Exception.class)
     public Long createRecord(CreateDistributionComplianceRecordRequestDTO request) {
         validateRecordType(request.getRecordType());
+        validateCreateScope(request.getBizId());
         Long operatorUserId = distributionOperatorService.getCurrentOperatorUserId();
         DistributionComplianceRecordEntity entity = new DistributionComplianceRecordEntity();
         entity.setBizType(trim(request.getBizType()));
@@ -85,6 +104,7 @@ public class DistributionComplianceServiceImpl implements DistributionCompliance
     @Transactional(rollbackFor = Exception.class)
     public void approveRecord(Long id, ApproveDistributionComplianceRecordRequestDTO request) {
         DistributionComplianceRecordEntity existing = getRecordEntity(id);
+        validateComplianceAccess(existing);
         validateStatusTransition(existing.getStatus());
         Long operatorUserId = distributionOperatorService.getCurrentOperatorUserId();
         DistributionComplianceRecordEntity update = new DistributionComplianceRecordEntity();
@@ -101,6 +121,7 @@ public class DistributionComplianceServiceImpl implements DistributionCompliance
     @Transactional(rollbackFor = Exception.class)
     public void rejectRecord(Long id, RejectDistributionComplianceRecordRequestDTO request) {
         DistributionComplianceRecordEntity existing = getRecordEntity(id);
+        validateComplianceAccess(existing);
         validateStatusTransition(existing.getStatus());
         Long operatorUserId = distributionOperatorService.getCurrentOperatorUserId();
         DistributionComplianceRecordEntity update = new DistributionComplianceRecordEntity();
@@ -131,6 +152,45 @@ public class DistributionComplianceServiceImpl implements DistributionCompliance
             list.add(dto);
         }
         return list;
+    }
+
+    private void validateCreateScope(Long bizId) {
+        if (bizId == null) return;
+        DistributionDataPermissionService.DistributionDataAccessScope accessScope = distributionDataPermissionService.resolveCurrentAccessScope();
+        if (accessScope.isAllScope()) return;
+        List<Long> authorizedDistributorIds = accessScope.getAuthorizedDistributorIds();
+        if (authorizedDistributorIds == null || !authorizedDistributorIds.contains(bizId)) {
+            throw new BizException("无权在该渠道下创建数据", ResultCode.DISTRIBUTION_DATA_ACCESS_DENIED.getCode());
+        }
+    }
+
+    private void validateComplianceAccess(DistributionComplianceRecordEntity entity) {
+        if (entity == null) return;
+        DistributionDataPermissionService.DistributionDataAccessScope accessScope = distributionDataPermissionService.resolveCurrentAccessScope();
+        if (accessScope.isAllScope()) return;
+        List<Long> authorizedDistributorIds = accessScope.getAuthorizedDistributorIds();
+        Long resolvedDistributorId = resolveDistributorId(entity.getBizType(), entity.getBizId());
+        if (resolvedDistributorId != null && authorizedDistributorIds != null
+                && authorizedDistributorIds.contains(resolvedDistributorId)) {
+            return; // authorized
+        }
+        throw new BizException("无权访问该数据", ResultCode.DISTRIBUTION_DATA_ACCESS_DENIED.getCode());
+    }
+
+    private Long resolveDistributorId(String bizType, Long bizId) {
+        if (bizType == null || bizId == null) return null;
+        switch (bizType) {
+            case "distributor":
+                return bizId; // bizId IS the distributorId
+            case "member":
+                DistributionDistributorMemberEntity member = distributionDistributorMemberMapper.selectByPrimaryKey(bizId);
+                return member != null ? member.getDistributorId() : null;
+            case "lead":
+                DistributionLeadEntity lead = distributionLeadMapper.selectByPrimaryKey(bizId);
+                return lead != null ? lead.getSourceDistributorId() : null;
+            default:
+                return null;
+        }
     }
 
     private void validateRecordType(String recordType) {

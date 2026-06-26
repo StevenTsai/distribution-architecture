@@ -100,6 +100,7 @@ public class DistributorServiceImpl implements DistributionDistributorService {
     @Override
     public DistributionDistributorDetailDTO getDistributor(Long id) {
         DistributionDistributorEntity entity = getDistributorEntity(id);
+        validateDistributorAccess(id);
         DistributionDistributorDetailDTO detailDTO = new DistributionDistributorDetailDTO();
         BeanUtils.copyProperties(toDTO(entity, loadProductLineMap(Collections.singletonList(entity))), detailDTO);
         detailDTO.setCreatedBy(entity.getCreatedBy());
@@ -114,6 +115,7 @@ public class DistributorServiceImpl implements DistributionDistributorService {
         ensureDistributorCodeNotExists(request.getCode(), null);
         validateParent(request.getParentId(), null);
         validateOwnerUser(request.getOwnerUserId());
+        validateCreateScope(request.getParentId());
 
         Long operatorUserId = distributionOperatorService.getCurrentOperatorUserId();
         DistributionDistributorEntity entity = new DistributionDistributorEntity();
@@ -151,6 +153,7 @@ public class DistributorServiceImpl implements DistributionDistributorService {
     @Transactional(rollbackFor = Exception.class)
     public void updateDistributor(Long id, UpdateDistributorRequestDTO request) {
         DistributionDistributorEntity existing = getDistributorEntity(id);
+        validateDistributorAccess(id);
         validateParent(request.getParentId(), id);
         validateOwnerUser(request.getOwnerUserId());
 
@@ -186,6 +189,7 @@ public class DistributorServiceImpl implements DistributionDistributorService {
     public void updateDistributorStatus(Long id, UpdateDistributorStatusRequestDTO request) {
         validateStatus(request.getStatus());
         DistributionDistributorEntity existing = getDistributorEntity(id);
+        validateDistributorAccess(id);
 
         DistributionDistributorEntity update = new DistributionDistributorEntity();
         update.setId(id);
@@ -268,6 +272,19 @@ public class DistributorServiceImpl implements DistributionDistributorService {
     private void validateStatus(String status) {
         if (!DistributionDistributorStatus.isValid(trim(status))) {
             throw new BizException("渠道状态不合法", ResultCode.DISTRIBUTOR_STATUS_INVALID.getCode());
+        }
+    }
+
+    private void validateCreateScope(Long parentId) {
+        DistributionDataPermissionService.DistributionDataAccessScope accessScope = distributionDataPermissionService.resolveCurrentAccessScope();
+        if (accessScope.isAllScope()) {
+            return;
+        }
+        if (parentId != null) {
+            List<Long> authorizedDistributorIds = accessScope.getAuthorizedDistributorIds();
+            if (authorizedDistributorIds == null || !authorizedDistributorIds.contains(parentId)) {
+                throw new BizException("无权在该渠道下创建数据", ResultCode.DISTRIBUTION_DATA_ACCESS_DENIED.getCode());
+            }
         }
     }
 

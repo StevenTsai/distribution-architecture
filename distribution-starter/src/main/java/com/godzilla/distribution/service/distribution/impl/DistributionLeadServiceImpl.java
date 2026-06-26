@@ -98,6 +98,7 @@ public class DistributionLeadServiceImpl implements DistributionLeadService {
     @Transactional(rollbackFor = Exception.class)
     public Long createLead(CreateDistributionLeadRequestDTO request) {
         validateDistributor(request.getSourceDistributorId());
+        validateCreateScope(request.getSourceDistributorId());
         validateMember(request.getSourceMemberId());
         validateProductLine(request.getIntentProductLine());
         validateDuplicateLead(request.getPatientPhone(), request.getIntentProductLine(), null);
@@ -117,7 +118,7 @@ public class DistributionLeadServiceImpl implements DistributionLeadService {
         entity.setCreatedBy(operatorUserId);
         entity.setUpdatedBy(operatorUserId);
         entity.setDeleted(0);
-        distributionLeadMapper.insertSelective(entity);
+        insertLeadWithRetry(entity);
         distributionAuditLogService.record(DistributionAuditBizType.LEAD.getCode(), entity.getId(), "create", null, entity, "创建线索");
         return entity.getId();
     }
@@ -130,6 +131,7 @@ public class DistributionLeadServiceImpl implements DistributionLeadService {
         validateDistributor(request.getSourceDistributorId());
         validateMember(request.getSourceMemberId());
         validateProductLine(request.getIntentProductLine());
+        validateDuplicateLead(trim(request.getPatientPhone()), trim(request.getIntentProductLine()), id);
 
         DistributionLeadEntity update = new DistributionLeadEntity();
         update.setId(id);
@@ -174,7 +176,8 @@ public class DistributionLeadServiceImpl implements DistributionLeadService {
 
     @Override
     public List<DistributionLeadFollowUpDTO> listFollowUps(Long leadId) {
-        getLeadEntity(leadId);
+        DistributionLeadEntity lead = getLeadEntity(leadId);
+        distributionDataPermissionService.checkAccessPermission(lead.getSourceDistributorId(), lead.getSourceMemberId(), lead.getOwnerUserId());
         List<DistributionLeadFollowUpEntity> entities = distributionLeadFollowUpMapper.selectByLeadId(leadId);
         if (entities == null || entities.isEmpty()) return Collections.emptyList();
         List<DistributionLeadFollowUpDTO> list = new ArrayList<DistributionLeadFollowUpDTO>();
@@ -258,6 +261,15 @@ public class DistributionLeadServiceImpl implements DistributionLeadService {
         return nameMap;
     }
 
+    private void validateCreateScope(Long distributorId) {
+        DistributionDataPermissionService.DistributionDataAccessScope accessScope = distributionDataPermissionService.resolveCurrentAccessScope();
+        if (accessScope.isAllScope()) return;
+        List<Long> authorizedDistributorIds = accessScope.getAuthorizedDistributorIds();
+        if (authorizedDistributorIds == null || !authorizedDistributorIds.contains(distributorId)) {
+            throw new BizException("无权在该渠道下创建数据", ResultCode.DISTRIBUTION_DATA_ACCESS_DENIED.getCode());
+        }
+    }
+
     private void validateDistributor(Long distributorId) {
         DistributionDistributorEntity distributor = distributionDistributorMapper.selectByPrimaryKey(distributorId);
         if (distributor == null || (distributor.getDeleted() != null && distributor.getDeleted() == 1)) {
@@ -295,9 +307,27 @@ public class DistributionLeadServiceImpl implements DistributionLeadService {
         }
     }
 
+    private static final int LEAD_NO_MAX_RETRIES = 3;
+
+    private void insertLeadWithRetry(DistributionLeadEntity entity) {
+        for (int i = 0; i < LEAD_NO_MAX_RETRIES; i++) {
+            entity.setLeadNo(generateLeadNo());
+            try {
+                distributionLeadMapper.insertSelective(entity);
+                return;
+            } catch (org.springframework.dao.DuplicateKeyException e) {
+                if (i == LEAD_NO_MAX_RETRIES - 1) {
+                    throw new BizException("线索编号生成失败，请重试", ResultCode.FAIL.getCode());
+                }
+                log.warn("lead_no collision, retrying ({}/{}): {}", i + 1, LEAD_NO_MAX_RETRIES, entity.getLeadNo());
+            }
+        }
+    }
+
     private String generateLeadNo() {
+        // 6-digit random suffix: 1M combinations per day
         return "LEAD-" + java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.BASIC_ISO_DATE)
-                + "-" + RandomStringUtils.randomNumeric(3);
+                + "-" + RandomStringUtils.randomNumeric(6);
     }
 
     private String trim(String value) {

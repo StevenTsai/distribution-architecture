@@ -6,7 +6,12 @@ B2B enterprise architecture design pattern library — reusable architecture sol
 
 ## What Is This
 
-This is a collection of **design documents** + a **reusable Starter library** + a **minimal runnable example**, documenting the complete process of building an enterprise system from scratch:
+This is a collection of **design documents** + a **reusable Starter library** + **production-validated case studies**, documenting the complete process of building an enterprise system from scratch.
+
+> I encountered generic problems in a production system: data permissions, workflow engines, event-driven decoupling, piecework wages.
+> I first implemented these patterns with Spring Boot + MyBatis in a real project,
+> then summarized them as design documents and ADRs,
+> and finally abstracted them into reusable components and open-sourced them.
 
 ### Design Patterns (4)
 - Data permissions at the SQL layer
@@ -17,21 +22,37 @@ This is a collection of **design documents** + a **reusable Starter library** + 
 ### Reusable Library
 - [spring-data-permission-starter](https://github.com/StevenTsai/spring-data-permission-starter) — Spring Boot Starter for data permissions, ready to import
 
-### Architecture Decision Records (3)
-- Session vs JWT, MyBatis vs JPA, Logical vs Physical Delete
-
 ### Production-Validated Case Studies
 - [MTO Workflow Engine](../case-studies/mto-workflow-engine/) — Generic work order state machine extracted from a jewelry ERP, reusable across furniture/electronics/apparel industries
+- [Spring Events Decoupling](../case-studies/spring-events-decoupling/) — Event-driven cross-module decoupling: delivery→receivable / work order→inventory / quality→rework
+- [Piecework Wage Engine](../case-studies/piecework-wage-engine/) — Pipeline-based piecework wage calculation with configurable difficulty and quality coefficients
+
+### Architecture Decision Records (3)
+- Session vs JWT, MyBatis vs JPA, Logical vs Physical Delete
 
 ### Tutorials & Guides
 - **7-Step Build-from-Scratch Tutorial**: Complete narrative from domain model to compliance checks
 - **4 Practical Guides**: Quick start, extending new modules, customizing permissions, Spring Boot 3 migration
 
+## Production Source
+
+The case study code is extracted and abstracted from a **real production system** (jewelry processing ERP):
+
+| Dimension | Data |
+|-----------|------|
+| API Endpoints | 152 |
+| Database Tables | 44 |
+| Test Cases | 909 |
+| Tech Stack | Java 17 + Spring Boot 3.2 + MyBatis-Plus 3.5 |
+| Business Modules | Production, Sales, Finance, Inventory, Quality, System |
+
+> The source project is a private repository. Only generic architecture patterns are extracted; no business-sensitive configuration or customer data is included.
+
 ## Who Is This For
 
 | Role | What You'll Get |
 |------|----------------|
-| **Backend Architect** | Production-ready patterns for data permissions, commission flows, audit logging |
+| **Backend Architect** | Production-ready patterns for data permissions, work order state machines, event-driven decoupling |
 | **Mid-level Java Developer** | How to build business systems that go beyond CRUD, and how to design a Starter library |
 | **Tech Lead** | Trade-off analysis for technology decisions (ADRs) |
 | **Developers needing data permissions** | Directly use [spring-data-permission-starter](https://github.com/StevenTsai/spring-data-permission-starter) |
@@ -61,8 +82,19 @@ This is a collection of **design documents** + a **reusable Starter library** + 
 │   ├── customize-permission.md      How to customize the permission model
 │   └── spring-boot-3-migration.md   Spring Boot 3.x migration guide
 │
-├── case-studies/                    Production-validated case studies
-│   └── mto-workflow-engine/         MTO Workflow Engine (extracted from jewelry ERP)
+├── case-studies/                    Production-validated case studies (from jewelry ERP)
+│   ├── mto-workflow-engine/         MTO Workflow Engine
+│   │   ├── WorkOrderStateMachine    9-state work order state machine
+│   │   ├── ProcessRouteConfig       YAML process route configuration
+│   │   └── MaterialCheckService     Material readiness check
+│   ├── spring-events-decoupling/    Spring Events Cross-Module Decoupling
+│   │   ├── DeliveryCompleteEvent    Delivery → Accounts Receivable
+│   │   ├── WorkOrderFinishedEvent   Completion → Finished Goods
+│   │   └── QualityDefectEvent       Quality → Rework Order
+│   └── piecework-wage-engine/       Piecework Wage Calculation Engine
+│       ├── WageCalculator           Wage calculation engine
+│       ├── WageSettlementPipeline   Pipeline orchestrator
+│       └── 4 Pipeline Stages        Calculate → Adjust → Confirm → Summary
 │
 ├── CONTRIBUTING.md                  Contribution guidelines
 │
@@ -87,6 +119,8 @@ This is a collection of **design documents** + a **reusable Starter library** + 
 **If you want to try it out**: Go to `distribution-starter/` and follow the README to get running in 5 minutes.
 
 **If you want a quick overview**: Start with the 4 design pattern documents in `architecture/`.
+
+**If you want to see production-validated case studies**: Go to `case-studies/` — each case study has a README and an evolution document.
 
 **If you want to understand from the beginning**: Read `tutorial/` in order (01→07) — this is the complete build-from-scratch narrative.
 
@@ -115,6 +149,17 @@ When a business order is cancelled, generated commissions are not deleted. Inste
 ### 5. Audit Logs Separated from Compliance Records
 
 Audit logs are "passive recording" (all operations automatically recorded), while compliance records are "active management" (requiring approval workflows). The two complement each other, meeting different dimensions of traceability requirements.
+
+## Case Study Abstraction Methodology
+
+Four principles for extracting generic patterns from domain-specific systems:
+
+| Principle | Description | Example |
+|-----------|-------------|---------|
+| **Identify specialization anchors** | Find fields/logic that clearly belong only to the current business | Gold/Stone → `InventoryQueryService` interface |
+| **Interface-isolate variations** | Use interfaces to encapsulate changeable parts | 17 fixed processes → YAML-configurable route |
+| **Preserve patterns, replace details** | Keep architectural patterns, replace business specifics | State machine pattern kept, specific state values replaced |
+| **Make it work first, then generic** | Get it running first, validate, then abstract | Implement `piecePrice × qty` first, add coefficients later |
 
 ## Tech Stack
 

@@ -53,6 +53,40 @@
         where id = #{id}
     </select>
 
+    <sql id="ConditionWhereWithScope">
+        where 1 = 1
+        <if test="bizType != null and bizType != ''">
+            and biz_type = #{bizType}
+        </if>
+        <if test="bizId != null">
+            and biz_id = #{bizId}
+        </if>
+        <if test="action != null and action != ''">
+            and action = #{action}
+        </if>
+        <if test="authorizedDistributorIds != null and authorizedDistributorIds.size() > 0">
+            and biz_id in
+            <foreach collection="authorizedDistributorIds" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+    </sql>
+
+    <select id="countByConditionWithScope" resultType="java.lang.Long">
+        select count(*)
+        from distribution_audit_log
+        <include refid="ConditionWhereWithScope"/>
+    </select>
+
+    <select id="selectByConditionWithScope" resultMap="BaseResultMap">
+        select
+        <include refid="BaseColumnList"/>
+        from distribution_audit_log
+        <include refid="ConditionWhereWithScope"/>
+        order by create_time desc, id desc
+        limit #{offset}, #{limit}
+    </select>
+
     <insert id="insertSelective" parameterType="com.godzilla.distribution.entity.distribution.DistributionAuditLogEntity" useGeneratedKeys="true" keyProperty="id">
         insert into distribution_audit_log
         <trim prefix="(" suffix=")" suffixOverrides=",">

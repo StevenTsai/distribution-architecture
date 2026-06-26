@@ -24,6 +24,20 @@ public interface DistributionComplianceRecordMapper {
 
     DistributionComplianceRecordEntity selectByPrimaryKey(@Param("id") Long id);
 
+    long countByConditionWithScope(@Param("bizType") String bizType,
+                                   @Param("bizId") Long bizId,
+                                   @Param("recordType") String recordType,
+                                   @Param("status") String status,
+                                   @Param("authorizedDistributorIds") List<Long> authorizedDistributorIds);
+
+    List<DistributionComplianceRecordEntity> selectByConditionWithScope(@Param("bizType") String bizType,
+                                                                        @Param("bizId") Long bizId,
+                                                                        @Param("recordType") String recordType,
+                                                                        @Param("status") String status,
+                                                                        @Param("authorizedDistributorIds") List<Long> authorizedDistributorIds,
+                                                                        @Param("offset") int offset,
+                                                                        @Param("limit") int limit);
+
     int insertSelective(DistributionComplianceRecordEntity row);
 
     int updateByPrimaryKeySelective(DistributionComplianceRecordEntity row);

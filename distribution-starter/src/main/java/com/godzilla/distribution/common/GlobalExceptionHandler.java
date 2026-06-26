@@ -24,6 +24,7 @@ public class GlobalExceptionHandler {
      * 业务逻辑校验失败时抛出，返回具体的错误码和信息
      */
     @ExceptionHandler(BizException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     public Result<?> handleBizException(BizException e) {
         log.warn("业务异常: code={}, msg={}", e.getCode(), e.getMessage());
         return new Result<>(e.getCode(), e.getMessage(), null);
@@ -48,6 +49,7 @@ public class GlobalExceptionHandler {
      * 未预期的运行时异常，返回通用错误信息
      */
     @ExceptionHandler(RuntimeException.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public Result<?> handleRuntimeException(RuntimeException e) {
         log.error("运行时异常", e);
         return Result.fail();
@@ -58,6 +60,7 @@ public class GlobalExceptionHandler {
      * 兜底处理，确保不会返回 500 错误给客户端
      */
     @ExceptionHandler(Exception.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public Result<?> handleException(Exception e) {
         log.error("系统异常", e);
         return Result.fail();

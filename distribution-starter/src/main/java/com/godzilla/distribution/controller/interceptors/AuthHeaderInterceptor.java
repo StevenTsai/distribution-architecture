@@ -65,11 +65,11 @@ public class AuthHeaderInterceptor implements HandlerInterceptor {
                 String token = request.getHeader("Authorization");
 
                 if (!isValidBiz(biz)) {
-                    writeResponse(response, Result.authFail());
+                    writeResponse(response, 401, Result.authFail());
                     return false;
                 }
                 if (!isValidToken(token)) {
-                    writeResponse(response, Result.loginFail());
+                    writeResponse(response, 401, Result.loginFail());
                     return false;
                 }
 
@@ -77,7 +77,7 @@ public class AuthHeaderInterceptor implements HandlerInterceptor {
                     return handleManagerAuth(response, biz, token);
                 } catch (Exception e) {
                     log.error("认证用户身份时发生异常，biz={}, token={}", biz, token, e);
-                    writeResponse(response, Result.loginFail());
+                    writeResponse(response, 401, Result.loginFail());
                     return false;
                 }
             }
@@ -104,7 +104,7 @@ public class AuthHeaderInterceptor implements HandlerInterceptor {
             return handleBackendAuth(response, biz, token, LOGIN_SOURCE_MANAGE);
         } catch (Exception e) {
             log.error("获取管理后台 session 失败，biz={}, token={}", biz, token, e);
-            writeResponse(response, Result.loginFail());
+            writeResponse(response, 401, Result.loginFail());
             return false;
         }
     }
@@ -112,11 +112,11 @@ public class AuthHeaderInterceptor implements HandlerInterceptor {
     private boolean handleBackendAuth(HttpServletResponse response, String biz, String token, String expectedLoginSource) {
         UserLoginSessionEntity sessionEntity = getActiveBackendSession(biz, token);
         if (sessionEntity == null || StringUtils.isBlank(sessionEntity.getOpenid())) {
-            writeResponse(response, Result.loginFail());
+            writeResponse(response, 401, Result.loginFail());
             return false;
         }
         if (!expectedLoginSource.equalsIgnoreCase(StringUtils.trimToEmpty(sessionEntity.getLoginSource()))) {
-            writeResponse(response, Result.loginFail());
+            writeResponse(response, 401, Result.loginFail());
             return false;
         }
 
@@ -124,14 +124,14 @@ public class AuthHeaderInterceptor implements HandlerInterceptor {
         try {
             adminUserId = Long.parseLong(sessionEntity.getOpenid());
         } catch (NumberFormatException e) {
-            writeResponse(response, Result.loginFail());
+            writeResponse(response, 401, Result.loginFail());
             return false;
         }
 
         AdminUserEntity adminUser = adminUserDao.selectByPrimaryKey(adminUserId);
         if (adminUser == null || adminUser.getStatus() == null || adminUser.getStatus() != (byte) 1
                 || adminUser.getUserId() == null) {
-            writeResponse(response, Result.loginFail());
+            writeResponse(response, 401, Result.loginFail());
             return false;
         }
 
@@ -147,7 +147,8 @@ public class AuthHeaderInterceptor implements HandlerInterceptor {
         return sessions.get(0);
     }
 
-    private void writeResponse(HttpServletResponse response, Result<?> result) {
+    private void writeResponse(HttpServletResponse response, int status, Result<?> result) {
+        response.setStatus(status);
         response.setCharacterEncoding("UTF-8");
         response.setContentType("application/json; charset=utf-8");
         try (PrintWriter writer = response.getWriter()) {
