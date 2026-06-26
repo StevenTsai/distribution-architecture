@@ -8,9 +8,13 @@ import com.godzilla.distribution.dto.distribution.response.DistributionAuditLogD
 import com.godzilla.distribution.dto.distribution.response.DistributionAuditLogDetailDTO;
 import com.godzilla.distribution.entity.shared.MedicalUserInfoEntity;
 import com.godzilla.distribution.entity.distribution.DistributionAuditLogEntity;
+import com.godzilla.distribution.entity.distribution.DistributionDistributorMemberEntity;
+import com.godzilla.distribution.entity.distribution.DistributionLeadEntity;
 import com.godzilla.distribution.enums.distribution.DistributionAuditBizType;
 import com.godzilla.distribution.exception.BizException;
 import com.godzilla.distribution.mapper.distribution.DistributionAuditLogMapper;
+import com.godzilla.distribution.mapper.distribution.DistributionDistributorMemberMapper;
+import com.godzilla.distribution.mapper.distribution.DistributionLeadMapper;
 import com.godzilla.distribution.enums.distribution.DistributionDataScope;
 import com.godzilla.distribution.service.distribution.DistributionAuditLogService;
 import com.godzilla.distribution.service.distribution.impl.DistributionDataPermissionService;
@@ -41,6 +45,12 @@ public class DistributionAuditLogServiceImpl implements DistributionAuditLogServ
     private DistributionDataPermissionService distributionDataPermissionService;
 
     @Autowired
+    private DistributionDistributorMemberMapper distributionDistributorMemberMapper;
+
+    @Autowired
+    private DistributionLeadMapper distributionLeadMapper;
+
+    @Autowired
     private ObjectMapper objectMapper;
 
     @Override
@@ -52,9 +62,14 @@ public class DistributionAuditLogServiceImpl implements DistributionAuditLogServ
         validateOptionalBizType(bizType);
         int safePage = page == null || page < 1 ? DEFAULT_PAGE : page;
         int safePageSize = pageSize == null || pageSize < 1 ? DEFAULT_PAGE_SIZE : Math.min(pageSize, MAX_PAGE_SIZE);
-        long total = distributionAuditLogMapper.countByCondition(trim(bizType), bizId, trim(action));
-        List<DistributionAuditLogEntity> entities = distributionAuditLogMapper.selectByCondition(
-                trim(bizType), bizId, trim(action), (safePage - 1) * safePageSize, safePageSize);
+        DistributionDataPermissionService.DistributionDataAccessScope accessScope = distributionDataPermissionService.resolveCurrentAccessScope();
+        List<Long> authorizedDistributorIds = accessScope.isAllScope() ? null : accessScope.getAuthorizedDistributorIds();
+        if (!accessScope.isAllScope() && (authorizedDistributorIds == null || authorizedDistributorIds.isEmpty())) {
+            return new PageResponseDTO<DistributionAuditLogDTO>(Collections.emptyList(), 0, safePage, safePageSize);
+        }
+        long total = distributionAuditLogMapper.countByConditionWithScope(trim(bizType), bizId, trim(action), authorizedDistributorIds);
+        List<DistributionAuditLogEntity> entities = distributionAuditLogMapper.selectByConditionWithScope(
+                trim(bizType), bizId, trim(action), authorizedDistributorIds, (safePage - 1) * safePageSize, safePageSize);
         return new PageResponseDTO<DistributionAuditLogDTO>(buildAuditLogDTOList(entities), total, safePage, safePageSize);
     }
 
@@ -102,11 +117,28 @@ public class DistributionAuditLogServiceImpl implements DistributionAuditLogServ
         DistributionDataPermissionService.DistributionDataAccessScope accessScope = distributionDataPermissionService.resolveCurrentAccessScope();
         if (accessScope.isAllScope()) return;
         List<Long> authorizedDistributorIds = accessScope.getAuthorizedDistributorIds();
-        if (entity.getBizId() != null && authorizedDistributorIds != null
-                && authorizedDistributorIds.contains(entity.getBizId())) {
+        Long resolvedDistributorId = resolveDistributorId(entity.getBizType(), entity.getBizId());
+        if (resolvedDistributorId != null && authorizedDistributorIds != null
+                && authorizedDistributorIds.contains(resolvedDistributorId)) {
             return; // authorized
         }
         throw new BizException("无权访问该数据", ResultCode.DISTRIBUTION_DATA_ACCESS_DENIED.getCode());
+    }
+
+    private Long resolveDistributorId(String bizType, Long bizId) {
+        if (bizType == null || bizId == null) return null;
+        switch (bizType) {
+            case "distributor":
+                return bizId;
+            case "member":
+                DistributionDistributorMemberEntity member = distributionDistributorMemberMapper.selectByPrimaryKey(bizId);
+                return member != null ? member.getDistributorId() : null;
+            case "lead":
+                DistributionLeadEntity lead = distributionLeadMapper.selectByPrimaryKey(bizId);
+                return lead != null ? lead.getSourceDistributorId() : null;
+            default:
+                return null;
+        }
     }
 
     private void validateOptionalBizType(String bizType) {

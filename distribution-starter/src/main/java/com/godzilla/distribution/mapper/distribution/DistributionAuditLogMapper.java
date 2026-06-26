@@ -22,5 +22,17 @@ public interface DistributionAuditLogMapper {
 
     DistributionAuditLogEntity selectByPrimaryKey(@Param("id") Long id);
 
+    long countByConditionWithScope(@Param("bizType") String bizType,
+                                   @Param("bizId") Long bizId,
+                                   @Param("action") String action,
+                                   @Param("authorizedDistributorIds") List<Long> authorizedDistributorIds);
+
+    List<DistributionAuditLogEntity> selectByConditionWithScope(@Param("bizType") String bizType,
+                                                                @Param("bizId") Long bizId,
+                                                                @Param("action") String action,
+                                                                @Param("authorizedDistributorIds") List<Long> authorizedDistributorIds,
+                                                                @Param("offset") int offset,
+                                                                @Param("limit") int limit);
+
     int insertSelective(DistributionAuditLogEntity row);
 }

@@ -64,6 +64,43 @@
           and deleted = 0
     </select>
 
+    <sql id="ConditionWhereWithScope">
+        where deleted = 0
+        <if test="bizType != null and bizType != ''">
+            and biz_type = #{bizType}
+        </if>
+        <if test="bizId != null">
+            and biz_id = #{bizId}
+        </if>
+        <if test="recordType != null and recordType != ''">
+            and record_type = #{recordType}
+        </if>
+        <if test="status != null and status != ''">
+            and status = #{status}
+        </if>
+        <if test="authorizedDistributorIds != null and authorizedDistributorIds.size() > 0">
+            and biz_id in
+            <foreach collection="authorizedDistributorIds" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+    </sql>
+
+    <select id="countByConditionWithScope" resultType="java.lang.Long">
+        select count(*)
+        from distribution_compliance_record
+        <include refid="ConditionWhereWithScope"/>
+    </select>
+
+    <select id="selectByConditionWithScope" resultMap="BaseResultMap">
+        select
+        <include refid="BaseColumnList"/>
+        from distribution_compliance_record
+        <include refid="ConditionWhereWithScope"/>
+        order by create_time desc, id desc
+        limit #{offset}, #{limit}
+    </select>
+
     <insert id="insertSelective" parameterType="com.godzilla.distribution.entity.distribution.DistributionComplianceRecordEntity" useGeneratedKeys="true" keyProperty="id">
         insert into distribution_compliance_record
         <trim prefix="(" suffix=")" suffixOverrides=",">
