@@ -20,11 +20,9 @@ import com.godzilla.distribution.mapper.distribution.DistributionDistributorMemb
 import com.godzilla.distribution.mapper.distribution.DistributionLeadMapper;
 import com.godzilla.distribution.service.distribution.DistributionAuditLogService;
 import com.godzilla.distribution.service.distribution.DistributionComplianceService;
-import com.godzilla.distribution.service.distribution.DistributionDataPermissionService;
 import com.godzilla.distribution.service.distribution.DistributionOperatorService;
+import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,24 +32,19 @@ import java.util.Date;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class DistributionComplianceServiceImpl implements DistributionComplianceService {
 
     private static final int DEFAULT_PAGE = 1;
     private static final int DEFAULT_PAGE_SIZE = 10;
     private static final int MAX_PAGE_SIZE = 100;
 
-    @Autowired
-    private DistributionComplianceRecordMapper distributionComplianceRecordMapper;
-    @Autowired
-    private DistributionOperatorService distributionOperatorService;
-    @Autowired
-    private DistributionAuditLogService distributionAuditLogService;
-    @Autowired
-    private DistributionDataPermissionService distributionDataPermissionService;
-    @Autowired
-    private DistributionDistributorMemberMapper distributionDistributorMemberMapper;
-    @Autowired
-    private DistributionLeadMapper distributionLeadMapper;
+    private final DistributionComplianceRecordMapper distributionComplianceRecordMapper;
+    private final DistributionOperatorService distributionOperatorService;
+    private final DistributionAuditLogService distributionAuditLogService;
+    private final DistributionDataPermissionService distributionDataPermissionService;
+    private final DistributionDistributorMemberMapper distributionDistributorMemberMapper;
+    private final DistributionLeadMapper distributionLeadMapper;
 
     @Override
     public PageResponseDTO<DistributionComplianceRecordDTO> listRecords(String bizType, Long bizId, String recordType, String status, Integer page, Integer pageSize) {
@@ -72,9 +65,7 @@ public class DistributionComplianceServiceImpl implements DistributionCompliance
     public DistributionComplianceRecordDetailDTO getRecord(Long id) {
         DistributionComplianceRecordEntity entity = getRecordEntity(id);
         validateComplianceAccess(entity);
-        DistributionComplianceRecordDetailDTO detailDTO = new DistributionComplianceRecordDetailDTO();
-        BeanUtils.copyProperties(entity, detailDTO);
-        return detailDTO;
+        return toDetailDTO(entity);
     }
 
     @Override
@@ -148,10 +139,38 @@ public class DistributionComplianceServiceImpl implements DistributionCompliance
         List<DistributionComplianceRecordDTO> list = new ArrayList<DistributionComplianceRecordDTO>();
         for (DistributionComplianceRecordEntity entity : entities) {
             DistributionComplianceRecordDTO dto = new DistributionComplianceRecordDTO();
-            BeanUtils.copyProperties(entity, dto);
+            dto.setId(entity.getId());
+            dto.setBizType(entity.getBizType());
+            dto.setBizId(entity.getBizId());
+            dto.setProductLineCode(entity.getProductLineCode());
+            dto.setRecordType(entity.getRecordType());
+            dto.setStatus(entity.getStatus());
+            dto.setReviewedBy(entity.getReviewedBy());
+            dto.setReviewedAt(entity.getReviewedAt());
+            dto.setRemark(entity.getRemark());
+            dto.setCreateTime(entity.getCreateTime());
             list.add(dto);
         }
         return list;
+    }
+
+    private DistributionComplianceRecordDetailDTO toDetailDTO(DistributionComplianceRecordEntity entity) {
+        DistributionComplianceRecordDetailDTO dto = new DistributionComplianceRecordDetailDTO();
+        dto.setId(entity.getId());
+        dto.setBizType(entity.getBizType());
+        dto.setBizId(entity.getBizId());
+        dto.setProductLineCode(entity.getProductLineCode());
+        dto.setRecordType(entity.getRecordType());
+        dto.setStatus(entity.getStatus());
+        dto.setContent(entity.getContent());
+        dto.setReviewedBy(entity.getReviewedBy());
+        dto.setReviewedAt(entity.getReviewedAt());
+        dto.setRemark(entity.getRemark());
+        dto.setCreatedBy(entity.getCreatedBy());
+        dto.setUpdatedBy(entity.getUpdatedBy());
+        dto.setCreateTime(entity.getCreateTime());
+        dto.setModifyTime(entity.getModifyTime());
+        return dto;
     }
 
     private void validateCreateScope(Long bizId) {

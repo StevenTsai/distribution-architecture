@@ -36,7 +36,7 @@ public class DistributionLeadController {
     @Operation(summary = "分页查询线索列表")
     public Result<PageResponseDTO<DistributionLeadDTO>> listLeads(
             @Parameter(description = "线索编号") @RequestParam(required = false) String leadNo,
-            @Parameter(description = "患者姓名或手机号") @RequestParam(required = false) String patientKeyword,
+            @Parameter(description = "联系人姓名或手机号") @RequestParam(required = false) String contactKeyword,
             @Parameter(description = "来源渠道ID") @RequestParam(required = false) Long sourceDistributorId,
             @Parameter(description = "意向产品线") @RequestParam(required = false) String intentProductLine,
             @Parameter(description = "负责人ID") @RequestParam(required = false) Long ownerUserId,
@@ -44,7 +44,7 @@ public class DistributionLeadController {
             @Parameter(description = "页码") @RequestParam(defaultValue = "1") Integer page,
             @Parameter(description = "每页数量") @RequestParam(defaultValue = "10") Integer pageSize) {
         return Result.success(distributionLeadService.listLeads(
-                leadNo, patientKeyword, sourceDistributorId, intentProductLine, ownerUserId, stage, page, pageSize));
+                leadNo, contactKeyword, sourceDistributorId, intentProductLine, ownerUserId, stage, page, pageSize));
     }
 
     @GetMapping("/{id}")

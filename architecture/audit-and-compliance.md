@@ -170,6 +170,92 @@ public enum DistributionAuditBizType {
 }
 ```
 
+### 决策 6：动作闭集——`<domain>.<verb>` + 目录端点
+
+决策 5 把**对象类型**收进枚举；本决策把**动作**也收进闭集。两层闭集是同一纪律：任何进入审计表的分类字段都不接受自由字符串。
+
+开放字符串的三个实际问题：
+
+| 问题 | 后果 |
+|---|---|
+| 拼写漂移（`update` vs `updata`） | 同一动作统计分裂成两个桶 |
+| 全集不可枚举 | 无法回答"系统里有哪些被审计的动作" |
+| 前端筛选无源 | 筛选下拉的选项与后端实际写入各自维护 |
+
+闭集的实现是一个常量类 + 有序集合 + 评审门槛：
+
+```java
+/** 审计动作闭集；新增动作须过评审。 */
+public final class AuditActions {
+    public static final String AUTH_LOGIN = "auth.login";
+    public static final String AUTH_PASSWORD_RESET = "auth.password_reset";
+    public static final String DEVICE_CREATE = "device.create";
+    public static final String DEVICE_UNBIND = "device.unbind";
+    public static final String OTA_STATUS_CHANGE = "ota.status_change";
+    public static final String USER_VIEW_MOBILE = "user.view_mobile";
+    // ... 共 35 项，按子系统分组排列
+
+    public static final Set<String> ALL = new LinkedHashSet<>(ORDERED);
+    private AuditActions() {}
+}
+```
+
+要点：
+
+1. **命名 `<domain>.<verb>`**：domain 是子系统（`auth` / `admin` / `device` / `ota` / `user` / `settings` …），verb 是 snake_case 动词。domain 前缀让"按子系统聚合统计"成为一次 `LIKE 'ota.%'` 或内存分组，不需要额外字段。
+2. **目录端点输出闭集**：`GET action-catalog` 直接把 `ALL` 返回给前端筛选下拉——**筛选项与代码常量是同一事实源**，新增动作后前端零同步成本。
+3. **新增动作 = 代码变更 = 评审事件**。闭集把"开始审计一个新动作"从一条隐蔽的字符串字面量，变成一次显式的、可被 review 拦截的常量追加——这正是审计面扩张唯一应该发生的时刻。
+4. **与决策 5 交叉得可回答全集**：对象类型闭集 × 动作闭集，使"谁、对哪类对象、做过哪些操作"三问都有有限枚举的答案。
+
+### 决策 7：detail 快照写入时脱敏（PII 红线）
+
+审计日志是全库**生命周期最长、访问面最宽**的数据——合规查询、运维排障、导出对接都读它。它因此是 PII 二次泄露的最高危面：一条明文手机号进了审计 detail，就跟着这张表十年。
+
+本决策把红线定在**写入时**而非读取时：
+
+```
+红线（禁入 detail）：明文密码 / 令牌 / openid / unionid / 手机号 / 密钥 / Authorization
+```
+
+1. **写时脱敏，唯一入口**。读路径有 N 条（管理端查询、导出、第三方对接），要求每条都记得脱敏等于要求每条都不出错——一处漏就是泄露。写时脱敏把红线收在 `record()` 这一个漏斗里。
+2. **黑名单递归掩码**：键名归一（小写 + 去下划线）后与敏感词表做包含匹配，命中则值替换为 `[REDACTED]`，并递归进入嵌套的 Map / List：
+
+   ```java
+   private static final List<String> SENSITIVE_KEYS = List.of(
+           "password", "passwd", "newpassword", "oldpassword", "passwordhash",
+           "token", "jwt", "openid", "unionid", "mobile", "secret", "privatekey", "authorization");
+
+   private Object sanitize(Object value) {
+       if (value instanceof Map<?, ?> map) {
+           Map<String, Object> out = new LinkedHashMap<>();
+           for (var entry : map.entrySet()) {
+               String key = String.valueOf(entry.getKey());
+               out.put(key, isSensitive(key) ? "[REDACTED]" : sanitize(entry.getValue()));
+           }
+           return out;
+       }
+       if (value instanceof List<?> list) { /* 逐项递归 */ }
+       return value;
+   }
+   ```
+
+   归一 + 包含匹配是刻意的：`new_password`、`oldPassword`、`password_hash` 全部命中 `newpassword` / `oldpassword` / `passwordhash` 词根，不需要为每个变体单独列键。
+3. **超限整体替换，不截断字符串**。detail 上限 16KB；超出时整个替换为 `{"truncated": true, "originalSize": N}`。截断字符串会产出半截 JSON（无法解析），还可能恰好截在敏感值中间——替换保留了"发生过截断"这一事实本身。
+4. **序列化失败不炸审计行**：detail 序列化异常时降级写入 `{"truncated": true}`，不让一个附属面的失败放大成主流程异常。
+
+**黑名单 vs 白名单（诚实记录）**：白名单更安全（默认拒绝），但审计 detail 的结构随动作类型多样，白名单漏配即静默丢失审计信息——而"审计信息缺失"比"多存一个非敏感字段"更难被发现。黑名单的风险方向相反：**未知敏感键名会漏配**。缓解：新增 detail 字段过评审；键名规范要求敏感语义使用词表内词根；词表本身是代码常量，变更可审。
+
+### 决策 8：失败策略分级——常规 fail-open，敏感 fail-closed
+
+审计写入失败怎么办？一刀切的"审计失败 = 业务失败"（本文局限性 #4 的初始选择）保护了完整性，但把审计面的故障域放大到了全部业务。本决策把它演进为按动作分级：
+
+| 档位 | 审计写入失败时 | 适用 | 语义 |
+|---|---|---|---|
+| **fail-open**（默认） | 记 error 日志，业务操作照常完成 | 常规增删改 | 审计是附属面，不应放大故障域 |
+| **fail-closed** | 抛业务异常，**操作被取消** | 密码重置、密钥轮换、删除类 | **不能留痕就不变更** |
+
+failClosed 由**调用点显式传参**，不是全局开关——判定"这个动作是否敏感"的人必须是写下这次调用的人，而不是事后再配一行配置。这样每一次 fail-closed 都跟着一次代码评审，而不是跟着一条可能被改错的环境变量。
+
 ## 代码实现
 
 ### 整体架构
@@ -205,7 +291,7 @@ public enum DistributionAuditBizType {
 public void record(String bizType, Long bizId, String action,
                    Object beforeSnapshot, Object afterSnapshot, String remark) {
     // 1. 自动获取当前操作人（从 ThreadLocal）
-    MedicalUserInfoEntity operator = distributionOperatorService.getCurrentOperatorUser();
+    UserProfileEntity operator = distributionOperatorService.getCurrentOperatorUser();
 
     // 2. 构建审计日志实体
     DistributionAuditLogEntity entity = new DistributionAuditLogEntity();
@@ -426,13 +512,17 @@ ALTER TABLE distribution_audit_log ADD INDEX idx_audit_log_operator (operator_us
 
 **替代方案**：审计失败时降级（如只记录 bizType + bizId + action，snapshot 记为 null），但这会导致审计数据不完整。
 
+**演进**：该一刀切选择已在后续系统中细化为按动作分级的失败策略——常规动作 fail-open、敏感动作 fail-closed，见[决策 8](#决策-8失败策略分级常规-fail-open敏感-fail-closed)。
+
 ### 5. 脱敏问题
 
-当前快照直接序列化完整对象，可能包含敏感信息（如患者手机号、身份证号）。审计日志本身也需要访问控制。
+当前快照直接序列化完整对象，可能包含敏感信息（如联系人手机号、身份证号）。审计日志本身也需要访问控制。
 
 **改进方向**：
 - 在 `writeSnapshot()` 中增加字段脱敏逻辑（如手机号中间 4 位打码）
 - 或在 DTO 层面定义"审计视图"，排除敏感字段
+
+**演进**：写入时黑名单脱敏（递归掩码 + 16KB 超限替换）已在后续系统落地，见[决策 7](#决策-7detail-快照写入时脱敏pii-红线)。剩余风险有二：黑名单对未知敏感键名会漏配；脱敏只保护 detail 字段，`operator` 等其余列与整表访问控制仍需独立措施。
 
 ### 6. 合规记录与审计日志的关联
 

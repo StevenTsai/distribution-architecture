@@ -14,7 +14,7 @@
 
 ## 核心领域概念
 
-分销系统的业务可以用一句话概括：**渠道推荐患者，患者产生业务，业务产生佣金**。
+分销系统的业务可以用一句话概括：**渠道推荐联系人，联系人产生业务，业务产生佣金**。
 
 ```
 ┌──────────┐    推荐     ┌──────────┐    产生     ┌──────────┐    触发     ┌──────────┐
@@ -131,7 +131,7 @@ CREATE TABLE distribution_distributor_member (
 
 ## 实体 3：线索（Lead）
 
-线索是"潜在患者"，由渠道成员推荐进入系统。
+线索是"潜在联系人"，由渠道成员推荐进入系统。
 
 **设计要点**：
 - `source_distributor_id` + `source_member_id` 记录线索来源
@@ -143,8 +143,8 @@ CREATE TABLE distribution_distributor_member (
 CREATE TABLE distribution_lead (
     id                  BIGINT NOT NULL AUTO_INCREMENT,
     lead_no             VARCHAR(32) NOT NULL COMMENT '线索编号',
-    patient_name        VARCHAR(64) NOT NULL,
-    patient_phone       VARCHAR(32) NOT NULL,
+    contact_name        VARCHAR(64) NOT NULL,
+    contact_phone       VARCHAR(32) NOT NULL,
     source_distributor_id BIGINT NOT NULL COMMENT '来源渠道',
     source_member_id    BIGINT COMMENT '推荐成员',
     intent_product_line VARCHAR(32) NOT NULL COMMENT '意向产品线',
@@ -157,7 +157,7 @@ CREATE TABLE distribution_lead (
     -- ...
     PRIMARY KEY (id),
     UNIQUE KEY uk_lead_no (lead_no),
-    KEY idx_patient_phone (patient_phone),
+    KEY idx_contact_phone (contact_phone),
     KEY idx_source_distributor (source_distributor_id),
     KEY idx_stage (stage)
 );
@@ -165,17 +165,17 @@ CREATE TABLE distribution_lead (
 
 ## 实体 4：归因（Attribution）
 
-归因记录"这个患者属于谁"。一个患者只能有一个活跃的归因。
+归因记录"这个联系人属于谁"。一个联系人只能有一个活跃的归因。
 
 **设计要点**：
-- `patient_id` 唯一索引（一个患者只能有一条活跃归因）
+- `contact_id` 唯一索引（一个联系人只能有一条活跃归因）
 - `first_*` 记录首次归因（不可变），`current_*` 记录当前归属（可变更）
 - `is_locked` 锁定后不允许修改（佣金计算前需要锁定归因）
 
 ```sql
-CREATE TABLE distribution_patient_attribution (
+CREATE TABLE distribution_contact_attribution (
     id                      BIGINT NOT NULL AUTO_INCREMENT,
-    patient_id              BIGINT NOT NULL,
+    contact_id              BIGINT NOT NULL,
     lead_id                 BIGINT,
     first_distributor_id    BIGINT COMMENT '首归因渠道（不可变）',
     first_member_id         BIGINT COMMENT '首归因成员（不可变）',
@@ -189,7 +189,7 @@ CREATE TABLE distribution_patient_attribution (
     deleted                 TINYINT NOT NULL DEFAULT 0,
     -- ...
     PRIMARY KEY (id),
-    UNIQUE KEY uk_patient_active (patient_id, deleted),
+    UNIQUE KEY uk_contact_active (contact_id, deleted),
     KEY idx_current_distributor (current_distributor_id)
 );
 ```
@@ -199,7 +199,7 @@ CREATE TABLE distribution_patient_attribution (
 业务单是"已确认的业务"，由线索转化而来。
 
 **设计要点**：
-- 关联线索、患者、归因、产品、渠道、成员——一张单子串联所有实体
+- 关联线索、联系人、归因、产品、渠道、成员——一张单子串联所有实体
 - `signed_amount` 签约金额，`received_amount` 累计回款金额
 - `status` 状态机驱动（draft → visiting → signed → first_paid → full_paid → service_completed → closed）
 - 时间戳字段记录关键节点时间
@@ -209,7 +209,7 @@ CREATE TABLE distribution_business_order (
     id                      BIGINT NOT NULL AUTO_INCREMENT,
     biz_order_no            VARCHAR(32) NOT NULL COMMENT '业务单号',
     lead_id                 BIGINT,
-    patient_id              BIGINT NOT NULL,
+    contact_id              BIGINT NOT NULL,
     attribution_id          BIGINT,
     product_line_code       VARCHAR(32) NOT NULL,
     product_code            VARCHAR(64) NOT NULL,
@@ -229,7 +229,7 @@ CREATE TABLE distribution_business_order (
     PRIMARY KEY (id),
     UNIQUE KEY uk_biz_order_no (biz_order_no),
     KEY idx_lead_id (lead_id),
-    KEY idx_patient_id (patient_id),
+    KEY idx_contact_id (contact_id),
     KEY idx_distributor_id (distributor_id),
     KEY idx_status (status)
 );
@@ -268,7 +268,7 @@ CREATE TABLE distribution_business_order_event (
 ## 实体关系全景图
 
 ```
-medical_user_info (系统用户)
+user_profile (系统用户)
     │
     ├── 1:N ── distribution_distributor_member (分销成员)
     │               │
@@ -278,9 +278,9 @@ medical_user_info (系统用户)
     │               │
     │               └── 1:N ── distribution_lead (线索)
     │                               │
-    │                               ├── 1:1 ── distribution_patient_attribution (归因)
+    │                               ├── 1:1 ── distribution_contact_attribution (归因)
     │                               │               │
-    │                               │               └── N:1 ── patient_info (患者)
+    │                               │               └── N:1 ── contact_info (联系人)
     │                               │
     │                               └── 1:N ── distribution_business_order (业务单)
     │                                               │

@@ -6,7 +6,7 @@ import com.godzilla.distribution.common.ResultCode;
 import com.godzilla.distribution.dto.PageResponseDTO;
 import com.godzilla.distribution.dto.distribution.response.DistributionAuditLogDTO;
 import com.godzilla.distribution.dto.distribution.response.DistributionAuditLogDetailDTO;
-import com.godzilla.distribution.entity.shared.MedicalUserInfoEntity;
+import com.godzilla.distribution.entity.shared.UserProfileEntity;
 import com.godzilla.distribution.entity.distribution.DistributionAuditLogEntity;
 import com.godzilla.distribution.entity.distribution.DistributionDistributorMemberEntity;
 import com.godzilla.distribution.entity.distribution.DistributionLeadEntity;
@@ -15,13 +15,10 @@ import com.godzilla.distribution.exception.BizException;
 import com.godzilla.distribution.mapper.distribution.DistributionAuditLogMapper;
 import com.godzilla.distribution.mapper.distribution.DistributionDistributorMemberMapper;
 import com.godzilla.distribution.mapper.distribution.DistributionLeadMapper;
-import com.godzilla.distribution.enums.distribution.DistributionDataScope;
 import com.godzilla.distribution.service.distribution.DistributionAuditLogService;
-import com.godzilla.distribution.service.distribution.impl.DistributionDataPermissionService;
 import com.godzilla.distribution.service.distribution.DistributionOperatorService;
+import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -29,29 +26,19 @@ import java.util.Collections;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class DistributionAuditLogServiceImpl implements DistributionAuditLogService {
 
     private static final int DEFAULT_PAGE = 1;
     private static final int DEFAULT_PAGE_SIZE = 10;
     private static final int MAX_PAGE_SIZE = 100;
 
-    @Autowired
-    private DistributionAuditLogMapper distributionAuditLogMapper;
-
-    @Autowired
-    private DistributionOperatorService distributionOperatorService;
-
-    @Autowired
-    private DistributionDataPermissionService distributionDataPermissionService;
-
-    @Autowired
-    private DistributionDistributorMemberMapper distributionDistributorMemberMapper;
-
-    @Autowired
-    private DistributionLeadMapper distributionLeadMapper;
-
-    @Autowired
-    private ObjectMapper objectMapper;
+    private final DistributionAuditLogMapper distributionAuditLogMapper;
+    private final DistributionOperatorService distributionOperatorService;
+    private final DistributionDataPermissionService distributionDataPermissionService;
+    private final DistributionDistributorMemberMapper distributionDistributorMemberMapper;
+    private final DistributionLeadMapper distributionLeadMapper;
+    private final ObjectMapper objectMapper;
 
     @Override
     public PageResponseDTO<DistributionAuditLogDTO> listLogs(String bizType,
@@ -81,13 +68,22 @@ public class DistributionAuditLogServiceImpl implements DistributionAuditLogServ
         }
         validateAuditLogAccess(entity);
         DistributionAuditLogDetailDTO detailDTO = new DistributionAuditLogDetailDTO();
-        BeanUtils.copyProperties(entity, detailDTO);
+        detailDTO.setId(entity.getId());
+        detailDTO.setBizType(entity.getBizType());
+        detailDTO.setBizId(entity.getBizId());
+        detailDTO.setAction(entity.getAction());
+        detailDTO.setBeforeSnapshot(entity.getBeforeSnapshot());
+        detailDTO.setAfterSnapshot(entity.getAfterSnapshot());
+        detailDTO.setOperatorUserId(entity.getOperatorUserId());
+        detailDTO.setOperatorName(entity.getOperatorName());
+        detailDTO.setRemark(entity.getRemark());
+        detailDTO.setCreateTime(entity.getCreateTime());
         return detailDTO;
     }
 
     @Override
     public void record(String bizType, Long bizId, String action, Object beforeSnapshot, Object afterSnapshot, String remark) {
-        MedicalUserInfoEntity operator = distributionOperatorService.getCurrentOperatorUser();
+        UserProfileEntity operator = distributionOperatorService.getCurrentOperatorUser();
 
         DistributionAuditLogEntity entity = new DistributionAuditLogEntity();
         entity.setBizType(bizType);
@@ -157,10 +153,21 @@ public class DistributionAuditLogServiceImpl implements DistributionAuditLogServ
         List<DistributionAuditLogDTO> list = new ArrayList<DistributionAuditLogDTO>();
         for (DistributionAuditLogEntity entity : entities) {
             DistributionAuditLogDTO dto = new DistributionAuditLogDTO();
-            BeanUtils.copyProperties(entity, dto);
+            fillBaseDTO(entity, dto);
             list.add(dto);
         }
         return list;
+    }
+
+    private void fillBaseDTO(DistributionAuditLogEntity entity, DistributionAuditLogDTO dto) {
+        dto.setId(entity.getId());
+        dto.setBizType(entity.getBizType());
+        dto.setBizId(entity.getBizId());
+        dto.setAction(entity.getAction());
+        dto.setOperatorUserId(entity.getOperatorUserId());
+        dto.setOperatorName(entity.getOperatorName());
+        dto.setRemark(entity.getRemark());
+        dto.setCreateTime(entity.getCreateTime());
     }
 
     private String trim(String value) {

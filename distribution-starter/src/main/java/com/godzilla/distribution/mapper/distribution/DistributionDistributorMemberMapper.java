@@ -13,26 +13,26 @@ public interface DistributionDistributorMemberMapper {
     long countByCondition(@Param("distributorId") Long distributorId,
                           @Param("status") String status,
                           @Param("roleCode") String roleCode,
-                          @Param("phone") String phone);
+                          @Param("phoneLookup") String phoneLookup);
 
     List<DistributionDistributorMemberEntity> selectByCondition(@Param("distributorId") Long distributorId,
                                                                 @Param("status") String status,
                                                                 @Param("roleCode") String roleCode,
-                                                                @Param("phone") String phone,
+                                                                @Param("phoneLookup") String phoneLookup,
                                                                 @Param("offset") int offset,
                                                                 @Param("limit") int limit);
 
     long countByConditionWithScope(@Param("distributorId") Long distributorId,
                                    @Param("status") String status,
                                    @Param("roleCode") String roleCode,
-                                   @Param("phone") String phone,
+                                   @Param("phoneLookup") String phoneLookup,
                                    @Param("authorizedDistributorIds") List<Long> authorizedDistributorIds,
                                    @Param("authorizedMemberId") Long authorizedMemberId);
 
     List<DistributionDistributorMemberEntity> selectByConditionWithScope(@Param("distributorId") Long distributorId,
                                                                          @Param("status") String status,
                                                                          @Param("roleCode") String roleCode,
-                                                                         @Param("phone") String phone,
+                                                                         @Param("phoneLookup") String phoneLookup,
                                                                          @Param("authorizedDistributorIds") List<Long> authorizedDistributorIds,
                                                                          @Param("authorizedMemberId") Long authorizedMemberId,
                                                                          @Param("offset") int offset,
@@ -43,7 +43,7 @@ public interface DistributionDistributorMemberMapper {
     DistributionDistributorMemberEntity selectByUserId(@Param("userId") Long userId);
 
     DistributionDistributorMemberEntity selectByDistributorAndPhone(@Param("distributorId") Long distributorId,
-                                                                    @Param("phone") String phone);
+                                                                    @Param("phoneLookup") String phoneLookup);
 
     DistributionDistributorMemberEntity selectByDistributorAndName(@Param("distributorId") Long distributorId,
                                                                    @Param("name") String name);

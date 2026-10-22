@@ -238,9 +238,9 @@ VALUES (1, 1, '管理员', '13800000001', 'DIST_SUPER_ADMIN', 'ALL', 'active', 0
        (2, 2, '张三', '13800000002', 'DIST_SALES', 'SELF', 'active', 0);
 
 -- 创建线索
-INSERT INTO distribution_lead (id, lead_no, patient_name, patient_phone, source_distributor_id, source_member_id, intent_product_line, owner_user_id, stage, deleted)
-VALUES (1, 'L001', '患者A', '13900000001', 1, NULL, 'gene', 1, 'contacted', 0),
-       (2, 'L002', '患者B', '13900000002', 2, 2, 'gene', 2, 'contacted', 0);
+INSERT INTO distribution_lead (id, lead_no, contact_name, contact_phone, source_distributor_id, source_member_id, intent_product_line, owner_user_id, stage, deleted)
+VALUES (1, 'L001', '联系人A', '13900000001', 1, NULL, 'gene', 1, 'contacted', 0),
+       (2, 'L002', '联系人B', '13900000002', 2, 2, 'gene', 2, 'contacted', 0);
 ```
 
 用管理员 token 查询：应该返回 2 条线索。

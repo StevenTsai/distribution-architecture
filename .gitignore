@@ -5,6 +5,11 @@
 .idea/
 .vscode/
 
+# Node.js / VitePress
+node_modules/
+.vitepress/dist/
+.vitepress/cache/
+
 # Environment & credentials (prevent accidental commit)
 .env
 .env.*

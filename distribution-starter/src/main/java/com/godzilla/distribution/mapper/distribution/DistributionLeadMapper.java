@@ -11,14 +11,16 @@ import java.util.List;
 @Repository
 public interface DistributionLeadMapper {
     long countByCondition(@Param("leadNo") String leadNo,
-                          @Param("patientKeyword") String patientKeyword,
+                          @Param("contactKeyword") String contactKeyword,
+                          @Param("contactPhoneLookup") String contactPhoneLookup,
                           @Param("sourceDistributorId") Long sourceDistributorId,
                           @Param("intentProductLine") String intentProductLine,
                           @Param("ownerUserId") Long ownerUserId,
                           @Param("stage") String stage);
 
     List<DistributionLeadEntity> selectByCondition(@Param("leadNo") String leadNo,
-                                                   @Param("patientKeyword") String patientKeyword,
+                                                   @Param("contactKeyword") String contactKeyword,
+                                                   @Param("contactPhoneLookup") String contactPhoneLookup,
                                                    @Param("sourceDistributorId") Long sourceDistributorId,
                                                    @Param("intentProductLine") String intentProductLine,
                                                    @Param("ownerUserId") Long ownerUserId,
@@ -27,7 +29,8 @@ public interface DistributionLeadMapper {
                                                    @Param("limit") int limit);
 
     long countByConditionWithScope(@Param("leadNo") String leadNo,
-                                   @Param("patientKeyword") String patientKeyword,
+                                   @Param("contactKeyword") String contactKeyword,
+                                   @Param("contactPhoneLookup") String contactPhoneLookup,
                                    @Param("sourceDistributorId") Long sourceDistributorId,
                                    @Param("intentProductLine") String intentProductLine,
                                    @Param("ownerUserId") Long ownerUserId,
@@ -37,7 +40,8 @@ public interface DistributionLeadMapper {
                                    @Param("authorizedOwnerUserId") Long authorizedOwnerUserId);
 
     List<DistributionLeadEntity> selectByConditionWithScope(@Param("leadNo") String leadNo,
-                                                            @Param("patientKeyword") String patientKeyword,
+                                                            @Param("contactKeyword") String contactKeyword,
+                                                            @Param("contactPhoneLookup") String contactPhoneLookup,
                                                             @Param("sourceDistributorId") Long sourceDistributorId,
                                                             @Param("intentProductLine") String intentProductLine,
                                                             @Param("ownerUserId") Long ownerUserId,
@@ -52,15 +56,15 @@ public interface DistributionLeadMapper {
 
     List<DistributionLeadEntity> selectByIds(@Param("ids") List<Long> ids);
 
-    DistributionLeadEntity selectByPatientPhone(@Param("patientPhone") String patientPhone,
+    DistributionLeadEntity selectByContactPhone(@Param("contactPhoneLookup") String contactPhoneLookup,
                                                 @Param("excludeId") Long excludeId);
 
-    DistributionLeadEntity selectByReferrerAndPatientPhone(@Param("sourceDistributorId") Long sourceDistributorId,
+    DistributionLeadEntity selectByReferrerAndContactPhone(@Param("sourceDistributorId") Long sourceDistributorId,
                                                            @Param("sourceMemberId") Long sourceMemberId,
-                                                           @Param("patientPhone") String patientPhone,
+                                                           @Param("contactPhoneLookup") String contactPhoneLookup,
                                                            @Param("excludeId") Long excludeId);
 
-    DistributionLeadEntity selectDuplicateLead(@Param("patientPhone") String patientPhone,
+    DistributionLeadEntity selectDuplicateLead(@Param("contactPhoneLookup") String contactPhoneLookup,
                                                @Param("intentProductLine") String intentProductLine,
                                                @Param("excludeId") Long excludeId);
 

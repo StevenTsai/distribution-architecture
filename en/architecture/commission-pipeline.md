@@ -52,7 +52,7 @@ flowchart LR
 The core of a distribution system is "how the money gets split." A typical commission flow chain is:
 
 ```
-Salesperson John from Distributor A refers a patient → Patient signs contract → Patient makes payment → Service completed → Commission settled
+Salesperson John from Distributor A refers a contact → Contact signs contract → Contact makes payment → Service completed → Commission settled
 ```
 
 This process involves state synchronization and fund calculation across multiple business entities:

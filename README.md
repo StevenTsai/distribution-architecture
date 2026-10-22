@@ -1,8 +1,11 @@
 # Distribution Architecture
 
+[![Deploy Docs](https://github.com/StevenTsai/distribution-architecture/actions/workflows/deploy.yml/badge.svg)](https://github.com/StevenTsai/distribution-architecture/actions/workflows/deploy.yml)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
+
 中文 | [English](en/README.md)
 
-B2B 企业级架构设计模式库，从生产系统中提炼的可复用架构方案。包含设计文档、可复用的 Spring Boot Starter 库，以及经过生产验证的架构模式。
+📖 **[在线阅读《架构炼金术：从真实系统提炼可复用的 Java 架构模式》](https://steven83.github.io/distribution-architecture/)** | B2B 企业级架构设计模式库，从生产系统中提炼的可复用架构方案。
 
 ## 这是什么
 
@@ -13,11 +16,14 @@ B2B 企业级架构设计模式库，从生产系统中提炼的可复用架构�
 > 然后总结为设计文档和 ADR，
 > 最后抽象为可复用的组件并开源。
 
-### 设计模式（4 个）
+### 设计模式（7 个）
 - 数据权限下沉到 SQL 层
 - 事件驱动状态机（佣金流转）
 - 审计日志 JSON 快照
 - MyBatis 工程化
+- PII 加密与脱敏（AES-GCM + HMAC 检索键）
+- 管理端 RBAC（模块级权限 + 敏感操作独立授权）
+- 跨语言契约测试（仓外裁判 + fixture 对拍）
 
 ### 可复用库
 - [spring-data-permission-starter](https://github.com/StevenTsai/spring-data-permission-starter) — 数据权限的 Spring Boot Starter 实现，可直接导入使用
@@ -26,9 +32,13 @@ B2B 企业级架构设计模式库，从生产系统中提炼的可复用架构�
 - [MTO 工作流引擎](case-studies/mto-workflow-engine/) — 从珠宝 ERP 提取的通用工单状态机，可复用到服装/家具/电子加工等行业
 - [Spring Events 跨模块联动](case-studies/spring-events-decoupling/) — 事件驱动解耦：发货→应收 / 工单→库存 / 质检→返工
 - [计件工资计算引擎](case-studies/piecework-wage-engine/) — Pipeline 模式的计件工资引擎，支持难度系数和质量系数
+- [生产护栏：fail-fast 启动守卫 + 可插拔状态存储](case-studies/production-guardrails/) — 生产中间件 2→1、回切零代码、契约测试补齐（源自 IoT 后端，非珠宝 ERP）
 
-### 架构决策记录（3 个）
+### 架构决策记录（6 个）
 - Session vs JWT、MyBatis vs JPA、逻辑删除 vs 物理删除
+- [Spring Boot 单轨 vs NestJS 计划](decisions/why-spring-boot-not-nestjs.md) — 框架替换的四条机制性收益，非偏好叙事
+- [状态存储进 MySQL，Redis 可插拔](decisions/why-redis-optional.md) — 生产中间件 2→1，回切零代码
+- [客户端零构建链：JS 而非 TS](decisions/why-javascript-not-typescript.md) — 代价已兑现的诚实记录与根因修正
 
 ### 教程与指南
 - **7 步从零构建教程**：从领域模型到合规检查的完整叙事线
@@ -47,6 +57,8 @@ Case Study 的代码从一个**真实生产系统**（珠宝加工 ERP）中提�
 | 业务模块 | 生产、销售、财务、库存、质检、基础数据 |
 
 > 源项目为私有仓库，仅提取通用架构模式，不包含业务敏感配置和客户数据。
+
+第四个案例 [production-guardrails](case-studies/production-guardrails/) 提取自**另一个私有生产系统**（IoT 设备管理后端，电池遥测域）：约 60 万注册用户的容量口径、24 个 REST 端点、155 个单测。同样只提取通用架构模式。
 
 ## 适合谁看
 
@@ -69,12 +81,18 @@ Case Study 的代码从一个**真实生产系统**（珠宝加工 ERP）中提�
 │   ├── data-permission-model.md     4 级数据权限：SQL 层注入的行级过滤
 │   ├── commission-pipeline.md       佣金流转：事件驱动状态机 + 规则快照 + 冲回
 │   ├── audit-and-compliance.md      审计日志：JSON 快照 + 统一入口
-│   └── mybatis-patterns.md          MyBatis 工程化：三段式 SQL 片段 + 对偶查询
+│   ├── mybatis-patterns.md          MyBatis 工程化：三段式 SQL 片段 + 对偶查询
+│   ├── pii-encryption.md            PII 加密：AES-GCM + HMAC 检索键 + 统一脱敏
+│   ├── admin-rbac.md                管理端 RBAC：模块级权限 + 敏感操作独立授权
+│   └── cross-language-contract-testing.md  跨语言契约测试：仓外裁判 + fixture 对拍
 │
 ├── decisions/                       架构决策记录（ADR）
 │   ├── why-session-not-jwt.md       为什么选 Session Token
 │   ├── why-mybatis-not-jpa.md       为什么选 MyBatis
-│   └── why-logical-delete.md        为什么用逻辑删除
+│   ├── why-logical-delete.md        为什么用逻辑删除
+│   ├── why-spring-boot-not-nestjs.md  为什么后端收敛为 Spring Boot 单轨
+│   ├── why-redis-optional.md        状态存储进 MySQL 表，Redis 可插拔回切
+│   └── why-javascript-not-typescript.md  客户端零构建链优先（代价已兑现的诚实记录）
 │
 ├── guides/                          实操指南
 │   ├── quick-start.md               5 分钟跑起来
@@ -82,7 +100,7 @@ Case Study 的代码从一个**真实生产系统**（珠宝加工 ERP）中提�
 │   ├── customize-permission.md      如何定制权限模型
 │   └── spring-boot-3-migration.md   Spring Boot 3.x 迁移指南
 │
-├── case-studies/                    生产验证案例（从珠宝 ERP 提取）
+├── case-studies/                    生产验证案例（提取自多个私有生产系统）
 │   ├── mto-workflow-engine/         MTO 工作流引擎
 │   │   ├── WorkOrderStateMachine    9 态工单状态机
 │   │   ├── ProcessRouteConfig       YAML 工序路由配置
@@ -91,10 +109,14 @@ Case Study 的代码从一个**真实生产系统**（珠宝加工 ERP）中提�
 │   │   ├── DeliveryCompleteEvent    发货→应收账款
 │   │   ├── WorkOrderFinishedEvent   完工→成品入库
 │   │   └── QualityDefectEvent       质检→返工工单
-│   └── piecework-wage-engine/       计件工资计算引擎
-│       ├── WageCalculator           工资计算引擎
-│       ├── WageSettlementPipeline   Pipeline 编排器
-│       └── 4 个 Pipeline Stage      计算→调整→确认→汇总
+│   ├── piecework-wage-engine/       计件工资计算引擎
+│   │   ├── WageCalculator           工资计算引擎
+│   │   ├── WageSettlementPipeline   Pipeline 编排器
+│   │   └── 4 个 Pipeline Stage      计算→调整→确认→汇总
+│   └── production-guardrails/       生产护栏（fail-fast 启动守卫 + 可插拔状态存储）
+│       ├── StartupGuard             配置红线拒绝启动矩阵
+│       ├── StateStore               六原语契约 + 三实现（mysql/redis/memory）
+│       └── 契约测试套件              40 用例零外部服务（H2 MODE=MySQL）
 │
 ├── CONTRIBUTING.md                  贡献指南
 │
@@ -124,7 +146,7 @@ Case Study 的代码从一个**真实生产系统**（珠宝加工 ERP）中提�
 
 **如果你想从头理解**：按 `tutorial/` 的 01→07 顺序阅读，这是从零构建的完整叙事线。
 
-**如果你要做技术选型**：读 `decisions/` 下的 3 篇 ADR，看 trade-off 分析。
+**如果你要做技术选型**：读 `decisions/` 下的 6 篇 ADR，看 trade-off 分析。
 
 **如果你要基于此做二次开发**：读 `guides/` 下的实操指南。
 
@@ -183,11 +205,30 @@ English translations of the core documents are available in the [`en/`](en/) dir
 | Document | Description |
 |----------|-------------|
 | [en/README.md](en/README.md) | Full project overview |
+| [en/preface.md](en/preface.md) | Preface: what this book is and where the patterns come from |
 | [en/architecture/data-permission-model.md](en/architecture/data-permission-model.md) | Row-Level Data Permission Model |
 | [en/architecture/commission-pipeline.md](en/architecture/commission-pipeline.md) | Commission Pipeline: State-Machine-Driven Flow |
+| [en/architecture/audit-and-compliance.md](en/architecture/audit-and-compliance.md) | Audit Snapshot: Audit Log and Compliance Record Pattern |
+| [en/architecture/mybatis-patterns.md](en/architecture/mybatis-patterns.md) | MyBatis Engineering: SQL Fragments and Permission Injection |
+| [en/architecture/pii-encryption.md](en/architecture/pii-encryption.md) | PII Encryption: AES-GCM, HMAC Lookup Keys, Masking |
+| [en/architecture/admin-rbac.md](en/architecture/admin-rbac.md) | Admin RBAC: Module-Level Permissions |
+| [en/architecture/cross-language-contract-testing.md](en/architecture/cross-language-contract-testing.md) | Cross-Language Contract Testing |
+| [en/decisions/why-javascript-not-typescript.md](en/decisions/why-javascript-not-typescript.md) | ADR: Zero Build Chain — JavaScript over TypeScript |
 | [en/decisions/why-logical-delete.md](en/decisions/why-logical-delete.md) | ADR: Why Logical Delete |
 | [en/decisions/why-mybatis-not-jpa.md](en/decisions/why-mybatis-not-jpa.md) | ADR: Why MyBatis over JPA |
+| [en/decisions/why-redis-optional.md](en/decisions/why-redis-optional.md) | ADR: State Storage in MySQL, Redis Optional |
 | [en/decisions/why-session-not-jwt.md](en/decisions/why-session-not-jwt.md) | ADR: Why Session Token over JWT |
+| [en/decisions/why-spring-boot-not-nestjs.md](en/decisions/why-spring-boot-not-nestjs.md) | ADR: Spring Boot Single Track over NestJS |
 | [en/guides/quick-start.md](en/guides/quick-start.md) | Quick Start Guide |
+| [en/guides/extend-new-module.md](en/guides/extend-new-module.md) | Extending a New Module |
+| [en/guides/customize-permission.md](en/guides/customize-permission.md) | Customizing the Permission Model |
+| [en/guides/spring-boot-3-migration.md](en/guides/spring-boot-3-migration.md) | Spring Boot 3.x Migration Guide |
+| [en/tutorial/](en/tutorial/) | Build-from-scratch tutorial, steps 01–07 |
+| [en/case-studies/](en/case-studies/) | Case-study READMEs and evolution notes |
+| [en/CONTRIBUTING.md](en/CONTRIBUTING.md) | Contributing guide |
+| [en/SECURITY.md](en/SECURITY.md) | Security policy |
+| [en/distribution-starter/README.md](en/distribution-starter/README.md) | Starter quick start and project structure |
 
-For Spring Boot 2.7 users, see [migration guide](guides/spring-boot-3-migration.md).
+The English directory covers every book page except the VitePress homepage (`index.md`); the internal `doc/open-source-strategy.md` remains Chinese-only.
+
+For Spring Boot 2.7 users, see the [migration guide](guides/spring-boot-3-migration.md) (also available in [English](en/guides/spring-boot-3-migration.md)).

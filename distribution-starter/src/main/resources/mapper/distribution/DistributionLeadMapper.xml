@@ -4,8 +4,9 @@
     <resultMap id="BaseResultMap" type="com.godzilla.distribution.entity.distribution.DistributionLeadEntity">
         <id column="id" jdbcType="BIGINT" property="id"/>
         <result column="lead_no" jdbcType="VARCHAR" property="leadNo"/>
-        <result column="patient_name" jdbcType="VARCHAR" property="patientName"/>
-        <result column="patient_phone" jdbcType="VARCHAR" property="patientPhone"/>
+        <result column="contact_name" jdbcType="VARCHAR" property="contactName"/>
+        <result column="contact_phone" jdbcType="VARCHAR" property="contactPhone"/>
+        <result column="contact_phone_lookup" jdbcType="VARCHAR" property="contactPhoneLookup"/>
         <result column="source_distributor_id" jdbcType="BIGINT" property="sourceDistributorId"/>
         <result column="source_member_id" jdbcType="BIGINT" property="sourceMemberId"/>
         <result column="intent_product_line" jdbcType="VARCHAR" property="intentProductLine"/>
@@ -26,7 +27,7 @@
     </resultMap>
 
     <sql id="BaseColumnList">
-        id, lead_no, patient_name, patient_phone, source_distributor_id, source_member_id, intent_product_line,
+        id, lead_no, contact_name, contact_phone, contact_phone_lookup, source_distributor_id, source_member_id, intent_product_line,
         source_region, source_channel, owner_user_id, stage, is_duplicate, duplicate_lead_id, invalid_reason,
         remark, latest_follow_up_at, created_by, updated_by, create_time, modify_time, deleted
     </sql>
@@ -36,9 +37,18 @@
         <if test="leadNo != null and leadNo != ''">
             and lead_no = #{leadNo}
         </if>
-        <if test="patientKeyword != null and patientKeyword != ''">
-            and (patient_name like concat('%', #{patientKeyword}, '%')
-            or patient_phone like concat('%', #{patientKeyword}, '%'))
+        <if test="(contactKeyword != null and contactKeyword != '') or (contactPhoneLookup != null and contactPhoneLookup != '')">
+            and (
+            <if test="contactKeyword != null and contactKeyword != ''">
+                contact_name like concat('%', #{contactKeyword}, '%')
+            </if>
+            <if test="contactKeyword != null and contactKeyword != '' and contactPhoneLookup != null and contactPhoneLookup != ''">
+                or
+            </if>
+            <if test="contactPhoneLookup != null and contactPhoneLookup != ''">
+                contact_phone_lookup = #{contactPhoneLookup}
+            </if>
+            )
         </if>
         <if test="sourceDistributorId != null">
             and source_distributor_id = #{sourceDistributorId}
@@ -127,11 +137,11 @@
         </foreach>
     </select>
 
-    <select id="selectByPatientPhone" resultMap="BaseResultMap">
+    <select id="selectByContactPhone" resultMap="BaseResultMap">
         select
         <include refid="BaseColumnList"/>
         from distribution_lead
-        where patient_phone = #{patientPhone}
+        where contact_phone_lookup = #{contactPhoneLookup}
           and deleted = 0
         <if test="excludeId != null">
             and id != #{excludeId}
@@ -140,11 +150,11 @@
         limit 1
     </select>
 
-    <select id="selectByReferrerAndPatientPhone" resultMap="BaseResultMap">
+    <select id="selectByReferrerAndContactPhone" resultMap="BaseResultMap">
         select
         <include refid="BaseColumnList"/>
         from distribution_lead
-        where patient_phone = #{patientPhone}
+        where contact_phone_lookup = #{contactPhoneLookup}
           and deleted = 0
         <choose>
             <when test="sourceMemberId != null">
@@ -168,7 +178,7 @@
         select
         <include refid="BaseColumnList"/>
         from distribution_lead
-        where patient_phone = #{patientPhone}
+        where contact_phone_lookup = #{contactPhoneLookup}
           and intent_product_line = #{intentProductLine}
           and deleted = 0
         <if test="excludeId != null">
@@ -184,11 +194,14 @@
             <if test="leadNo != null">
                 lead_no,
             </if>
-            <if test="patientName != null">
-                patient_name,
+            <if test="contactName != null">
+                contact_name,
             </if>
-            <if test="patientPhone != null">
-                patient_phone,
+            <if test="contactPhone != null">
+                contact_phone,
+            </if>
+            <if test="contactPhoneLookup != null">
+                contact_phone_lookup,
             </if>
             <if test="sourceDistributorId != null">
                 source_distributor_id,
@@ -246,11 +259,14 @@
             <if test="leadNo != null">
                 #{leadNo,jdbcType=VARCHAR},
             </if>
-            <if test="patientName != null">
-                #{patientName,jdbcType=VARCHAR},
+            <if test="contactName != null">
+                #{contactName,jdbcType=VARCHAR},
             </if>
-            <if test="patientPhone != null">
-                #{patientPhone,jdbcType=VARCHAR},
+            <if test="contactPhone != null">
+                #{contactPhone,jdbcType=VARCHAR},
+            </if>
+            <if test="contactPhoneLookup != null">
+                #{contactPhoneLookup,jdbcType=VARCHAR},
             </if>
             <if test="sourceDistributorId != null">
                 #{sourceDistributorId,jdbcType=BIGINT},
@@ -309,11 +325,14 @@
     <update id="updateByPrimaryKeySelective" parameterType="com.godzilla.distribution.entity.distribution.DistributionLeadEntity">
         update distribution_lead
         <set>
-            <if test="patientName != null">
-                patient_name = #{patientName,jdbcType=VARCHAR},
+            <if test="contactName != null">
+                contact_name = #{contactName,jdbcType=VARCHAR},
             </if>
-            <if test="patientPhone != null">
-                patient_phone = #{patientPhone,jdbcType=VARCHAR},
+            <if test="contactPhone != null">
+                contact_phone = #{contactPhone,jdbcType=VARCHAR},
+            </if>
+            <if test="contactPhoneLookup != null">
+                contact_phone_lookup = #{contactPhoneLookup,jdbcType=VARCHAR},
             </if>
             <if test="sourceDistributorId != null">
                 source_distributor_id = #{sourceDistributorId,jdbcType=BIGINT},

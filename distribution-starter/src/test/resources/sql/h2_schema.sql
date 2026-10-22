@@ -5,7 +5,7 @@ CREATE SCHEMA IF NOT EXISTS distribution_starter_test;
 SET SCHEMA distribution_starter_test;
 
 -- 共享表
-CREATE TABLE IF NOT EXISTS medical_user_info (
+CREATE TABLE IF NOT EXISTS user_profile (
   id BIGINT AUTO_INCREMENT PRIMARY KEY,
   openid VARCHAR(64),
   name VARCHAR(64),
@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS distribution_distributor (
   level_code VARCHAR(32) NOT NULL,
   owner_user_id BIGINT,
   contact_name VARCHAR(64),
-  contact_phone VARCHAR(32),
+  contact_phone VARCHAR(512),
   province VARCHAR(32),
   city VARCHAR(32),
   settlement_type VARCHAR(32),
@@ -80,7 +80,8 @@ CREATE TABLE IF NOT EXISTS distribution_distributor_member (
   distributor_id BIGINT NOT NULL,
   user_id BIGINT,
   name VARCHAR(64) NOT NULL,
-  phone VARCHAR(32) NOT NULL,
+  phone VARCHAR(512) NOT NULL,
+  phone_lookup VARCHAR(32),
   role_code VARCHAR(32) NOT NULL,
   data_scope VARCHAR(32) NOT NULL DEFAULT 'SELF',
   manager_member_id BIGINT,
@@ -105,8 +106,9 @@ CREATE INDEX IF NOT EXISTS idx_member_status ON distribution_distributor_member(
 CREATE TABLE IF NOT EXISTS distribution_lead (
   id BIGINT AUTO_INCREMENT PRIMARY KEY,
   lead_no VARCHAR(32) NOT NULL,
-  patient_name VARCHAR(64) NOT NULL,
-  patient_phone VARCHAR(32) NOT NULL,
+  contact_name VARCHAR(64) NOT NULL,
+  contact_phone VARCHAR(512) NOT NULL,
+  contact_phone_lookup VARCHAR(32),
   source_distributor_id BIGINT NOT NULL,
   source_member_id BIGINT,
   intent_product_line VARCHAR(32) NOT NULL,
@@ -127,7 +129,7 @@ CREATE TABLE IF NOT EXISTS distribution_lead (
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS uk_lead_no ON distribution_lead(lead_no);
-CREATE INDEX IF NOT EXISTS idx_lead_patient_phone ON distribution_lead(patient_phone);
+CREATE INDEX IF NOT EXISTS idx_lead_contact_phone_lookup ON distribution_lead(contact_phone_lookup);
 CREATE INDEX IF NOT EXISTS idx_lead_source_distributor_id ON distribution_lead(source_distributor_id);
 CREATE INDEX IF NOT EXISTS idx_lead_owner_user_id ON distribution_lead(owner_user_id);
 CREATE INDEX IF NOT EXISTS idx_lead_stage ON distribution_lead(stage);

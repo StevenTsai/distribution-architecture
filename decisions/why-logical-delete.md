@@ -124,7 +124,7 @@ UPDATE distribution_distributor SET deleted = 0 WHERE id = 123;
 
 ### 5. 与现有系统一致
 
-`medical-chaperon-server` 已经使用逻辑删除，保持一致可以复用已有的查询逻辑和数据。
+`jewelry-erp-server` 已经使用逻辑删除，保持一致可以复用已有的查询逻辑和数据。
 
 ## Trade-off
 

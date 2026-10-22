@@ -1,8 +1,11 @@
 # Distribution Architecture
 
+[![Deploy Docs](https://github.com/StevenTsai/distribution-architecture/actions/workflows/deploy.yml/badge.svg)](https://github.com/StevenTsai/distribution-architecture/actions/workflows/deploy.yml)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](../LICENSE)
+
 [中文](../README.md) | English
 
-B2B enterprise architecture design pattern library — reusable architecture solutions refined from production systems. Includes design documents, a reusable Spring Boot Starter library, and production-validated architecture patterns.
+📖 **[Read Online](https://steven83.github.io/distribution-architecture/)** | B2B enterprise architecture design pattern library — reusable architecture solutions refined from production systems.
 
 ## What Is This
 
@@ -13,11 +16,14 @@ This is a collection of **design documents** + a **reusable Starter library** + 
 > then summarized them as design documents and ADRs,
 > and finally abstracted them into reusable components and open-sourced them.
 
-### Design Patterns (4)
+### Design Patterns (7)
 - Data permissions at the SQL layer
 - Event-driven state machine (commission pipeline)
 - Audit logging with JSON snapshots
 - MyBatis engineering patterns
+- PII encryption & masking (AES-GCM + HMAC lookup keys)
+- Admin RBAC (module-level permissions + sensitive operation control)
+- Cross-language contract testing (outside-the-arbiter + fixture comparison)
 
 ### Reusable Library
 - [spring-data-permission-starter](https://github.com/StevenTsai/spring-data-permission-starter) — Spring Boot Starter for data permissions, ready to import
@@ -26,9 +32,13 @@ This is a collection of **design documents** + a **reusable Starter library** + 
 - [MTO Workflow Engine](../case-studies/mto-workflow-engine/) — Generic work order state machine extracted from a jewelry ERP, reusable across furniture/electronics/apparel industries
 - [Spring Events Decoupling](../case-studies/spring-events-decoupling/) — Event-driven cross-module decoupling: delivery→receivable / work order→inventory / quality→rework
 - [Piecework Wage Engine](../case-studies/piecework-wage-engine/) — Pipeline-based piecework wage calculation with configurable difficulty and quality coefficients
+- [Production Guardrails: fail-fast startup + pluggable state store](../case-studies/production-guardrails/) — Mandatory middleware 2→1, zero-code rollback, contract tests filled in (from an IoT backend, not the jewelry ERP)
 
-### Architecture Decision Records (3)
+### Architecture Decision Records (6)
 - Session vs JWT, MyBatis vs JPA, Logical vs Physical Delete
+- [Spring Boot single track over planned NestJS](decisions/why-spring-boot-not-nestjs.md) — Four mechanism-level benefits of the framework switch, not preference narratives
+- [State storage in MySQL, Redis pluggable](decisions/why-redis-optional.md) — Mandatory middleware 2→1, zero-code rollback
+- [Zero build chain: JavaScript over TypeScript](decisions/why-javascript-not-typescript.md) — Honest record of realized costs and root-cause revision
 
 ### Tutorials & Guides
 - **7-Step Build-from-Scratch Tutorial**: Complete narrative from domain model to compliance checks
@@ -47,6 +57,8 @@ The case study code is extracted and abstracted from a **real production system*
 | Business Modules | Production, Sales, Finance, Inventory, Quality, System |
 
 > The source project is a private repository. Only generic architecture patterns are extracted; no business-sensitive configuration or customer data is included.
+
+The fourth case study, [production-guardrails](../case-studies/production-guardrails/), is extracted from **a second private production system** (an IoT device-management backend, battery-telemetry domain): ~600k registered-user capacity envelope, 24 REST endpoints, 155 unit tests. Only generic architecture patterns are carried over.
 
 ## Who Is This For
 
@@ -69,12 +81,18 @@ The case study code is extracted and abstracted from a **real production system*
 │   ├── data-permission-model.md     4-level data permissions: SQL-layer row filtering
 │   ├── commission-pipeline.md       Commission pipeline: event-driven state machine + rule snapshots + reversal
 │   ├── audit-and-compliance.md      Audit logging: JSON snapshots + unified entry point
-│   └── mybatis-patterns.md          MyBatis engineering: 3-segment SQL fragments + dual queries
+│   ├── mybatis-patterns.md          MyBatis engineering: 3-segment SQL fragments + dual queries
+│   ├── pii-encryption.md            PII encryption: AES-GCM + HMAC lookup keys + unified masking
+│   ├── admin-rbac.md                Admin RBAC: module-level permissions + sensitive operation control
+│   └── cross-language-contract-testing.md  Cross-language contract testing: outside-the-arbiter + fixture comparison
 │
 ├── decisions/                       Architecture Decision Records (ADR)
 │   ├── why-session-not-jwt.md       Why Session Token over JWT
 │   ├── why-mybatis-not-jpa.md       Why MyBatis over JPA
-│   └── why-logical-delete.md        Why logical delete over physical delete
+│   ├── why-logical-delete.md        Why logical delete over physical delete
+│   ├── why-spring-boot-not-nestjs.md  Spring Boot single track over NestJS
+│   ├── why-redis-optional.md        State storage in MySQL table, Redis pluggable
+│   └── why-javascript-not-typescript.md  Zero build chain on the client (honest cost record)
 │
 ├── guides/                          Practical guides
 │   ├── quick-start.md               Get running in 5 minutes
@@ -82,7 +100,7 @@ The case study code is extracted and abstracted from a **real production system*
 │   ├── customize-permission.md      How to customize the permission model
 │   └── spring-boot-3-migration.md   Spring Boot 3.x migration guide
 │
-├── case-studies/                    Production-validated case studies (from jewelry ERP)
+├── case-studies/                    Production-validated case studies (extracted from multiple private systems)
 │   ├── mto-workflow-engine/         MTO Workflow Engine
 │   │   ├── WorkOrderStateMachine    9-state work order state machine
 │   │   ├── ProcessRouteConfig       YAML process route configuration
@@ -91,10 +109,14 @@ The case study code is extracted and abstracted from a **real production system*
 │   │   ├── DeliveryCompleteEvent    Delivery → Accounts Receivable
 │   │   ├── WorkOrderFinishedEvent   Completion → Finished Goods
 │   │   └── QualityDefectEvent       Quality → Rework Order
-│   └── piecework-wage-engine/       Piecework Wage Calculation Engine
-│       ├── WageCalculator           Wage calculation engine
-│       ├── WageSettlementPipeline   Pipeline orchestrator
-│       └── 4 Pipeline Stages        Calculate → Adjust → Confirm → Summary
+│   ├── piecework-wage-engine/       Piecework Wage Calculation Engine
+│   │   ├── WageCalculator           Wage calculation engine
+│   │   ├── WageSettlementPipeline   Pipeline orchestrator
+│   │   └── 4 Pipeline Stages        Calculate → Adjust → Confirm → Summary
+│   └── production-guardrails/       Production guardrails (fail-fast startup + pluggable state store)
+│       ├── StartupGuard             Config red-line rejection matrix
+│       ├── StateStore               Six-primitive contract, three impls (mysql/redis/memory)
+│       └── Contract test suite      40 tests, zero external services (H2 MODE=MySQL)
 │
 ├── CONTRIBUTING.md                  Contribution guidelines
 │
@@ -114,6 +136,23 @@ The case study code is extracted and abstracted from a **real production system*
 |---------|-------------|------------|
 | `spring-data-permission-starter` | Spring Boot Starter for data permissions, ready to import | [GitHub](https://github.com/StevenTsai/spring-data-permission-starter) |
 
+## English Documentation
+
+This directory mirrors the Chinese book: the preface, all 7 architecture patterns, all 6 ADRs, all 4 practical guides, the 7-step tutorial, and the case-study READMEs plus their evolution notes.
+
+| Section | Documents |
+|---------|-----------|
+| Overview | [Preface](preface.md) |
+| Architecture | [Data Permission Model](architecture/data-permission-model.md) · [Commission Pipeline](architecture/commission-pipeline.md) · [Audit Snapshot](architecture/audit-and-compliance.md) · [MyBatis Engineering](architecture/mybatis-patterns.md) · [PII Encryption](architecture/pii-encryption.md) · [Admin RBAC](architecture/admin-rbac.md) · [Cross-Language Contract Testing](architecture/cross-language-contract-testing.md) |
+| Decisions | [Session vs JWT](decisions/why-session-not-jwt.md) · [MyBatis vs JPA](decisions/why-mybatis-not-jpa.md) · [Logical Delete](decisions/why-logical-delete.md) · [Spring Boot over NestJS](decisions/why-spring-boot-not-nestjs.md) · [Redis Optional](decisions/why-redis-optional.md) · [JavaScript over TypeScript](decisions/why-javascript-not-typescript.md) |
+| Guides | [Quick Start](guides/quick-start.md) · [Extend a New Module](guides/extend-new-module.md) · [Customize Permissions](guides/customize-permission.md) · [Spring Boot 3 Migration](guides/spring-boot-3-migration.md) |
+| Tutorial | [01 Domain Model](tutorial/01-domain-model.md) · [02 Data Permissions](tutorial/02-data-permission.md) · [03 CRUD Scaffolding](tutorial/03-crud-scaffolding.md) · [04 Audit Logging](tutorial/04-audit-logging.md) · [05 Commission Flow](tutorial/05-commission-flow.md) · [06 Settlement](tutorial/06-settlement.md) · [07 Compliance](tutorial/07-compliance.md) |
+| Case studies | [MTO Workflow Engine](case-studies/mto-workflow-engine/README.md) · [Piecework Wage Engine](case-studies/piecework-wage-engine/README.md) · [Spring Events Decoupling](case-studies/spring-events-decoupling/README.md) · [Production Guardrails](case-studies/production-guardrails/README.md) |
+
+Each English page links back to its Chinese original at the top. Translations track the Chinese source; if you change either version, update both.
+
+Project-level documents are also available in English: [Contributing](CONTRIBUTING.md) · [Security Policy](SECURITY.md) · [Starter README](distribution-starter/README.md).
+
 ## Recommended Reading
 
 **If you want to try it out**: Go to `distribution-starter/` and follow the README to get running in 5 minutes.
@@ -124,7 +163,7 @@ The case study code is extracted and abstracted from a **real production system*
 
 **If you want to understand from the beginning**: Read `tutorial/` in order (01→07) — this is the complete build-from-scratch narrative.
 
-**If you're making technology decisions**: Read the 3 ADRs in `decisions/` for trade-off analysis.
+**If you're making technology decisions**: Read the 6 ADRs in `decisions/` for trade-off analysis.
 
 **If you're building on top of this**: Read the practical guides in `guides/`.
 
