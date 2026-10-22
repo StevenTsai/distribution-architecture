@@ -26,6 +26,7 @@ B2B 企业级架构设计模式库，从生产系统中提炼的可复用架构�
 - [MTO 工作流引擎](case-studies/mto-workflow-engine/) — 从珠宝 ERP 提取的通用工单状态机，可复用到服装/家具/电子加工等行业
 - [Spring Events 跨模块联动](case-studies/spring-events-decoupling/) — 事件驱动解耦：发货→应收 / 工单→库存 / 质检→返工
 - [计件工资计算引擎](case-studies/piecework-wage-engine/) — Pipeline 模式的计件工资引擎，支持难度系数和质量系数
+- [生产护栏：fail-fast 启动守卫 + 可插拔状态存储](case-studies/production-guardrails/) — 生产中间件 2→1、回切零代码、契约测试补齐（源自 IoT 后端，非珠宝 ERP）
 
 ### 架构决策记录（6 个）
 - Session vs JWT、MyBatis vs JPA、逻辑删除 vs 物理删除
@@ -50,6 +51,8 @@ Case Study 的代码从一个**真实生产系统**（珠宝加工 ERP）中提�
 | 业务模块 | 生产、销售、财务、库存、质检、基础数据 |
 
 > 源项目为私有仓库，仅提取通用架构模式，不包含业务敏感配置和客户数据。
+
+第四个案例 [production-guardrails](case-studies/production-guardrails/) 提取自**另一个私有生产系统**（IoT 设备管理后端，电池遥测域）：约 60 万注册用户的容量口径、24 个 REST 端点、155 个单测。同样只提取通用架构模式。
 
 ## 适合谁看
 
@@ -88,7 +91,7 @@ Case Study 的代码从一个**真实生产系统**（珠宝加工 ERP）中提�
 │   ├── customize-permission.md      如何定制权限模型
 │   └── spring-boot-3-migration.md   Spring Boot 3.x 迁移指南
 │
-├── case-studies/                    生产验证案例（从珠宝 ERP 提取）
+├── case-studies/                    生产验证案例（提取自多个私有生产系统）
 │   ├── mto-workflow-engine/         MTO 工作流引擎
 │   │   ├── WorkOrderStateMachine    9 态工单状态机
 │   │   ├── ProcessRouteConfig       YAML 工序路由配置
@@ -97,10 +100,14 @@ Case Study 的代码从一个**真实生产系统**（珠宝加工 ERP）中提�
 │   │   ├── DeliveryCompleteEvent    发货→应收账款
 │   │   ├── WorkOrderFinishedEvent   完工→成品入库
 │   │   └── QualityDefectEvent       质检→返工工单
-│   └── piecework-wage-engine/       计件工资计算引擎
-│       ├── WageCalculator           工资计算引擎
-│       ├── WageSettlementPipeline   Pipeline 编排器
-│       └── 4 个 Pipeline Stage      计算→调整→确认→汇总
+│   ├── piecework-wage-engine/       计件工资计算引擎
+│   │   ├── WageCalculator           工资计算引擎
+│   │   ├── WageSettlementPipeline   Pipeline 编排器
+│   │   └── 4 个 Pipeline Stage      计算→调整→确认→汇总
+│   └── production-guardrails/       生产护栏（fail-fast 启动守卫 + 可插拔状态存储）
+│       ├── StartupGuard             配置红线拒绝启动矩阵
+│       ├── StateStore               六原语契约 + 三实现（mysql/redis/memory）
+│       └── 契约测试套件              40 用例零外部服务（H2 MODE=MySQL）
 │
 ├── CONTRIBUTING.md                  贡献指南
 │

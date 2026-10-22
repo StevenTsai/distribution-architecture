@@ -26,6 +26,7 @@ This is a collection of **design documents** + a **reusable Starter library** + 
 - [MTO Workflow Engine](../case-studies/mto-workflow-engine/) — Generic work order state machine extracted from a jewelry ERP, reusable across furniture/electronics/apparel industries
 - [Spring Events Decoupling](../case-studies/spring-events-decoupling/) — Event-driven cross-module decoupling: delivery→receivable / work order→inventory / quality→rework
 - [Piecework Wage Engine](../case-studies/piecework-wage-engine/) — Pipeline-based piecework wage calculation with configurable difficulty and quality coefficients
+- [Production Guardrails: fail-fast startup + pluggable state store](../case-studies/production-guardrails/) — Mandatory middleware 2→1, zero-code rollback, contract tests filled in (from an IoT backend, not the jewelry ERP)
 
 ### Architecture Decision Records (6)
 - Session vs JWT, MyBatis vs JPA, Logical vs Physical Delete
@@ -50,6 +51,8 @@ The case study code is extracted and abstracted from a **real production system*
 | Business Modules | Production, Sales, Finance, Inventory, Quality, System |
 
 > The source project is a private repository. Only generic architecture patterns are extracted; no business-sensitive configuration or customer data is included.
+
+The fourth case study, [production-guardrails](../case-studies/production-guardrails/), is extracted from **a second private production system** (an IoT device-management backend, battery-telemetry domain): ~600k registered-user capacity envelope, 24 REST endpoints, 155 unit tests. Only generic architecture patterns are carried over.
 
 ## Who Is This For
 
@@ -88,7 +91,7 @@ The case study code is extracted and abstracted from a **real production system*
 │   ├── customize-permission.md      How to customize the permission model
 │   └── spring-boot-3-migration.md   Spring Boot 3.x migration guide
 │
-├── case-studies/                    Production-validated case studies (from jewelry ERP)
+├── case-studies/                    Production-validated case studies (extracted from multiple private systems)
 │   ├── mto-workflow-engine/         MTO Workflow Engine
 │   │   ├── WorkOrderStateMachine    9-state work order state machine
 │   │   ├── ProcessRouteConfig       YAML process route configuration
@@ -97,10 +100,14 @@ The case study code is extracted and abstracted from a **real production system*
 │   │   ├── DeliveryCompleteEvent    Delivery → Accounts Receivable
 │   │   ├── WorkOrderFinishedEvent   Completion → Finished Goods
 │   │   └── QualityDefectEvent       Quality → Rework Order
-│   └── piecework-wage-engine/       Piecework Wage Calculation Engine
-│       ├── WageCalculator           Wage calculation engine
-│       ├── WageSettlementPipeline   Pipeline orchestrator
-│       └── 4 Pipeline Stages        Calculate → Adjust → Confirm → Summary
+│   ├── piecework-wage-engine/       Piecework Wage Calculation Engine
+│   │   ├── WageCalculator           Wage calculation engine
+│   │   ├── WageSettlementPipeline   Pipeline orchestrator
+│   │   └── 4 Pipeline Stages        Calculate → Adjust → Confirm → Summary
+│   └── production-guardrails/       Production guardrails (fail-fast startup + pluggable state store)
+│       ├── StartupGuard             Config red-line rejection matrix
+│       ├── StateStore               Six-primitive contract, three impls (mysql/redis/memory)
+│       └── Contract test suite      40 tests, zero external services (H2 MODE=MySQL)
 │
 ├── CONTRIBUTING.md                  Contribution guidelines
 │
