@@ -27,10 +27,11 @@ This is a collection of **design documents** + a **reusable Starter library** + 
 - [Spring Events Decoupling](../case-studies/spring-events-decoupling/) — Event-driven cross-module decoupling: delivery→receivable / work order→inventory / quality→rework
 - [Piecework Wage Engine](../case-studies/piecework-wage-engine/) — Pipeline-based piecework wage calculation with configurable difficulty and quality coefficients
 
-### Architecture Decision Records (5)
+### Architecture Decision Records (6)
 - Session vs JWT, MyBatis vs JPA, Logical vs Physical Delete
 - [Spring Boot single track over planned NestJS](decisions/why-spring-boot-not-nestjs.md) — Four mechanism-level benefits of the framework switch, not preference narratives
 - [State storage in MySQL, Redis pluggable](decisions/why-redis-optional.md) — Mandatory middleware 2→1, zero-code rollback
+- [Zero build chain: JavaScript over TypeScript](decisions/why-javascript-not-typescript.md) — Honest record of realized costs and root-cause revision
 
 ### Tutorials & Guides
 - **7-Step Build-from-Scratch Tutorial**: Complete narrative from domain model to compliance checks
@@ -78,7 +79,8 @@ The case study code is extracted and abstracted from a **real production system*
 │   ├── why-mybatis-not-jpa.md       Why MyBatis over JPA
 │   ├── why-logical-delete.md        Why logical delete over physical delete
 │   ├── why-spring-boot-not-nestjs.md  Spring Boot single track over NestJS
-│   └── why-redis-optional.md        State storage in MySQL table, Redis pluggable
+│   ├── why-redis-optional.md        State storage in MySQL table, Redis pluggable
+│   └── why-javascript-not-typescript.md  Zero build chain on the client (honest cost record)
 │
 ├── guides/                          Practical guides
 │   ├── quick-start.md               Get running in 5 minutes
@@ -128,7 +130,7 @@ The case study code is extracted and abstracted from a **real production system*
 
 **If you want to understand from the beginning**: Read `tutorial/` in order (01→07) — this is the complete build-from-scratch narrative.
 
-**If you're making technology decisions**: Read the 5 ADRs in `decisions/` for trade-off analysis.
+**If you're making technology decisions**: Read the 6 ADRs in `decisions/` for trade-off analysis.
 
 **If you're building on top of this**: Read the practical guides in `guides/`.
 
