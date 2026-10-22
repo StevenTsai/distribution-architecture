@@ -27,8 +27,10 @@ B2B 企业级架构设计模式库，从生产系统中提炼的可复用架构�
 - [Spring Events 跨模块联动](case-studies/spring-events-decoupling/) — 事件驱动解耦：发货→应收 / 工单→库存 / 质检→返工
 - [计件工资计算引擎](case-studies/piecework-wage-engine/) — Pipeline 模式的计件工资引擎，支持难度系数和质量系数
 
-### 架构决策记录（3 个）
+### 架构决策记录（5 个）
 - Session vs JWT、MyBatis vs JPA、逻辑删除 vs 物理删除
+- [Spring Boot 单轨 vs NestJS 计划](decisions/why-spring-boot-not-nestjs.md) — 框架替换的四条机制性收益，非偏好叙事
+- [状态存储进 MySQL，Redis 可插拔](decisions/why-redis-optional.md) — 生产中间件 2→1，回切零代码
 
 ### 教程与指南
 - **7 步从零构建教程**：从领域模型到合规检查的完整叙事线
@@ -74,7 +76,9 @@ Case Study 的代码从一个**真实生产系统**（珠宝加工 ERP）中提�
 ├── decisions/                       架构决策记录（ADR）
 │   ├── why-session-not-jwt.md       为什么选 Session Token
 │   ├── why-mybatis-not-jpa.md       为什么选 MyBatis
-│   └── why-logical-delete.md        为什么用逻辑删除
+│   ├── why-logical-delete.md        为什么用逻辑删除
+│   ├── why-spring-boot-not-nestjs.md  为什么后端收敛为 Spring Boot 单轨
+│   └── why-redis-optional.md        状态存储进 MySQL 表，Redis 可插拔回切
 │
 ├── guides/                          实操指南
 │   ├── quick-start.md               5 分钟跑起来
@@ -124,7 +128,7 @@ Case Study 的代码从一个**真实生产系统**（珠宝加工 ERP）中提�
 
 **如果你想从头理解**：按 `tutorial/` 的 01→07 顺序阅读，这是从零构建的完整叙事线。
 
-**如果你要做技术选型**：读 `decisions/` 下的 3 篇 ADR，看 trade-off 分析。
+**如果你要做技术选型**：读 `decisions/` 下的 5 篇 ADR，看 trade-off 分析。
 
 **如果你要基于此做二次开发**：读 `guides/` 下的实操指南。
 
@@ -187,7 +191,9 @@ English translations of the core documents are available in the [`en/`](en/) dir
 | [en/architecture/commission-pipeline.md](en/architecture/commission-pipeline.md) | Commission Pipeline: State-Machine-Driven Flow |
 | [en/decisions/why-logical-delete.md](en/decisions/why-logical-delete.md) | ADR: Why Logical Delete |
 | [en/decisions/why-mybatis-not-jpa.md](en/decisions/why-mybatis-not-jpa.md) | ADR: Why MyBatis over JPA |
+| [en/decisions/why-redis-optional.md](en/decisions/why-redis-optional.md) | ADR: State Storage in MySQL, Redis Optional |
 | [en/decisions/why-session-not-jwt.md](en/decisions/why-session-not-jwt.md) | ADR: Why Session Token over JWT |
+| [en/decisions/why-spring-boot-not-nestjs.md](en/decisions/why-spring-boot-not-nestjs.md) | ADR: Spring Boot Single Track over NestJS |
 | [en/guides/quick-start.md](en/guides/quick-start.md) | Quick Start Guide |
 
 For Spring Boot 2.7 users, see [migration guide](guides/spring-boot-3-migration.md).
