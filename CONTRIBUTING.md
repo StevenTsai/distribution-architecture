@@ -83,7 +83,7 @@ npm run docs:preview # 预览构建产物
 2. 在 `.vitepress/config.mts` 的 `sidebar` 中添加链接
 3. 推送到 main 分支后自动部署
 
-**访问在线书**：https://steven83.github.io/distribution-architecture/
+**访问在线书**：https://steventsai.github.io/distribution-architecture/
 
 ### Starter 项目
 

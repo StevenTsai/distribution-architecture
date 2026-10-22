@@ -85,7 +85,7 @@ npm run docs:preview # Preview the build output
 2. Add a link to the `sidebar` in `.vitepress/config.mts`
 3. Push to the main branch — deployment is automatic
 
-**Visit the online book**: https://steven83.github.io/distribution-architecture/
+**Visit the online book**: https://steventsai.github.io/distribution-architecture/
 
 ### Starter Project
 
