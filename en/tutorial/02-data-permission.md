@@ -198,30 +198,30 @@ public DistributionLeadDetailDTO getLead(Long id) {
 
 ## Permission Path Overview
 
-```
-Request enters
-  │
-  ▼
-AuthHeaderInterceptor
-  │ Parse Token → userId → ThreadLocal
-  ▼
-Controller.listLeads()
-  │
-  ▼
-Service.listLeads()
-  │
-  ├── dataPermissionService.resolveCurrentAccessScope()
-  │     │
-  │     ├── query member table → roleCode, dataScope
-  │     ├── resolveAuthorizedDistributorIds()
-  │     │     └── BFS traverse distributor tree (if OWN_AND_CHILDREN)
-  │     └── return DistributionDataAccessScope (immutable)
-  │
-  ├── mapper.countByConditionWithScope(..., authorizedIds, ...)
-  │     └── SQL: WHERE ... AND distributor_id IN (1, 5, 23)
-  │
-  └── mapper.selectByConditionWithScope(..., authorizedIds, ...)
-        └── SQL: WHERE ... AND distributor_id IN (1, 5, 23)
+```mermaid
+flowchart TB
+    A[Request enters] --> B[AuthHeaderInterceptor]
+    B -->|"parse Token → userId → ThreadLocal"| C["Controller.listLeads()"]
+    C --> D["Service.listLeads()"]
+    D --> E["resolveCurrentAccessScope()"]
+    E --> F["Query member table<br/>roleCode + dataScope"]
+    F --> G["resolveAuthorizedDistributorIds()"]
+    G --> H{OWN_AND_CHILDREN?}
+    H -->|Yes| I[BFS over the distributor tree]
+    H -->|No| J[Own distributor only]
+    I --> K["DistributionDataAccessScope (immutable)"]
+    J --> K
+    K --> L["countByConditionWithScope()"]
+    K --> M["selectByConditionWithScope()"]
+    L --> N["SQL: ... AND distributor_id IN (1, 5, 23)"]
+    M --> N
+
+    class A entry
+    class H decision
+    class N success
+    classDef entry fill:#dbeafe,stroke:#3b82f6,color:#1e3a8a,stroke-width:1.5px
+    classDef decision fill:#ede9fe,stroke:#8b5cf6,color:#4c1d95,stroke-width:1.5px
+    classDef success fill:#dcfce7,stroke:#22c55e,color:#14532d,stroke-width:1.5px
 ```
 
 ## Verification

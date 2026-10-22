@@ -8,37 +8,37 @@
 
 ## Architecture Overview
 
+**Query Path**
+
 ```mermaid
 flowchart TB
-    subgraph SQLFragment["MyBatis SQL Fragment Composition"]
-        A["BaseColumnList<br/>Column definitions"] --> D[SELECT query]
-        B["ConditionWhere<br/>WHERE deleted=0 + dynamic conditions"] --> D
-        C["ScopeCondition<br/>Data permission IN filter"] --> D
-    end
+    A["BaseColumnList<br/>Column definitions"] --> D[SELECT query]
+    B["ConditionWhere<br/>WHERE deleted=0 + dynamic conditions"] --> D
+    C["ScopeCondition<br/>Data permission IN filter"] --> D
 
-    subgraph DualQueries["Dual Queries"]
-        D --> E["selectByCondition<br/>no permission filtering"]
-        D --> F["selectByConditionWithScope<br/>with permission filtering"]
-        E --> G[Admin/system calls]
-        F --> H[Regular user calls]
-    end
-
-    subgraph ServiceLayer["Service Layer"]
-        I[Service method] -->|resolveCurrentAccessScope| J{Permission check}
-        J -->|ALL scope| E
-        J -->|other scopes| F
-    end
-
-    subgraph WriteOps["Write Operations"]
-        K["insertSelective<br/>insert non-null fields only"] --> L[INSERT]
-        M["updateByPrimaryKeySelective<br/>update non-null fields only"] --> N[UPDATE]
-        N --> O["Automatically add WHERE deleted=0"]
-    end
+    I[Service method] -->|resolveCurrentAccessScope| J{Permission check}
+    J -->|ALL scope| E["selectByCondition<br/>no permission filtering"]
+    J -->|other scopes| F["selectByConditionWithScope<br/>with permission filtering"]
+    D --> E
+    D --> F
+    E --> G[Admin/system calls]
+    F --> H[Regular user calls]
 
     class C warning
     class F success
-    class O warning
     classDef success fill:#dcfce7,stroke:#22c55e,color:#14532d,stroke-width:1.5px
+    classDef warning fill:#fef9c3,stroke:#eab308,color:#713f12,stroke-width:1.5px
+```
+
+**Write Operations**
+
+```mermaid
+flowchart LR
+    K["insertSelective<br/>insert non-null fields only"] --> L[INSERT]
+    M["updateByPrimaryKeySelective<br/>update non-null fields only"] --> N[UPDATE]
+    N --> O["Automatically add WHERE deleted=0"]
+
+    class O warning
     classDef warning fill:#fef9c3,stroke:#eab308,color:#713f12,stroke-width:1.5px
 ```
 

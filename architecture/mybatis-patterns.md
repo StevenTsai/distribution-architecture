@@ -6,37 +6,37 @@
 
 ## 架构总览
 
+**查询链路**
+
 ```mermaid
 flowchart TB
-    subgraph SQL片段["MyBatis SQL 片段组合"]
-        A["BaseColumnList<br/>列定义"] --> D[SELECT 查询]
-        B["ConditionWhere<br/>WHERE deleted=0 + 动态条件"] --> D
-        C["ScopeCondition<br/>数据权限 IN 过滤"] --> D
-    end
+    A["BaseColumnList<br/>列定义"] --> D[SELECT 查询]
+    B["ConditionWhere<br/>WHERE deleted=0 + 动态条件"] --> D
+    C["ScopeCondition<br/>数据权限 IN 过滤"] --> D
 
-    subgraph 对偶查询
-        D --> E["selectByCondition<br/>无权限过滤"]
-        D --> F["selectByConditionWithScope<br/>带权限过滤"]
-        E --> G[管理员/系统调用]
-        F --> H[普通用户调用]
-    end
-
-    subgraph Service 层
-        I[Service 方法] -->|resolveCurrentAccessScope| J{权限判断}
-        J -->|ALL scope| E
-        J -->|其他 scope| F
-    end
-
-    subgraph 写操作
-        K["insertSelective<br/>仅插入非空字段"] --> L[INSERT]
-        M["updateByPrimaryKeySelective<br/>仅更新非空字段"] --> N[UPDATE]
-        N --> O["自动添加 WHERE deleted=0"]
-    end
+    I[Service 方法] -->|resolveCurrentAccessScope| J{权限判断}
+    J -->|ALL scope| E["selectByCondition<br/>无权限过滤"]
+    J -->|其他 scope| F["selectByConditionWithScope<br/>带权限过滤"]
+    D --> E
+    D --> F
+    E --> G[管理员/系统调用]
+    F --> H[普通用户调用]
 
     class C warning
     class F success
-    class O warning
     classDef success fill:#dcfce7,stroke:#22c55e,color:#14532d,stroke-width:1.5px
+    classDef warning fill:#fef9c3,stroke:#eab308,color:#713f12,stroke-width:1.5px
+```
+
+**写操作**
+
+```mermaid
+flowchart LR
+    K["insertSelective<br/>仅插入非空字段"] --> L[INSERT]
+    M["updateByPrimaryKeySelective<br/>仅更新非空字段"] --> N[UPDATE]
+    N --> O["自动添加 WHERE deleted=0"]
+
+    class O warning
     classDef warning fill:#fef9c3,stroke:#eab308,color:#713f12,stroke-width:1.5px
 ```
 

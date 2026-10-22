@@ -16,18 +16,24 @@
 
 分销系统的业务可以用一句话概括：**渠道推荐联系人，联系人产生业务，业务产生佣金**。
 
-```
-┌──────────┐    推荐     ┌──────────┐    产生     ┌──────────┐    触发     ┌──────────┐
-│  渠道    │───────────►│  线索    │───────────►│  业务单  │───────────►│  佣金    │
-│Distributor│           │  Lead    │           │ BizOrder │           │Commission│
-└──────────┘            └──────────┘            └──────────┘            └──────────┘
-     │                       │                       │
-     │ 包含                  │ 关联                  │ 关联
-     ▼                       ▼                       ▼
-┌──────────┐            ┌──────────┐            ┌──────────┐
-│  成员    │            │  归因    │            │  事件    │
-│  Member  │            │Attribution│           │  Event   │
-└──────────┘            └──────────┘            └──────────┘
+```mermaid
+flowchart LR
+    D[渠道 Distributor] -->|推荐| L[线索 Lead]
+    L -->|产生| B[业务单 BizOrder]
+    B -->|触发| C[佣金 Commission]
+    D -->|包含| M[成员 Member]
+    L -->|关联| A[归因 Attribution]
+    B -->|关联| E[事件 Event]
+
+    class D entry
+    class L entry
+    class B warning
+    class C success
+    class M,A,E muted
+    classDef entry fill:#dbeafe,stroke:#3b82f6,color:#1e3a8a,stroke-width:1.5px
+    classDef warning fill:#fef9c3,stroke:#eab308,color:#713f12,stroke-width:1.5px
+    classDef success fill:#dcfce7,stroke:#22c55e,color:#14532d,stroke-width:1.5px
+    classDef muted fill:#f1f5f9,stroke:#94a3b8,color:#334155,stroke-width:1.5px
 ```
 
 ## 实体 1：渠道（Distributor）
@@ -267,26 +273,16 @@ CREATE TABLE distribution_business_order_event (
 
 ## 实体关系全景图
 
-```
-user_profile (系统用户)
-    │
-    ├── 1:N ── distribution_distributor_member (分销成员)
-    │               │
-    │               ├── N:1 ── distribution_distributor (渠道)
-    │               │               │
-    │               │               └── self-ref ── parent_id (上级渠道)
-    │               │
-    │               └── 1:N ── distribution_lead (线索)
-    │                               │
-    │                               ├── 1:1 ── distribution_contact_attribution (归因)
-    │                               │               │
-    │                               │               └── N:1 ── contact_info (联系人)
-    │                               │
-    │                               └── 1:N ── distribution_business_order (业务单)
-    │                                               │
-    │                                               └── 1:N ── distribution_business_order_event (事件)
-    │
-    └── (created_by, updated_by, owner_user_id 在各表中引用)
+```mermaid
+erDiagram
+    USER_PROFILE ||--o{ DISTRIBUTOR_MEMBER : "1:N"
+    DISTRIBUTOR ||--o{ DISTRIBUTOR_MEMBER : "1:N"
+    DISTRIBUTOR ||--o{ DISTRIBUTOR : "parent_id"
+    DISTRIBUTOR_MEMBER ||--o{ LEAD : "1:N"
+    LEAD ||--|| CONTACT_ATTRIBUTION : "1:1"
+    CONTACT_INFO ||--o{ CONTACT_ATTRIBUTION : "1:N"
+    LEAD ||--o{ BUSINESS_ORDER : "1:N"
+    BUSINESS_ORDER ||--o{ BUSINESS_ORDER_EVENT : "1:N"
 ```
 
 ## 设计决策说明

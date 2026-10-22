@@ -33,7 +33,7 @@ flowchart TB
     end
 
     subgraph Context
-        M --> P[AdminAuthContext.set(principal)]
+        M --> P["AdminAuthContext.set(principal)"]
         P --> Q[Business code reads current admin]
     end
 

@@ -15,16 +15,20 @@
 
 ## Settlement Statement vs Commission Ledger
 
-```
-Commission ledger (multiple)   Settlement statement (one)
-┌────────────────────┐      ┌────────────────────────┐
-│ Entry 1: +5000     │──┐   │ Settlement #DST001     │
-│ Entry 2: +3000     │──┼──►│ Distributor: A         │
-│ Entry 3: +2000     │──┘   │ Period: 2026-06        │
-└────────────────────┘      │ Payable: 10000         │
-                            │ Reversed: 0            │
-                            │ Actual: 10000          │
-                            └────────────────────────┘
+```mermaid
+flowchart LR
+    subgraph Ledger["Commission ledger (multiple)"]
+        A1["Entry 1: +5000"]
+        A2["Entry 2: +3000"]
+        A3["Entry 3: +2000"]
+    end
+    S["Settlement #DST001<br/>Distributor: A<br/>Period: 2026-06<br/>Payable: 10000<br/>Reversed: 0<br/>Actual: 10000"]
+    A1 --> S
+    A2 --> S
+    A3 --> S
+
+    class S success
+    classDef success fill:#dcfce7,stroke:#22c55e,color:#14532d,stroke-width:1.5px
 ```
 
 One settlement statement corresponds to multiple commission ledger entries. The settlement statement is the "payment voucher issued to the distributor."
@@ -163,10 +167,22 @@ public Long createSettlement(CreateDistributionSettlementRequestDTO request) {
 
 The status transitions of a settlement statement:
 
-```
-PENDING ──► APPROVED ──► PAID
-    │
-    └──► REJECTED
+```mermaid
+stateDiagram-v2
+    [*] --> PENDING
+    PENDING --> APPROVED: approve
+    PENDING --> REJECTED: reject
+    APPROVED --> PAID: pay
+    PAID --> [*]
+    REJECTED --> [*]
+
+    classDef success fill:#dcfce7,stroke:#22c55e,color:#14532d,stroke-width:1.5px
+    classDef warning fill:#fef9c3,stroke:#eab308,color:#713f12,stroke-width:1.5px
+    classDef danger fill:#fee2e2,stroke:#ef4444,color:#7f1d1d,stroke-width:1.5px
+    class PENDING warning
+    class APPROVED success
+    class PAID success
+    class REJECTED danger
 ```
 
 ```java

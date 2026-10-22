@@ -8,9 +8,11 @@
 
 ## Architecture Overview
 
+**Write and Lookup**
+
 ```mermaid
 flowchart TB
-    subgraph Write Path
+    subgraph WritePath["Write Path"]
         A[Business code] -->|plaintext mobile| B[PiiCipher.encrypt]
         B --> C{PII_KEY configured?}
         C -->|Yes| D[AES/GCM/NoPadding encryption]
@@ -18,31 +20,54 @@ flowchart TB
         C -->|No| F[Persist plaintext + warn log]
     end
 
-    subgraph Lookup Path
+    subgraph LookupPath["Lookup Path"]
         G[Business query] -->|plaintext mobile| H[PiiCipher.lookupKey]
         H --> I["HMAC-SHA256(key, 'pii:'+value)"]
         I --> J[Truncate to 32hex]
         J --> K[WHERE lookup_key = ?]
     end
 
-    subgraph Read Path
+    E -.->|later queried by plaintext| G
+
+    class A,G entry
+    class C decision
+    class E success
+    class F warning
+    classDef entry fill:#dbeafe,stroke:#3b82f6,color:#1e3a8a,stroke-width:1.5px
+    classDef decision fill:#ede9fe,stroke:#8b5cf6,color:#4c1d95,stroke-width:1.5px
+    classDef success fill:#dcfce7,stroke:#22c55e,color:#14532d,stroke-width:1.5px
+    classDef warning fill:#fef9c3,stroke:#eab308,color:#713f12,stroke-width:1.5px
+```
+
+**Read and Present**
+
+```mermaid
+flowchart TB
+    subgraph ReadPath["Read Path"]
         L[Query returns ciphertext] --> M[PiiCipher.decrypt]
         M --> N{enc:v1: prefix?}
         N -->|Yes| O[AES/GCM decryption]
-        N -->|No| P[Treat as legacy plaintext, return as-is]
+        N -->|No| P[Treat as legacy plaintext]
     end
 
-    subgraph Presentation Path
+    subgraph PresentationPath["Presentation Path"]
         Q[Return to frontend] --> R[PiiCipher.mask]
         R --> S["138****5678"]
         T[Audit log] --> U[PiiCipher.mask]
-        U --> V["[pii] mobile number access action=xxx mobile=138****5678"]
+        U --> V["[pii] mobile access action=xxx mobile=138****5678"]
     end
 
-    class C decision
-    class E success
+    O --> Q
+    P --> Q
+
+    class L,Q,T entry
+    class N decision
+    class S success
+    class V warning
+    classDef entry fill:#dbeafe,stroke:#3b82f6,color:#1e3a8a,stroke-width:1.5px
     classDef decision fill:#ede9fe,stroke:#8b5cf6,color:#4c1d95,stroke-width:1.5px
     classDef success fill:#dcfce7,stroke:#22c55e,color:#14532d,stroke-width:1.5px
+    classDef warning fill:#fef9c3,stroke:#eab308,color:#713f12,stroke-width:1.5px
 ```
 
 ---
@@ -241,18 +266,19 @@ String masked = piiCipher.mask(piiCipher.decrypt(user.getMobileEnc()));
 
 The Node and Java implementations must produce identical ciphertext (with a fixed IV) or be able to decrypt each other's output (with a random IV).
 
-```
-Node (reference)               Java (in production)
-    │                              │
-    ├─ Fixed key test-key          │
-    ├─ Fixed IV (for fixtures)     │
-    ├─ encrypt("13800138000")      │
-    │  → enc:v1:fixedIv:...        │
-    │                              │
-    └──────────────────────────────┘
-           fixture.json
-                │
-    Java loads fixture → decrypt → should get "13800138000"
+```mermaid
+sequenceDiagram
+    autonumber
+    participant N as Node (reference)
+    participant F as fixture.json
+    participant J as Java (in production)
+    N->>N: Fixed key test-key
+    N->>N: Fixed IV (for fixtures)
+    N->>N: encrypt("13800138000")
+    N->>F: write enc:v1:fixedIv:...
+    F->>J: load the same fixture
+    J->>J: decrypt
+    J-->>J: should get "13800138000"
 ```
 
 **Note**: Production uses a random IV, so encrypting the same plaintext yields a different result each time. Interop tests only verify "can the plaintext be recovered", not byte equality.

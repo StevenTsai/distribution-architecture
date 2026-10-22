@@ -196,30 +196,30 @@ public DistributionLeadDetailDTO getLead(Long id) {
 
 ## 权限链路全景
 
-```
-请求进入
-  │
-  ▼
-AuthHeaderInterceptor
-  │ 解析 Token → userId → ThreadLocal
-  ▼
-Controller.listLeads()
-  │
-  ▼
-Service.listLeads()
-  │
-  ├── dataPermissionService.resolveCurrentAccessScope()
-  │     │
-  │     ├── 查 member 表 → roleCode, dataScope
-  │     ├── resolveAuthorizedDistributorIds()
-  │     │     └── BFS 遍历渠道树（如果是 OWN_AND_CHILDREN）
-  │     └── 返回 DistributionDataAccessScope（不可变）
-  │
-  ├── mapper.countByConditionWithScope(..., authorizedIds, ...)
-  │     └── SQL: WHERE ... AND distributor_id IN (1, 5, 23)
-  │
-  └── mapper.selectByConditionWithScope(..., authorizedIds, ...)
-        └── SQL: WHERE ... AND distributor_id IN (1, 5, 23)
+```mermaid
+flowchart TB
+    A[请求进入] --> B[AuthHeaderInterceptor]
+    B -->|"解析 Token → userId → ThreadLocal"| C["Controller.listLeads()"]
+    C --> D["Service.listLeads()"]
+    D --> E["resolveCurrentAccessScope()"]
+    E --> F["查 member 表<br/>roleCode + dataScope"]
+    F --> G["resolveAuthorizedDistributorIds()"]
+    G --> H{OWN_AND_CHILDREN?}
+    H -->|是| I[BFS 遍历渠道树]
+    H -->|否| J[仅本渠道]
+    I --> K["DistributionDataAccessScope（不可变）"]
+    J --> K
+    K --> L["countByConditionWithScope()"]
+    K --> M["selectByConditionWithScope()"]
+    L --> N["SQL: ... AND distributor_id IN (1, 5, 23)"]
+    M --> N
+
+    class A entry
+    class H decision
+    class N success
+    classDef entry fill:#dbeafe,stroke:#3b82f6,color:#1e3a8a,stroke-width:1.5px
+    classDef decision fill:#ede9fe,stroke:#8b5cf6,color:#4c1d95,stroke-width:1.5px
+    classDef success fill:#dcfce7,stroke:#22c55e,color:#14532d,stroke-width:1.5px
 ```
 
 ## 验证

@@ -9,7 +9,7 @@
 ## 架构总览
 
 ```mermaid
-flowchart LR
+flowchart TB
     subgraph 业务单状态机
         A[DRAFT] -->|visited| B[VISITING]
         B -->|signed| C[SIGNED]
@@ -185,97 +185,76 @@ if (SETTLED.equals(ledger.getStatus())) {
 
 ### 全链路数据流
 
-```
-线索 (Lead)
-  │
-  │ 创建业务单时关联
-  ▼
-业务单 (Business Order)  ◄─── 业务单事件 (Business Order Event)
-  │                              │
-  │ 状态推进                     │ 触发
-  │                              ▼
-  │                         佣金流水 (Commission Ledger)
-  │                              │
-  │                              │ 录入回款
-  │                              ▼
-  │                         结算单 (Settlement)
-  │                              │
-  │                              │ 审批 → 打款
-  │                              ▼
-  └─────────────────────► 归因 (Attribution) 联动更新
+```mermaid
+flowchart TB
+    A[线索 Lead] -->|创建业务单时关联| B[业务单 Business Order]
+    B -->|状态推进| C[业务单事件 Business Order Event]
+    C -->|触发| D[佣金流水 Commission Ledger]
+    D -->|录入回款| E[结算单 Settlement]
+    E -->|审批 → 打款| F[归因 Attribution 联动更新]
+    B -.->|归因同步| F
+
+    class A entry
+    class D warning
+    class E success
+    classDef entry fill:#dbeafe,stroke:#3b82f6,color:#1e3a8a,stroke-width:1.5px
+    classDef warning fill:#fef9c3,stroke:#eab308,color:#713f12,stroke-width:1.5px
+    classDef success fill:#dcfce7,stroke:#22c55e,color:#14532d,stroke-width:1.5px
 ```
 
 ### 状态机全景图
 
 #### 业务单状态转换
 
-```
-                  ┌─────────────────────────────────────────────┐
-                  │                                             │
-                  ▼                                             │
-  ┌───────┐   visited   ┌─────────┐   signed   ┌──────────┐   │
-  │ DRAFT │────────────►│VISITING │───────────►│  SIGNED  │   │
-  └───────┘             └─────────┘            └──────────┘   │
-      │                     │                     │            │
-      │ signed              │ signed              │ first_payment
-      ├─────────────────────┼─────────────────────┤            │
-      │                     │                     ▼            │
-      │                     │               ┌───────────┐      │
-      │                     │               │FIRST_PAID │      │
-      │                     │               └───────────┘      │
-      │                     │                     │            │
-      │ cancelled           │ cancelled           │ full_payment
-      ▼                     ▼                     ▼            │
-  ┌───────────┐        ┌───────────┐        ┌──────────┐      │
-  │CANCELLED  │        │CANCELLED  │        │ FULL_PAID│      │
-  └───────────┘        └───────────┘        └──────────┘      │
-                                                   │            │
-                                                   │ service_completed
-                                                   ▼            │
-                                             ┌─────────────┐   │
-                                             │  SERVICE_    │   │
-                                             │  COMPLETED   │   │
-                                             └─────────────┘   │
-                                                   │            │
-                                                   │ closed     │
-                                                   ▼            │
-                                             ┌──────────┐      │
-                                             │  CLOSED  │──────┘
-                                             └──────────┘
+```mermaid
+stateDiagram-v2
+    [*] --> DRAFT
+    DRAFT --> VISITING: visited
+    VISITING --> SIGNED: signed
+    SIGNED --> FIRST_PAID: first_payment
+    FIRST_PAID --> FULL_PAID: full_payment
+    FULL_PAID --> SERVICE_COMPLETED: service_completed
+    VISITING --> CLOSED: cancelled
+    SIGNED --> CLOSED: cancelled
+    FIRST_PAID --> CLOSED: cancelled
+    FULL_PAID --> CLOSED: cancelled
+    SERVICE_COMPLETED --> [*]
+    CLOSED --> [*]
+
+    classDef warning fill:#fef9c3,stroke:#eab308,color:#713f12,stroke-width:1.5px
+    classDef success fill:#dcfce7,stroke:#22c55e,color:#14532d,stroke-width:1.5px
+    classDef danger fill:#fee2e2,stroke:#ef4444,color:#7f1d1d,stroke-width:1.5px
+    class DRAFT warning
+    class SERVICE_COMPLETED success
+    class CLOSED danger
 ```
 
 #### 佣金流水状态转换
 
-```
-  ┌──────────────────┐
-  │  PENDING_REVIEW  │ (自动生成)
-  └──────────────────┘
-         │
-         │ lock (审核通过)
-         ▼
-  ┌──────────────────┐
-  │     LOCKED       │
-  └──────────────────┘
-         │
-         │ record_receipt (录入回款)
-         ▼
-  ┌──────────────────┐
-  │   SETTLEABLE     │─────► 自动生成结算单
-  └──────────────────┘
-         │
-         │ (关联到结算单后)
-         ▼
-  ┌──────────────────┐
-  │     SETTLED      │ (已结算/已打款)
-  └──────────────────┘
+```mermaid
+stateDiagram-v2
+    [*] --> PENDING_REVIEW: 自动生成
+    PENDING_REVIEW --> LOCKED: lock（审核通过）
+    LOCKED --> SETTLEABLE: record_receipt（录入回款）
+    SETTLEABLE --> SETTLED: 关联结算单
+    PENDING_REVIEW --> REVERSED: 冲回（未结算）
+    LOCKED --> REVERSED: 冲回（未结算）
+    PENDING_REVIEW --> VOIDED: 作废
+    SETTLED --> [*]
+    REVERSED --> [*]
+    VOIDED --> [*]
 
-  ┌──────────────────┐
-  │     REVERSED     │ (未结算的冲回)
-  └──────────────────┘
-
-  ┌──────────────────┐
-  │     VOIDED       │ (作废)
-  └──────────────────┘
+    classDef entry fill:#dbeafe,stroke:#3b82f6,color:#1e3a8a,stroke-width:1.5px
+    classDef success fill:#dcfce7,stroke:#22c55e,color:#14532d,stroke-width:1.5px
+    classDef warning fill:#fef9c3,stroke:#eab308,color:#713f12,stroke-width:1.5px
+    classDef danger fill:#fee2e2,stroke:#ef4444,color:#7f1d1d,stroke-width:1.5px
+    classDef muted fill:#f1f5f9,stroke:#94a3b8,color:#334155,stroke-width:1.5px
+    class PENDING_REVIEW warning
+    class LOCKED warning
+    class SETTLEABLE entry
+    class SETTLED success
+    class REVERSED danger
+    class VOIDED muted
 ```
 
 ### 核心代码：佣金自动生成
@@ -434,20 +413,22 @@ distributionAuditLogService.record(BUSINESS_ORDER, id, "event_" + eventType, ...
 
 ### 结算单的生命周期
 
-```
-佣金流水 SETTLEABLE
-       │
-       │ createSettlement (按渠道+时间段批量归集)
-       ▼
-  ┌──────────┐   approve   ┌──────────┐   pay   ┌──────────┐
-  │ PENDING  │────────────►│ APPROVED │────────►│   PAID   │
-  └──────────┘             └──────────┘         └──────────┘
-       │
-       │ reject
-       ▼
-  ┌──────────┐
-  │ REJECTED │
-  └──────────┘
+```mermaid
+stateDiagram-v2
+    [*] --> PENDING: createSettlement
+    PENDING --> APPROVED: approve
+    PENDING --> REJECTED: reject
+    APPROVED --> PAID: pay
+    PAID --> [*]
+    REJECTED --> [*]
+
+    classDef success fill:#dcfce7,stroke:#22c55e,color:#14532d,stroke-width:1.5px
+    classDef warning fill:#fef9c3,stroke:#eab308,color:#713f12,stroke-width:1.5px
+    classDef danger fill:#fee2e2,stroke:#ef4444,color:#7f1d1d,stroke-width:1.5px
+    class PENDING warning
+    class APPROVED success
+    class PAID success
+    class REJECTED danger
 ```
 
 ## 适用场景

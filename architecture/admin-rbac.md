@@ -31,7 +31,7 @@ flowchart TB
     end
 
     subgraph 上下文
-        M --> P[AdminAuthContext.set(principal)]
+        M --> P["AdminAuthContext.set(principal)"]
         P --> Q[业务代码读取当前管理员]
     end
 

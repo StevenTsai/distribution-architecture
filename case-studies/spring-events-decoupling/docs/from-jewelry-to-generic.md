@@ -6,12 +6,16 @@ This document explains how the three cross-module interaction patterns were extr
 
 The jewelry ERP has 6 modules that need to communicate:
 
-```
-jewelry-sales ──────────┐
-jewelry-production ─────┼──→ jewelry-common (shared entities, enums)
-jewelry-quality ────────┤
-jewelry-finance ────────┤
-jewelry-inventory ──────┘
+```mermaid
+flowchart LR
+    S[jewelry-sales] --> C[jewelry-common<br/>共享实体、枚举]
+    P[jewelry-production] --> C
+    Q[jewelry-quality] --> C
+    F[jewelry-finance] --> C
+    I[jewelry-inventory] --> C
+
+    class C warning
+    classDef warning fill:#fef9c3,stroke:#eab308,color:#713f12,stroke-width:1.5px
 ```
 
 Cross-module interactions found:

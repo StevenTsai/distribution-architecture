@@ -18,23 +18,41 @@ The MTO workflow engine is the core of its production module, managing the compl
 
 ## State Machine
 
-```
-                                    ┌──────────────────────────────────┐
-                                    │                                  │
-[new] ──create──→ PENDING ──schedule──→ SCHEDULED ──startWork──→ PRODUCING
-  │                 │                                                │
-  │                 │ markAsMaterialReady                             │ finishProcess (partial)
-  │                 ↓                                                ↓
-  │            MATERIAL_READY ──schedule──→ SCHEDULED      PARTIAL_FINISHED
-  │                                                          │
-  │                                      ┌───────────────────┘
-  │                                      │ finishProcess (all done) / finishWork
-  │                                      ↓
-  │                                 ALL_FINISHED ──→ WAREHOUSED ──→ CLOSED
-  │                                      │                            ↑
-  │                                      └──────────closeWork─────────┘
-  │
-  └──voidWork──→ VOID (from any except CLOSED/VOID)
+```mermaid
+stateDiagram-v2
+    [*] --> PENDING: create
+    PENDING --> SCHEDULED: schedule
+    PENDING --> MATERIAL_READY: markAsMaterialReady
+    MATERIAL_READY --> SCHEDULED: schedule
+    SCHEDULED --> PRODUCING: startWork
+    PRODUCING --> PARTIAL_FINISHED: finishProcess（partial）
+    PRODUCING --> ALL_FINISHED: finishProcess（all done）/ finishWork
+    PARTIAL_FINISHED --> ALL_FINISHED: finishProcess（all done）/ finishWork
+    ALL_FINISHED --> WAREHOUSED
+    WAREHOUSED --> CLOSED: closeWork
+    ALL_FINISHED --> CLOSED: closeWork
+    PENDING --> VOID: voidWork
+    MATERIAL_READY --> VOID: voidWork
+    SCHEDULED --> VOID: voidWork
+    PRODUCING --> VOID: voidWork
+    PARTIAL_FINISHED --> VOID: voidWork
+    ALL_FINISHED --> VOID: voidWork
+    WAREHOUSED --> VOID: voidWork
+    CLOSED --> [*]
+    VOID --> [*]
+
+    note right of VOID
+        任意状态均可进入（CLOSED / VOID 除外）
+    end note
+
+    classDef entry fill:#dbeafe,stroke:#3b82f6,color:#1e3a8a,stroke-width:1.5px
+    classDef success fill:#dcfce7,stroke:#22c55e,color:#14532d,stroke-width:1.5px
+    classDef warning fill:#fef9c3,stroke:#eab308,color:#713f12,stroke-width:1.5px
+    classDef danger fill:#fee2e2,stroke:#ef4444,color:#7f1d1d,stroke-width:1.5px
+    class PENDING entry
+    class PRODUCING warning
+    class CLOSED success
+    class VOID danger
 ```
 
 ### State Transitions

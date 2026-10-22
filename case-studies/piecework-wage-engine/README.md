@@ -38,10 +38,17 @@ Configurable per process — different processes can have different thresholds a
 
 ## Settlement Pipeline
 
-```
-PieceworkRecord → [CalculateStage] → [AdjustStage] → [ConfirmStage] → [SummaryStage]
-                  baseWage            adjustments      auto-confirm      worker summary
-                  coefficients        (optional)        (criteria-based)  (running total)
+```mermaid
+flowchart LR
+    A[PieceworkRecord] --> B["CalculateStage<br/>baseWage + coefficients"]
+    B --> C["AdjustStage<br/>adjustments（optional）"]
+    C --> D["ConfirmStage<br/>auto-confirm（criteria-based）"]
+    D --> E["SummaryStage<br/>worker summary（running total）"]
+
+    class A entry
+    class E success
+    classDef entry fill:#dbeafe,stroke:#3b82f6,color:#1e3a8a,stroke-width:1.5px
+    classDef success fill:#dcfce7,stroke:#22c55e,color:#14532d,stroke-width:1.5px
 ```
 
 ### Pipeline Stages

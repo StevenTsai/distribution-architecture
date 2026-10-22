@@ -99,8 +99,12 @@ WHERE a.biz_type = 'distributor' AND a.biz_id = 123;
 
 分销系统有复杂的关联关系：
 
-```
-渠道 → 成员 → 线索 → 归因 → 业务单 → 佣金流水 → 结算单
+```mermaid
+flowchart LR
+    A[渠道] --> B[成员] --> C[线索] --> D[归因] --> E[业务单] --> F[佣金流水] --> G[结算单]
+
+    class A,B,C,D,E,F,G muted
+    classDef muted fill:#f1f5f9,stroke:#94a3b8,color:#334155,stroke-width:1.5px
 ```
 
 如果物理删除了中间某个节点（如渠道），所有下游数据都会变成孤儿记录。逻辑删除保证了关联查询的完整性。

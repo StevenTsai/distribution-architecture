@@ -22,50 +22,46 @@ The jewelry ERP has 6 modules (`jewelry-sales`, `jewelry-production`, `jewelry-q
 
 ### 1. Delivery → Accounts Receivable
 
-```
-Sales Module                    Finance Module
-    │                               │
-    ├─ shipDelivery()               │
-    │   ├─ update delivery status   │
-    │   ├─ update order status      │
-    │   │                           │
-    │   └─ publishEvent ──────────→ │ @EventListener
-    │      DeliveryCompleteEvent    │   createReceivable()
-    │                               │   (30-day payment term)
+```mermaid
+sequenceDiagram
+    participant S as 销售模块
+    participant F as 财务模块
+    S->>S: shipDelivery()
+    S->>S: 更新发货单状态
+    S->>S: 更新订单状态
+    S-)F: publishEvent(DeliveryCompleteEvent)
+    F->>F: @EventListener createReceivable()
+    Note over F: 30 天账期
 ```
 
 **Source:** Real pattern from `jewelry-finance/DeliveryEventListener.java`
 
 ### 2. Work Order → Finished Goods Inventory
 
-```
-Production Module                Inventory Module
-    │                               │
-    ├─ finishWork()                 │
-    │   ├─ set ALL_FINISHED         │
-    │   │                           │
-    │   └─ publishEvent ──────────→ │ @EventListener
-    │      WorkOrderFinishedEvent   │   createFinishedGoods()
-    │                               │
-    │ (BEFORE: direct call to       │
-    │  finishedInventoryService)    │
+```mermaid
+sequenceDiagram
+    participant P as 生产模块
+    participant I as 库存模块
+    P->>P: finishWork()
+    P->>P: set ALL_FINISHED
+    P-)I: publishEvent(WorkOrderFinishedEvent)
+    I->>I: @EventListener createFinishedGoods()
+    Note over P: BEFORE：直接调用 finishedInventoryService
 ```
 
 **Source:** Refactored from `jewelry-production/BizWorkOrderServiceImpl.finishWork()` which directly called `finishedInventoryService.createInventory()`.
 
 ### 3. Quality Defect → Rework Work Order
 
-```
-Quality Module                   Production Module
-    │                               │
-    ├─ handleDefect()               │
-    │   ├─ record defect            │
-    │   │                           │
-    │   └─ publishEvent ──────────→ │ @EventListener
-    │      QualityDefectEvent       │   createReworkOrder()
-    │                               │
-    │ (BEFORE: no cross-module      │
-    │  side effect at all)          │
+```mermaid
+sequenceDiagram
+    participant Q as 质检模块
+    participant P as 生产模块
+    Q->>Q: handleDefect()
+    Q->>Q: record defect
+    Q-)P: publishEvent(QualityDefectEvent)
+    P->>P: @EventListener createReworkOrder()
+    Note over Q: BEFORE：跨模块无任何副作用
 ```
 
 **Source:** Refactored from `jewelry-quality/BizQualityServiceImpl.handleDefect()` which only inserted a defect record without triggering rework.

@@ -35,11 +35,26 @@ Two design points worth copying:
 
 ## Guard 2: StateStore — Middleware 2→1 with Zero-Code Rollback
 
-```
-app.state.store = mysql (default, matchIfMissing)  →  MysqlStateStore   (app_state table, zero extra middleware)
-               | redis                              →  RedisStateStore   (rollback path, resident code)
-               | memory                             →  InMemoryStateStore (contract reference / local dev)
-               | anything else                      →  no bean (StartupGuard rejects at startup)
+```mermaid
+flowchart LR
+    A["app.state.store"] --> B{value}
+    B -->|"mysql (default)"| C["MysqlStateStore<br/>app_state table, no extra middleware"]
+    B -->|redis| D["RedisStateStore<br/>rollback path, resident code"]
+    B -->|memory| E["InMemoryStateStore<br/>contract reference / local dev"]
+    B -->|anything else| F["No bean<br/>StartupGuard rejects at startup"]
+
+    class A entry
+    class B decision
+    class C success
+    class D warning
+    class E muted
+    class F danger
+    classDef entry fill:#dbeafe,stroke:#3b82f6,color:#1e3a8a,stroke-width:1.5px
+    classDef decision fill:#ede9fe,stroke:#8b5cf6,color:#4c1d95,stroke-width:1.5px
+    classDef success fill:#dcfce7,stroke:#22c55e,color:#14532d,stroke-width:1.5px
+    classDef warning fill:#fef9c3,stroke:#eab308,color:#713f12,stroke-width:1.5px
+    classDef danger fill:#fee2e2,stroke:#ef4444,color:#7f1d1d,stroke-width:1.5px
+    classDef muted fill:#f1f5f9,stroke:#94a3b8,color:#334155,stroke-width:1.5px
 ```
 
 Six primitives (`set` / `get` / `setIfAbsent` / `delete` / `exists` / `increment`) with a written semantic contract; JSON values; tolerant read (corrupt value → treated as missing and deleted).

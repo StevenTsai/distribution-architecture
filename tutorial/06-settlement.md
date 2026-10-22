@@ -13,16 +13,20 @@
 
 ## 结算单 vs 佣金流水
 
-```
-佣金流水（多条）              结算单（一条）
-┌────────────────────┐      ┌────────────────────┐
-│ 流水1: +5000       │──┐   │ 结算单 #DST001     │
-│ 流水2: +3000       │──┼──►│ 渠道: A 渠道       │
-│ 流水3: +2000       │──┘   │ 期间: 2026-06      │
-└────────────────────┘      │ 应结: 10000        │
-                            │ 冲回: 0            │
-                            │ 实结: 10000        │
-                            └────────────────────┘
+```mermaid
+flowchart LR
+    subgraph Ledger["佣金流水（多条）"]
+        A1["流水 1: +5000"]
+        A2["流水 2: +3000"]
+        A3["流水 3: +2000"]
+    end
+    S["结算单 #DST001<br/>渠道: A 渠道<br/>期间: 2026-06<br/>应结: 10000<br/>冲回: 0<br/>实结: 10000"]
+    A1 --> S
+    A2 --> S
+    A3 --> S
+
+    class S success
+    classDef success fill:#dcfce7,stroke:#22c55e,color:#14532d,stroke-width:1.5px
 ```
 
 一条结算单对应多条佣金流水。结算单是"给渠道的付款凭证"。
@@ -161,10 +165,22 @@ public Long createSettlement(CreateDistributionSettlementRequestDTO request) {
 
 结算单的状态流转：
 
-```
-PENDING ──► APPROVED ──► PAID
-    │
-    └──► REJECTED
+```mermaid
+stateDiagram-v2
+    [*] --> PENDING
+    PENDING --> APPROVED: approve
+    PENDING --> REJECTED: reject
+    APPROVED --> PAID: pay
+    PAID --> [*]
+    REJECTED --> [*]
+
+    classDef success fill:#dcfce7,stroke:#22c55e,color:#14532d,stroke-width:1.5px
+    classDef warning fill:#fef9c3,stroke:#eab308,color:#713f12,stroke-width:1.5px
+    classDef danger fill:#fee2e2,stroke:#ef4444,color:#7f1d1d,stroke-width:1.5px
+    class PENDING warning
+    class APPROVED success
+    class PAID success
+    class REJECTED danger
 ```
 
 ```java

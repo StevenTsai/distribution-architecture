@@ -14,20 +14,22 @@
 
 ## 分层架构
 
-```
-┌─────────────────────────────────────────────────┐
-│  Controller  (薄层：路由 + 异常捕获)              │
-│  @Slf4j @RestController @OpsApi @SessionAuth    │
-├─────────────────────────────────────────────────┤
-│  Service     (厚层：业务逻辑 + 权限 + 校验)       │
-│  接口 + 实现，@Transactional                     │
-├─────────────────────────────────────────────────┤
-│  Mapper      (薄层：SQL 映射)                    │
-│  接口 + XML，三段式 SQL 片段                      │
-├─────────────────────────────────────────────────┤
-│  Entity      (纯数据容器)                        │
-│  @Data，无业务逻辑                               │
-└─────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    A["Controller（薄层）<br/>路由 + 异常捕获<br/>@RestController / @SessionAuth"]
+    B["Service（厚层）<br/>业务逻辑 + 权限 + 校验<br/>接口 + 实现 / @Transactional"]
+    C["Mapper（薄层）<br/>SQL 映射<br/>接口 + XML / 三段式片段"]
+    D["Entity（纯数据容器）<br/>@Data / 无业务逻辑"]
+
+    A --> B --> C --> D
+
+    class A entry
+    class B warning
+    class C entry
+    class D muted
+    classDef entry fill:#dbeafe,stroke:#3b82f6,color:#1e3a8a,stroke-width:1.5px
+    classDef warning fill:#fef9c3,stroke:#eab308,color:#713f12,stroke-width:1.5px
+    classDef muted fill:#f1f5f9,stroke:#94a3b8,color:#334155,stroke-width:1.5px
 ```
 
 ## 第一步：Mapper 层

@@ -6,6 +6,8 @@
 
 ## 架构总览
 
+**写入与检索**
+
 ```mermaid
 flowchart TB
     subgraph 写入链路
@@ -23,6 +25,22 @@ flowchart TB
         J --> K[WHERE lookup_key = ?]
     end
 
+    E -.->|后续按明文检索| G
+
+    class A,G entry
+    class C decision
+    class E success
+    class F warning
+    classDef entry fill:#dbeafe,stroke:#3b82f6,color:#1e3a8a,stroke-width:1.5px
+    classDef decision fill:#ede9fe,stroke:#8b5cf6,color:#4c1d95,stroke-width:1.5px
+    classDef success fill:#dcfce7,stroke:#22c55e,color:#14532d,stroke-width:1.5px
+    classDef warning fill:#fef9c3,stroke:#eab308,color:#713f12,stroke-width:1.5px
+```
+
+**读取与展示**
+
+```mermaid
+flowchart TB
     subgraph 读取链路
         L[查出密文] --> M[PiiCipher.decrypt]
         M --> N{enc:v1: 前缀?}
@@ -37,10 +55,17 @@ flowchart TB
         U --> V["[pii] 手机号访问 action=xxx mobile=138****5678"]
     end
 
-    class C decision
-    class E success
+    O --> Q
+    P --> Q
+
+    class L,Q,T entry
+    class N decision
+    class S success
+    class V warning
+    classDef entry fill:#dbeafe,stroke:#3b82f6,color:#1e3a8a,stroke-width:1.5px
     classDef decision fill:#ede9fe,stroke:#8b5cf6,color:#4c1d95,stroke-width:1.5px
     classDef success fill:#dcfce7,stroke:#22c55e,color:#14532d,stroke-width:1.5px
+    classDef warning fill:#fef9c3,stroke:#eab308,color:#713f12,stroke-width:1.5px
 ```
 
 ---
@@ -239,18 +264,19 @@ String masked = piiCipher.mask(piiCipher.decrypt(user.getMobileEnc()));
 
 Node 和 Java 实现必须产出相同的密文（固定 IV）或能互相解密（随机 IV）。
 
-```
-Node (基准)                    Java (现役)
-    │                              │
-    ├─ 固定密钥 test-key           │
-    ├─ 固定 IV（fixture 用）       │
-    ├─ encrypt("13800138000")      │
-    │  → enc:v1:fixedIv:...        │
-    │                              │
-    └──────────────────────────────┘
-           fixture.json
-                │
-    Java 加载 fixture → decrypt → 应得到 "13800138000"
+```mermaid
+sequenceDiagram
+    autonumber
+    participant N as Node（基准）
+    participant F as fixture.json
+    participant J as Java（现役）
+    N->>N: 固定密钥 test-key
+    N->>N: 固定 IV（fixture 用）
+    N->>N: encrypt("13800138000")
+    N->>F: 写入 enc:v1:fixedIv:...
+    F->>J: 加载同一份 fixture
+    J->>J: decrypt
+    J-->>J: 应得到 "13800138000"
 ```
 
 **注意**：生产使用随机 IV，同一明文每次加密结果不同。对拍测试只验证"能否解出明文"，不验证字节相等。

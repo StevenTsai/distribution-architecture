@@ -99,8 +99,12 @@ WHERE a.biz_type = 'distributor' AND a.biz_id = 123;
 
 Distribution systems have complex relationships:
 
-```
-Distributor → Member → Lead → Attribution → Business Order → Commission Ledger → Settlement
+```mermaid
+flowchart LR
+    A[Distributor] --> B[Member] --> C[Lead] --> D[Attribution] --> E[Business Order] --> F[Commission Ledger] --> G[Settlement]
+
+    class A,B,C,D,E,F,G muted
+    classDef muted fill:#f1f5f9,stroke:#94a3b8,color:#334155,stroke-width:1.5px
 ```
 
 If an intermediate node (e.g., distributor) is physically deleted, all downstream data becomes orphan records. Logical deletion ensures referential query integrity.

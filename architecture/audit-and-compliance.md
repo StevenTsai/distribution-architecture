@@ -6,25 +6,15 @@
 
 ## 架构总览
 
+**审计日志（被动记录）**
+
 ```mermaid
 flowchart TB
-    subgraph 审计日志["审计日志（被动记录）"]
-        A[Service 方法] -->|调用| B[distributionAuditLogService.record]
-        B --> C[自动获取操作人信息]
-        C --> D[序列化 before/after 快照]
-        D --> E[写入 distribution_audit_log]
-        E --> F[不可变，无 deleted 字段]
-    end
-
-    subgraph 合规记录["合规记录（主动管理）"]
-        G[业务触发] --> H[创建合规记录 pending]
-        H --> I[提交审核材料]
-        I --> J{审核结果}
-        J -->|通过| K[approved]
-        J -->|拒绝| L[rejected]
-        K --> M[关联业务继续推进]
-        L --> N[关联业务阻断]
-    end
+    A[Service 方法] -->|调用| B[distributionAuditLogService.record]
+    B --> C[自动获取操作人信息]
+    C --> D[序列化 before/after 快照]
+    D --> E[写入 distribution_audit_log]
+    E --> F[不可变，无 deleted 字段]
 
     subgraph 数据结构
         E --> O["before_snapshot: JSON"]
@@ -34,10 +24,24 @@ flowchart TB
     end
 
     class F warning
+    classDef warning fill:#fef9c3,stroke:#eab308,color:#713f12,stroke-width:1.5px
+```
+
+**合规记录（主动管理）**
+
+```mermaid
+flowchart TB
+    G[业务触发] --> H[创建合规记录 pending]
+    H --> I[提交审核材料]
+    I --> J{审核结果}
+    J -->|通过| K[approved]
+    J -->|拒绝| L[rejected]
+    K --> M[关联业务继续推进]
+    L --> N[关联业务阻断]
+
     class K success
     class L danger
     classDef success fill:#dcfce7,stroke:#22c55e,color:#14532d,stroke-width:1.5px
-    classDef warning fill:#fef9c3,stroke:#eab308,color:#713f12,stroke-width:1.5px
     classDef danger fill:#fee2e2,stroke:#ef4444,color:#7f1d1d,stroke-width:1.5px
 ```
 
@@ -113,16 +117,20 @@ flowchart TB
 
 所有审计日志通过 `DistributionAuditLogService.record()` 一个方法写入，而非每个 Service 自己拼装日志对象。
 
-```java
-// 统一入口
-distributionAuditLogService.record(
-    bizType,          // 业务类型：business_order / commission / settlement / ...
-    bizId,            // 业务对象 ID
-    action,           // 操作：create / update / delete / event_xxx / lock / ...
-    beforeSnapshot,   // 变更前的对象（可为 null，如创建操作）
-    afterSnapshot,    // 变更后的对象（可为 null，如删除操作）
-    remark            // 操作说明
-);
+```mermaid
+flowchart TB
+    A["任何写操作<br/>（增删改、状态变更、<br/>事件、加锁）"] -->|业务完成后调用| B["distributionAuditLogService.record(...)"]
+    B --> C["自动获取操作人上下文"]
+    C --> D["序列化 before / after 快照"]
+    D --> E[("distribution_audit_log")]
+    E --> F["不可变记录<br/>无 deleted 字段"]
+
+    class A entry
+    class B warning
+    class E success
+    classDef entry fill:#dbeafe,stroke:#3b82f6,color:#1e3a8a,stroke-width:1.5px
+    classDef warning fill:#fef9c3,stroke:#eab308,color:#713f12,stroke-width:1.5px
+    classDef success fill:#dcfce7,stroke:#22c55e,color:#14532d,stroke-width:1.5px
 ```
 
 **为什么统一入口？**
@@ -263,26 +271,20 @@ failClosed 由**调用点显式传参**，不是全局开关——判定"这个�
 
 ### 整体架构
 
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                        Service 层                                    │
-│                                                                      │
-│  任何写操作（create/update/delete/status_change/event/lock/...）     │
-│       │                                                              │
-│       │ 业务操作完成后调用                                           │
-│       ▼                                                              │
-│  distributionAuditLogService.record(                                │
-│      bizType, bizId, action, beforeSnapshot, afterSnapshot, remark) │
-│       │                                                              │
-│       │ 自动获取操作人上下文                                         │
-│       ▼                                                              │
-│  DistributionAuditLogServiceImpl.record() {                         │
-│      operator = getCurrentOperatorUser();                            │
-│      entity.setBeforeSnapshot(objectMapper.writeValueAsString(o));  │
-│      entity.setAfterSnapshot(objectMapper.writeValueAsString(n));   │
-│      mapper.insertSelective(entity);                                │
-│  }                                                                   │
-└─────────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    A["任何写操作<br/>（增删改、状态变更、<br/>事件、加锁）"] -->|业务操作完成后调用| B["distributionAuditLogService.record(...)"]
+    B --> C["自动获取操作人上下文"]
+    C --> D["ObjectMapper 序列化<br/>before / after 快照"]
+    D --> E[("distribution_audit_log")]
+    E --> F["不可变记录<br/>无 deleted 字段"]
+
+    class A entry
+    class B warning
+    class E success
+    classDef entry fill:#dbeafe,stroke:#3b82f6,color:#1e3a8a,stroke-width:1.5px
+    classDef warning fill:#fef9c3,stroke:#eab308,color:#713f12,stroke-width:1.5px
+    classDef success fill:#dcfce7,stroke:#22c55e,color:#14532d,stroke-width:1.5px
 ```
 
 ### 核心代码：统一的审计记录方法
@@ -442,18 +444,18 @@ public class DistributionComplianceRecordEntity {
 
 合规记录的生命周期：
 
-```
-  ┌─────────┐
-  │ PENDING │  ← 创建合规记录
-  └─────────┘
-       │
-       ├── approve ──► ┌──────────┐
-       │               │ APPROVED │
-       │               └──────────┘
-       │
-       └── reject ───► ┌──────────┐
-                       │ REJECTED │
-                       └──────────┘
+```mermaid
+stateDiagram-v2
+    [*] --> PENDING: 创建合规记录
+    PENDING --> APPROVED: approve
+    PENDING --> REJECTED: reject
+    APPROVED --> [*]
+    REJECTED --> [*]
+
+    classDef success fill:#dcfce7,stroke:#22c55e,color:#14532d,stroke-width:1.5px
+    classDef danger fill:#fee2e2,stroke:#ef4444,color:#7f1d1d,stroke-width:1.5px
+    class APPROVED success
+    class REJECTED danger
 ```
 
 ## 适用场景

@@ -8,25 +8,15 @@
 
 ## Architecture Overview
 
+**Audit Log (Passive Recording)**
+
 ```mermaid
 flowchart TB
-    subgraph AuditLog["Audit Log (Passive Recording)"]
-        A[Service Method] -->|invoke| B[distributionAuditLogService.record]
-        B --> C[Automatically obtain operator info]
-        C --> D[Serialize before/after snapshots]
-        D --> E[Write to distribution_audit_log]
-        E --> F[Immutable, no deleted field]
-    end
-
-    subgraph ComplianceRecord["Compliance Record (Active Management)"]
-        G[Business trigger] --> H[Create compliance record pending]
-        H --> I[Submit review materials]
-        I --> J{Review result}
-        J -->|Approved| K[approved]
-        J -->|Rejected| L[rejected]
-        K --> M[Associated business proceeds]
-        L --> N[Associated business blocked]
-    end
+    A[Service Method] -->|invoke| B[distributionAuditLogService.record]
+    B --> C[Automatically obtain operator info]
+    C --> D[Serialize before/after snapshots]
+    D --> E[Write to distribution_audit_log]
+    E --> F[Immutable, no deleted field]
 
     subgraph DataStructure[Data Structure]
         E --> O["before_snapshot: JSON"]
@@ -36,10 +26,24 @@ flowchart TB
     end
 
     class F warning
+    classDef warning fill:#fef9c3,stroke:#eab308,color:#713f12,stroke-width:1.5px
+```
+
+**Compliance Record (Active Management)**
+
+```mermaid
+flowchart TB
+    G[Business trigger] --> H[Create compliance record pending]
+    H --> I[Submit review materials]
+    I --> J{Review result}
+    J -->|Approved| K[approved]
+    J -->|Rejected| L[rejected]
+    K --> M[Associated business proceeds]
+    L --> N[Associated business blocked]
+
     class K success
     class L danger
     classDef success fill:#dcfce7,stroke:#22c55e,color:#14532d,stroke-width:1.5px
-    classDef warning fill:#fef9c3,stroke:#eab308,color:#713f12,stroke-width:1.5px
     classDef danger fill:#fee2e2,stroke:#ef4444,color:#7f1d1d,stroke-width:1.5px
 ```
 
@@ -115,16 +119,20 @@ Split "operation auditing" and "compliance review" into two independent tables:
 
 All audit logs are written through a single method, `DistributionAuditLogService.record()`, rather than each Service assembling log objects itself.
 
-```java
-// Single entry point
-distributionAuditLogService.record(
-    bizType,          // Business type: business_order / commission / settlement / ...
-    bizId,            // Business object ID
-    action,           // Operation: create / update / delete / event_xxx / lock / ...
-    beforeSnapshot,   // Object before the change (may be null, e.g. for create)
-    afterSnapshot,    // Object after the change (may be null, e.g. for delete)
-    remark            // Operation description
-);
+```mermaid
+flowchart TB
+    A["Any write operation<br/>(CRUD, status change,<br/>events, locking)"] -->|called after the business operation| B["distributionAuditLogService.record(...)"]
+    B --> C["Obtain operator context automatically"]
+    C --> D["Serialize before / after snapshots"]
+    D --> E[("distribution_audit_log")]
+    E --> F["Immutable record<br/>no deleted field"]
+
+    class A entry
+    class B warning
+    class E success
+    classDef entry fill:#dbeafe,stroke:#3b82f6,color:#1e3a8a,stroke-width:1.5px
+    classDef warning fill:#fef9c3,stroke:#eab308,color:#713f12,stroke-width:1.5px
+    classDef success fill:#dcfce7,stroke:#22c55e,color:#14532d,stroke-width:1.5px
 ```
 
 **Why a single entry point?**
@@ -265,26 +273,20 @@ failClosed is **passed explicitly at the call site**, not a global switch — th
 
 ### Overall Architecture
 
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                        Service Layer                                 │
-│                                                                      │
-│  Any write operation (create/update/delete/status_change/event/lock) │
-│       │                                                              │
-│       │ Called after the business operation completes                │
-│       ▼                                                              │
-│  distributionAuditLogService.record(                                │
-│      bizType, bizId, action, beforeSnapshot, afterSnapshot, remark) │
-│       │                                                              │
-│       │ Obtain operator context automatically                        │
-│       ▼                                                              │
-│  DistributionAuditLogServiceImpl.record() {                         │
-│      operator = getCurrentOperatorUser();                            │
-│      entity.setBeforeSnapshot(objectMapper.writeValueAsString(o));  │
-│      entity.setAfterSnapshot(objectMapper.writeValueAsString(n));   │
-│      mapper.insertSelective(entity);                                │
-│  }                                                                   │
-└─────────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    A["Any write operation<br/>(CRUD, status change,<br/>events, locking)"] -->|called after the business operation| B["distributionAuditLogService.record(...)"]
+    B --> C["Obtain operator context automatically"]
+    C --> D["ObjectMapper serializes<br/>before / after snapshots"]
+    D --> E[("distribution_audit_log")]
+    E --> F["Immutable record<br/>no deleted field"]
+
+    class A entry
+    class B warning
+    class E success
+    classDef entry fill:#dbeafe,stroke:#3b82f6,color:#1e3a8a,stroke-width:1.5px
+    classDef warning fill:#fef9c3,stroke:#eab308,color:#713f12,stroke-width:1.5px
+    classDef success fill:#dcfce7,stroke:#22c55e,color:#14532d,stroke-width:1.5px
 ```
 
 ### Core Code: Unified Audit Recording Method
@@ -444,18 +446,18 @@ public class DistributionComplianceRecordEntity {
 
 Lifecycle of a compliance record:
 
-```
-  ┌─────────┐
-  │ PENDING │  ← Create compliance record
-  └─────────┘
-       │
-       ├── approve ──► ┌──────────┐
-       │               │ APPROVED │
-       │               └──────────┘
-       │
-       └── reject ───► ┌──────────┐
-                       │ REJECTED │
-                       └──────────┘
+```mermaid
+stateDiagram-v2
+    [*] --> PENDING: create compliance record
+    PENDING --> APPROVED: approve
+    PENDING --> REJECTED: reject
+    APPROVED --> [*]
+    REJECTED --> [*]
+
+    classDef success fill:#dcfce7,stroke:#22c55e,color:#14532d,stroke-width:1.5px
+    classDef danger fill:#fee2e2,stroke:#ef4444,color:#7f1d1d,stroke-width:1.5px
+    class APPROVED success
+    class REJECTED danger
 ```
 
 ## Applicable Scenarios

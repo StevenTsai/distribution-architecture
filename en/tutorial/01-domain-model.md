@@ -18,16 +18,24 @@ After completing this chapter, you will have:
 
 The distribution business can be summed up in one sentence: **A distributor recommends a contact, the contact generates business, and the business generates commission**.
 
-```
-┌──────────┐   recommend   ┌──────────┐   generate   ┌──────────┐    trigger    ┌──────────┐
-│Distributor│──────────────►│   Lead   │─────────────►│ BizOrder │──────────────►│Commission│
-└──────────┘               └──────────┘              └──────────┘               └──────────┘
-     │                          │                         │
-     │ contains                 │ associated              │ associated
-     ▼                          ▼                         ▼
-┌──────────┐               ┌──────────┐              ┌──────────┐
-│  Member  │               │Attribution│             │  Event   │
-└──────────┘               └──────────┘              └──────────┘
+```mermaid
+flowchart LR
+    D[Distributor] -->|recommend| L[Lead]
+    L -->|generate| B[BizOrder]
+    B -->|trigger| C[Commission]
+    D -->|contains| M[Member]
+    L -->|associated| A[Attribution]
+    B -->|associated| E[Event]
+
+    class D entry
+    class L entry
+    class B warning
+    class C success
+    class M,A,E muted
+    classDef entry fill:#dbeafe,stroke:#3b82f6,color:#1e3a8a,stroke-width:1.5px
+    classDef warning fill:#fef9c3,stroke:#eab308,color:#713f12,stroke-width:1.5px
+    classDef success fill:#dcfce7,stroke:#22c55e,color:#14532d,stroke-width:1.5px
+    classDef muted fill:#f1f5f9,stroke:#94a3b8,color:#334155,stroke-width:1.5px
 ```
 
 ## Entity 1: Distributor
@@ -267,26 +275,16 @@ CREATE TABLE distribution_business_order_event (
 
 ## Entity Relationship Overview
 
-```
-user_profile (system user)
-    │
-    ├── 1:N ── distribution_distributor_member (distributor member)
-    │               │
-    │               ├── N:1 ── distribution_distributor (distributor)
-    │               │               │
-    │               │               └── self-ref ── parent_id (parent distributor)
-    │               │
-    │               └── 1:N ── distribution_lead (lead)
-    │                               │
-    │                               ├── 1:1 ── distribution_contact_attribution (attribution)
-    │                               │               │
-    │                               │               └── N:1 ── contact_info (contact)
-    │                               │
-    │                               └── 1:N ── distribution_business_order (business order)
-    │                                               │
-    │                                               └── 1:N ── distribution_business_order_event (event)
-    │
-    └── (created_by, updated_by, owner_user_id referenced in each table)
+```mermaid
+erDiagram
+    USER_PROFILE ||--o{ DISTRIBUTOR_MEMBER : "1:N"
+    DISTRIBUTOR ||--o{ DISTRIBUTOR_MEMBER : "1:N"
+    DISTRIBUTOR ||--o{ DISTRIBUTOR : "parent_id"
+    DISTRIBUTOR_MEMBER ||--o{ LEAD : "1:N"
+    LEAD ||--|| CONTACT_ATTRIBUTION : "1:1"
+    CONTACT_INFO ||--o{ CONTACT_ATTRIBUTION : "1:N"
+    LEAD ||--o{ BUSINESS_ORDER : "1:N"
+    BUSINESS_ORDER ||--o{ BUSINESS_ORDER_EVENT : "1:N"
 ```
 
 ## Design Decision Notes

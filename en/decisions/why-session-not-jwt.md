@@ -23,28 +23,21 @@ Use database-backed Session Token authentication, with tokens stored in the `use
 
 ### Authentication Flow
 
-```
-Client                              Server
-  │                                   │
-  │  POST /login                      │
-  │  {username, password}             │
-  │ ─────────────────────────────────►│
-  │                                   │ 1. Validate username/password
-  │                                   │ 2. Generate random token
-  │                                   │ 3. INSERT INTO user_login_session
-  │  {token}                          │    (skey=token, biz=..., expire_time=...)
-  │ ◄─────────────────────────────────│
-  │                                   │
-  │  GET /api/manage/xxx              │
-  │  Authorization: {token}           │
-  │  x-biz: distribution-starter      │
-  │ ─────────────────────────────────►│
-  │                                   │ 4. SELECT FROM user_login_session
-  │                                   │    WHERE skey=? AND expire_time > NOW()
-  │                                   │ 5. Resolve admin_user_id → user_id
-  │                                   │ 6. ThreadLocal.set(userId)
-  │  {data}                           │
-  │ ◄─────────────────────────────────│
+```mermaid
+sequenceDiagram
+    autonumber
+    participant C as Client
+    participant S as Server
+    C->>S: POST /login {username, password}
+    S->>S: validate username/password
+    S->>S: generate a random token
+    S->>S: INSERT INTO user_login_session
+    S-->>C: {token}
+    C->>S: GET /api/manage/xxx<br/>Authorization: {token}<br/>x-biz: distribution-starter
+    S->>S: SELECT user_login_session<br/>WHERE skey=? AND expire_time > NOW()
+    S->>S: resolve admin_user_id → user_id
+    S->>S: ThreadLocal.set(userId)
+    S-->>C: {data}
 ```
 
 ### Core Code

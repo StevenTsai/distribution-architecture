@@ -68,10 +68,17 @@ The traditional approach is to manually append `WHERE` conditions in each query 
 
 The `data_scope` and `role_code` fields are on the `distribution_distributor_member` table, not the `admin_user` table.
 
-```
-admin_user (System User)
-    └── distribution_distributor_member (Distribution Member) ← data_scope, role_code here
-            └── distribution_distributor (Belonging Distributor)
+```mermaid
+flowchart LR
+    U[admin_user<br/>System User] --> M["distribution_distributor_member<br/>data_scope / role_code"]
+    M --> D[distribution_distributor<br/>Belonging Distributor]
+
+    class U entry
+    class M warning
+    class D muted
+    classDef entry fill:#dbeafe,stroke:#3b82f6,color:#1e3a8a,stroke-width:1.5px
+    classDef warning fill:#fef9c3,stroke:#eab308,color:#713f12,stroke-width:1.5px
+    classDef muted fill:#f1f5f9,stroke:#94a3b8,color:#334155,stroke-width:1.5px
 ```
 
 **Reason**: The same system user may have different roles in different distributors. For example, John is a salesperson (`SELF`) in Distributor A, but a manager (`OWN_DISTRIBUTOR`) in Distributor B. If stored on the user table, this multi-distributor multi-role scenario cannot be expressed.
@@ -148,36 +155,32 @@ Permission conditions are injected into SQL via MyBatis `<sql>` fragments, rathe
 
 ### Overall Architecture
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        Controller Layer                          │
-│  @SessionAuth → Parse Token → ThreadLocal userId                │
-└──────────────────────────────┬──────────────────────────────────┘
-                               │
-┌──────────────────────────────▼──────────────────────────────────┐
-│                        Service Layer                             │
-│                                                                  │
-│  1. resolveCurrentAccessScope()                                  │
-│     → Query member table → Read roleCode + dataScope             │
-│     → resolveAuthorizedDistributorIds()                          │
-│     → Return DistributionDataAccessScope (immutable object)      │
-│                                                                  │
-│  2. checkAccessPermission(distributorId, memberId, ownerUserId)  │
-│     → ALL: Pass through                                          │
-│     → SELF: Check if memberId or ownerUserId matches             │
-│     → OWN_DISTRIBUTOR / OWN_AND_CHILDREN:                       │
-│       Check if distributorId is in authorizedDistributorIds      │
-└──────────────────────────────┬──────────────────────────────────┘
-                               │
-┌──────────────────────────────▼──────────────────────────────────┐
-│                        Mapper Layer                              │
-│                                                                  │
-│  <select id="selectByConditionWithScope">                        │
-│    SELECT ... FROM table                                         │
-│    <include refid="ConditionWhere"/>    ← Business filter        │
-│    <include refid="ScopeCondition"/>    ← Permission filter      │
-│  </select>                                                       │
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph Controller["Controller Layer"]
+        A["@SessionAuth"] --> B["Parse Token"]
+        B --> C["ThreadLocal userId"]
+    end
+
+    subgraph Service["Service Layer"]
+        D["resolveCurrentAccessScope()"] --> E["Query member table<br/>read roleCode + dataScope"]
+        E --> F["resolveAuthorizedDistributorIds()"]
+        F --> G["DistributionDataAccessScope<br/>immutable object"]
+        G --> H["checkAccessPermission(...)"]
+        H --> I{dataScope}
+        I -->|ALL| J[Pass through]
+        I -->|SELF| K[Check memberId / ownerUserId]
+        I -->|OWN_DISTRIBUTOR / OWN_AND_CHILDREN| L[Check distributorId against the authorized set]
+    end
+
+    C --> D
+
+    class A entry
+    class I decision
+    class J,K,L success
+    classDef entry fill:#dbeafe,stroke:#3b82f6,color:#1e3a8a,stroke-width:1.5px
+    classDef decision fill:#ede9fe,stroke:#8b5cf6,color:#4c1d95,stroke-width:1.5px
+    classDef success fill:#dcfce7,stroke:#22c55e,color:#14532d,stroke-width:1.5px
 ```
 
 ### Core Code: Permission Resolution

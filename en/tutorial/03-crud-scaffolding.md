@@ -16,20 +16,22 @@ Using "lead management" as an example, build the complete CRUD path:
 
 ## Layered Architecture
 
-```
-┌─────────────────────────────────────────────────┐
-│  Controller  (thin layer: routing + exception handling) │
-│  @Slf4j @RestController @OpsApi @SessionAuth    │
-├─────────────────────────────────────────────────┤
-│  Service     (thick layer: business logic + permissions + validation) │
-│  interface + implementation, @Transactional     │
-├─────────────────────────────────────────────────┤
-│  Mapper      (thin layer: SQL mapping)          │
-│  interface + XML, three-part SQL fragment       │
-├─────────────────────────────────────────────────┤
-│  Entity      (pure data container)              │
-│  @Data, no business logic                       │
-└─────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    A["Controller (thin layer)<br/>routing + exception handling<br/>@RestController / @SessionAuth"]
+    B["Service (thick layer)<br/>business logic + permissions + validation<br/>interface + impl / @Transactional"]
+    C["Mapper (thin layer)<br/>SQL mapping<br/>interface + XML / three-part fragments"]
+    D["Entity (pure data container)<br/>@Data / no business logic"]
+
+    A --> B --> C --> D
+
+    class A entry
+    class B warning
+    class C entry
+    class D muted
+    classDef entry fill:#dbeafe,stroke:#3b82f6,color:#1e3a8a,stroke-width:1.5px
+    classDef warning fill:#fef9c3,stroke:#eab308,color:#713f12,stroke-width:1.5px
+    classDef muted fill:#f1f5f9,stroke:#94a3b8,color:#334155,stroke-width:1.5px
 ```
 
 ## Step 1: Mapper Layer

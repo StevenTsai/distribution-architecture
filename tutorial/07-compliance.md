@@ -123,24 +123,23 @@ public class DistributionComplianceServiceImpl implements DistributionCompliance
 
 ## 第四步：合规记录生命周期
 
-```
-┌─────────┐
-│ PENDING │  ← 创建合规记录
-└─────────┘
-     │
-     ├── approve ──► ┌──────────┐
-     │               │ APPROVED │
-     │               └──────────┘
-     │
-     └── reject ───► ┌──────────┐
-                     │ REJECTED │
-                     └──────────┘
+```mermaid
+stateDiagram-v2
+    [*] --> PENDING: 创建合规记录
+    PENDING --> APPROVED: approve
+    PENDING --> REJECTED: reject
+    APPROVED --> EXPIRED: 资质到期
+    APPROVED --> [*]
+    REJECTED --> [*]
+    EXPIRED --> [*]
 
-（资质类记录还可以过期）
-┌──────────┐
-│ APPROVED │ ──► ┌─────────┐
-└──────────┘     │ EXPIRED │
-                 └─────────┘
+    classDef success fill:#dcfce7,stroke:#22c55e,color:#14532d,stroke-width:1.5px
+    classDef warning fill:#fef9c3,stroke:#eab308,color:#713f12,stroke-width:1.5px
+    classDef danger fill:#fee2e2,stroke:#ef4444,color:#7f1d1d,stroke-width:1.5px
+    class PENDING warning
+    class APPROVED success
+    class REJECTED danger
+    class EXPIRED danger
 ```
 
 ## 第五步：嵌入业务流程
@@ -205,12 +204,17 @@ PageResponseDTO<DistributionComplianceRecordDTO> pending =
 
 合规记录和审计日志是互补的：
 
-```
-业务操作
-  │
-  ├──► 审计日志：记录"做了什么"（自动，所有操作）
-  │
-  └──► 合规记录：记录"是否合规"（手动，特定场景）
+```mermaid
+flowchart LR
+    A[业务操作] --> B["审计日志<br/>记录“做了什么”<br/>自动，所有操作"]
+    A --> C["合规记录<br/>记录“是否合规”<br/>手动，特定场景"]
+
+    class A entry
+    class B warning
+    class C success
+    classDef entry fill:#dbeafe,stroke:#3b82f6,color:#1e3a8a,stroke-width:1.5px
+    classDef warning fill:#fef9c3,stroke:#eab308,color:#713f12,stroke-width:1.5px
+    classDef success fill:#dcfce7,stroke:#22c55e,color:#14532d,stroke-width:1.5px
 ```
 
 查询时可以交叉验证：

@@ -23,28 +23,21 @@
 
 ### 认证流程
 
-```
-客户端                          服务端
-  │                               │
-  │  POST /login                  │
-  │  {username, password}         │
-  │ ─────────────────────────────►│
-  │                               │ 1. 验证用户名密码
-  │                               │ 2. 生成随机 token
-  │                               │ 3. INSERT INTO user_login_session
-  │  {token}                      │    (skey=token, biz=..., expire_time=...)
-  │ ◄─────────────────────────────│
-  │                               │
-  │  GET /api/manage/xxx          │
-  │  Authorization: {token}       │
-  │  x-biz: jewelry-erp      │
-  │ ─────────────────────────────►│
-  │                               │ 4. SELECT FROM user_login_session
-  │                               │    WHERE skey=? AND expire_time > NOW()
-  │                               │ 5. 解析 admin_user_id → user_id
-  │                               │ 6. ThreadLocal.set(userId)
-  │  {data}                       │
-  │ ◄─────────────────────────────│
+```mermaid
+sequenceDiagram
+    autonumber
+    participant C as 客户端
+    participant S as 服务端
+    C->>S: POST /login {username, password}
+    S->>S: 验证用户名密码
+    S->>S: 生成随机 token
+    S->>S: INSERT INTO user_login_session
+    S-->>C: {token}
+    C->>S: GET /api/manage/xxx<br/>Authorization: {token}<br/>x-biz: jewelry-erp
+    S->>S: SELECT user_login_session<br/>WHERE skey=? AND expire_time > NOW()
+    S->>S: 解析 admin_user_id → user_id
+    S->>S: ThreadLocal.set(userId)
+    S-->>C: {data}
 ```
 
 ### 核心代码

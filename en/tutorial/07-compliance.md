@@ -125,24 +125,23 @@ public class DistributionComplianceServiceImpl implements DistributionCompliance
 
 ## Step 4: Compliance Record Lifecycle
 
-```
-┌─────────┐
-│ PENDING │  ← Create a compliance record
-└─────────┘
-     │
-     ├── approve ──► ┌──────────┐
-     │               │ APPROVED │
-     │               └──────────┘
-     │
-     └── reject ───► ┌──────────┐
-                     │ REJECTED │
-                     └──────────┘
+```mermaid
+stateDiagram-v2
+    [*] --> PENDING: create a compliance record
+    PENDING --> APPROVED: approve
+    PENDING --> REJECTED: reject
+    APPROVED --> EXPIRED: qualification expires
+    APPROVED --> [*]
+    REJECTED --> [*]
+    EXPIRED --> [*]
 
-(Qualification records can also expire)
-┌──────────┐
-│ APPROVED │ ──► ┌─────────┐
-└──────────┘     │ EXPIRED │
-                 └─────────┘
+    classDef success fill:#dcfce7,stroke:#22c55e,color:#14532d,stroke-width:1.5px
+    classDef warning fill:#fef9c3,stroke:#eab308,color:#713f12,stroke-width:1.5px
+    classDef danger fill:#fee2e2,stroke:#ef4444,color:#7f1d1d,stroke-width:1.5px
+    class PENDING warning
+    class APPROVED success
+    class REJECTED danger
+    class EXPIRED danger
 ```
 
 ## Step 5: Embedding in Business Processes
@@ -207,12 +206,17 @@ PageResponseDTO<DistributionComplianceRecordDTO> pending =
 
 Compliance records and audit logs complement each other:
 
-```
-Business operation
-  │
-  ├──► Audit log: records "what was done" (automatic, all operations)
-  │
-  └──► Compliance record: records "whether it is compliant" (manual, specific scenarios)
+```mermaid
+flowchart LR
+    A[Business operation] --> B["Audit log<br/>records “what was done”<br/>automatic, all operations"]
+    A --> C["Compliance record<br/>records “whether it is compliant”<br/>manual, specific scenarios"]
+
+    class A entry
+    class B warning
+    class C success
+    classDef entry fill:#dbeafe,stroke:#3b82f6,color:#1e3a8a,stroke-width:1.5px
+    classDef warning fill:#fef9c3,stroke:#eab308,color:#713f12,stroke-width:1.5px
+    classDef success fill:#dcfce7,stroke:#22c55e,color:#14532d,stroke-width:1.5px
 ```
 
 Queries can cross-validate:

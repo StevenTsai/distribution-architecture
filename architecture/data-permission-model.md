@@ -68,10 +68,17 @@ flowchart TB
 
 将 `data_scope` 和 `role_code` 字段放在 `distribution_distributor_member` 表上，而非 `admin_user` 表上。
 
-```
-admin_user (系统用户)
-    └── distribution_distributor_member (分销成员) ← data_scope, role_code 在这里
-            └── distribution_distributor (所属渠道)
+```mermaid
+flowchart LR
+    U[admin_user<br/>系统用户] --> M["distribution_distributor_member<br/>data_scope / role_code"]
+    M --> D[distribution_distributor<br/>所属渠道]
+
+    class U entry
+    class M warning
+    class D muted
+    classDef entry fill:#dbeafe,stroke:#3b82f6,color:#1e3a8a,stroke-width:1.5px
+    classDef warning fill:#fef9c3,stroke:#eab308,color:#713f12,stroke-width:1.5px
+    classDef muted fill:#f1f5f9,stroke:#94a3b8,color:#334155,stroke-width:1.5px
 ```
 
 **原因**：同一个系统用户在不同渠道中可能有不同角色。例如张三在 A 渠道是销售（`SELF`），在 B 渠道可能是经理（`OWN_DISTRIBUTOR`）。如果放在用户表上，就无法表达这种多渠道多角色的场景。
@@ -148,36 +155,32 @@ public static final class DistributionDataAccessScope {
 
 ### 整体架构
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        Controller 层                             │
-│  @SessionAuth → 解析 Token → ThreadLocal userId                │
-└──────────────────────────────┬──────────────────────────────────┘
-                               │
-┌──────────────────────────────▼──────────────────────────────────┐
-│                        Service 层                                │
-│                                                                  │
-│  1. resolveCurrentAccessScope()                                  │
-│     → 查 member 表 → 读 roleCode + dataScope                    │
-│     → resolveAuthorizedDistributorIds()                          │
-│     → 返回 DistributionDataAccessScope (不可变对象)              │
-│                                                                  │
-│  2. checkAccessPermission(distributorId, memberId, ownerUserId)  │
-│     → ALL: 直接通过                                              │
-│     → SELF: 检查 memberId 或 ownerUserId 是否匹配               │
-│     → OWN_DISTRIBUTOR / OWN_AND_CHILDREN:                       │
-│       检查 distributorId 是否在 authorizedDistributorIds 中     │
-└──────────────────────────────┬──────────────────────────────────┘
-                               │
-┌──────────────────────────────▼──────────────────────────────────┐
-│                        Mapper 层                                 │
-│                                                                  │
-│  <select id="selectByConditionWithScope">                        │
-│    SELECT ... FROM table                                         │
-│    <include refid="ConditionWhere"/>    ← 业务过滤条件           │
-│    <include refid="ScopeCondition"/>    ← 权限过滤条件 (自动注入)│
-│  </select>                                                       │
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph Controller["Controller 层"]
+        A["@SessionAuth"] --> B["解析 Token"]
+        B --> C["ThreadLocal userId"]
+    end
+
+    subgraph Service["Service 层"]
+        D["resolveCurrentAccessScope()"] --> E["查 member 表<br/>读 roleCode + dataScope"]
+        E --> F["resolveAuthorizedDistributorIds()"]
+        F --> G["DistributionDataAccessScope<br/>不可变对象"]
+        G --> H["checkAccessPermission(...)"]
+        H --> I{dataScope}
+        I -->|ALL| J[直接通过]
+        I -->|SELF| K[校验 memberId / ownerUserId]
+        I -->|OWN_DISTRIBUTOR / OWN_AND_CHILDREN| L[校验 distributorId 是否在授权集合]
+    end
+
+    C --> D
+
+    class A entry
+    class I decision
+    class J,K,L success
+    classDef entry fill:#dbeafe,stroke:#3b82f6,color:#1e3a8a,stroke-width:1.5px
+    classDef decision fill:#ede9fe,stroke:#8b5cf6,color:#4c1d95,stroke-width:1.5px
+    classDef success fill:#dcfce7,stroke:#22c55e,color:#14532d,stroke-width:1.5px
 ```
 
 ### 核心代码：权限解析

@@ -15,14 +15,18 @@
 
 ## Data Flow Overview
 
-```
-Business order event (e.g., "signed")
-    │
-    ├── 1. Update business order status
-    ├── 2. Update lead stage
-    ├── 3. Automatically generate commission ledger entries
-    ├── 4. Create a lead follow-up record
-    └── 5. Record an audit log
+```mermaid
+flowchart TB
+    E["Business order event (e.g. “signed”)"] --> A[Update business order status]
+    E --> B[Update lead stage]
+    E --> C[Generate commission ledger entries]
+    E --> D[Create a lead follow-up record]
+    E --> F[Record an audit log]
+
+    class E entry
+    class C success
+    classDef entry fill:#dbeafe,stroke:#3b82f6,color:#1e3a8a,stroke-width:1.5px
+    classDef success fill:#dcfce7,stroke:#22c55e,color:#14532d,stroke-width:1.5px
 ```
 
 One event triggers five side effects, all within the same transaction.
@@ -233,10 +237,24 @@ private void reverseForBusinessOrderEvent(DistributionBusinessOrderEntity order,
 
 ## Commission Ledger State Machine
 
-```
-PENDING_REVIEW  ──►  LOCKED  ──►  SETTLEABLE  ──►  SETTLED
-      │                                            │
-      └──► REVERSED                                └──► (negative offset entry)
+```mermaid
+stateDiagram-v2
+    [*] --> PENDING_REVIEW
+    PENDING_REVIEW --> LOCKED
+    LOCKED --> SETTLEABLE
+    SETTLEABLE --> SETTLED
+    PENDING_REVIEW --> REVERSED
+    SETTLED --> OFFSET: negative offset
+    SETTLED --> [*]
+    REVERSED --> [*]
+    OFFSET --> [*]
+
+    classDef success fill:#dcfce7,stroke:#22c55e,color:#14532d,stroke-width:1.5px
+    classDef warning fill:#fef9c3,stroke:#eab308,color:#713f12,stroke-width:1.5px
+    classDef danger fill:#fee2e2,stroke:#ef4444,color:#7f1d1d,stroke-width:1.5px
+    class SETTLED success
+    class OFFSET warning
+    class REVERSED danger
 ```
 
 ## Verification

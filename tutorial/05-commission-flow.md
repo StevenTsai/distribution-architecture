@@ -13,14 +13,18 @@
 
 ## 数据流全景
 
-```
-业务单事件（如"签约"）
-    │
-    ├── 1. 更新业务单状态
-    ├── 2. 更新线索阶段
-    ├── 3. 自动生成佣金流水
-    ├── 4. 创建线索跟进记录
-    └── 5. 记录审计日志
+```mermaid
+flowchart TB
+    E["业务单事件（如“签约”）"] --> A[更新业务单状态]
+    E --> B[更新线索阶段]
+    E --> C[自动生成佣金流水]
+    E --> D[创建线索跟进记录]
+    E --> F[记录审计日志]
+
+    class E entry
+    class C success
+    classDef entry fill:#dbeafe,stroke:#3b82f6,color:#1e3a8a,stroke-width:1.5px
+    classDef success fill:#dcfce7,stroke:#22c55e,color:#14532d,stroke-width:1.5px
 ```
 
 一个事件触发 5 个副作用，全部在同一个事务中。
@@ -231,10 +235,24 @@ private void reverseForBusinessOrderEvent(DistributionBusinessOrderEntity order,
 
 ## 佣金流水状态机
 
-```
-PENDING_REVIEW  ──►  LOCKED  ──►  SETTLEABLE  ──►  SETTLED
-      │                                            │
-      └──► REVERSED                                └──► (负数挂账)
+```mermaid
+stateDiagram-v2
+    [*] --> PENDING_REVIEW
+    PENDING_REVIEW --> LOCKED
+    LOCKED --> SETTLEABLE
+    SETTLEABLE --> SETTLED
+    PENDING_REVIEW --> REVERSED
+    SETTLED --> OFFSET: 负数挂账
+    SETTLED --> [*]
+    REVERSED --> [*]
+    OFFSET --> [*]
+
+    classDef success fill:#dcfce7,stroke:#22c55e,color:#14532d,stroke-width:1.5px
+    classDef warning fill:#fef9c3,stroke:#eab308,color:#713f12,stroke-width:1.5px
+    classDef danger fill:#fee2e2,stroke:#ef4444,color:#7f1d1d,stroke-width:1.5px
+    class SETTLED success
+    class OFFSET warning
+    class REVERSED danger
 ```
 
 ## 验证
