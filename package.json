@@ -1,0 +1,25 @@
+{
+  "name": "distribution-architecture",
+  "version": "1.0.0",
+  "description": "从生产到通用：Java 架构模式实战 — 从真实生产系统提炼的可复用架构模式",
+  "type": "module",
+  "scripts": {
+    "docs:dev": "vitepress dev",
+    "docs:build": "vitepress build",
+    "docs:preview": "vitepress preview"
+  },
+  "keywords": [
+    "java",
+    "architecture",
+    "spring-boot",
+    "mybatis",
+    "design-patterns",
+    "adr"
+  ],
+  "author": "Steven Tsai",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "vitepress": "^1.6.4",
+    "vue": "^3.5.44"
+  }
+}

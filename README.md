@@ -13,11 +13,14 @@ B2B 企业级架构设计模式库，从生产系统中提炼的可复用架构�
 > 然后总结为设计文档和 ADR，
 > 最后抽象为可复用的组件并开源。
 
-### 设计模式（4 个）
+### 设计模式（7 个）
 - 数据权限下沉到 SQL 层
 - 事件驱动状态机（佣金流转）
 - 审计日志 JSON 快照
 - MyBatis 工程化
+- PII 加密与脱敏（AES-GCM + HMAC 检索键）
+- 管理端 RBAC（模块级权限 + 敏感操作独立授权）
+- 跨语言契约测试（仓外裁判 + fixture 对拍）
 
 ### 可复用库
 - [spring-data-permission-starter](https://github.com/StevenTsai/spring-data-permission-starter) — 数据权限的 Spring Boot Starter 实现，可直接导入使用
@@ -75,7 +78,10 @@ Case Study 的代码从一个**真实生产系统**（珠宝加工 ERP）中提�
 │   ├── data-permission-model.md     4 级数据权限：SQL 层注入的行级过滤
 │   ├── commission-pipeline.md       佣金流转：事件驱动状态机 + 规则快照 + 冲回
 │   ├── audit-and-compliance.md      审计日志：JSON 快照 + 统一入口
-│   └── mybatis-patterns.md          MyBatis 工程化：三段式 SQL 片段 + 对偶查询
+│   ├── mybatis-patterns.md          MyBatis 工程化：三段式 SQL 片段 + 对偶查询
+│   ├── pii-encryption.md            PII 加密：AES-GCM + HMAC 检索键 + 统一脱敏
+│   ├── admin-rbac.md                管理端 RBAC：模块级权限 + 敏感操作独立授权
+│   └── cross-language-contract-testing.md  跨语言契约测试：仓外裁判 + fixture 对拍
 │
 ├── decisions/                       架构决策记录（ADR）
 │   ├── why-session-not-jwt.md       为什么选 Session Token

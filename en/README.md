@@ -13,11 +13,14 @@ This is a collection of **design documents** + a **reusable Starter library** + 
 > then summarized them as design documents and ADRs,
 > and finally abstracted them into reusable components and open-sourced them.
 
-### Design Patterns (4)
+### Design Patterns (7)
 - Data permissions at the SQL layer
 - Event-driven state machine (commission pipeline)
 - Audit logging with JSON snapshots
 - MyBatis engineering patterns
+- PII encryption & masking (AES-GCM + HMAC lookup keys)
+- Admin RBAC (module-level permissions + sensitive operation control)
+- Cross-language contract testing (outside-the-arbiter + fixture comparison)
 
 ### Reusable Library
 - [spring-data-permission-starter](https://github.com/StevenTsai/spring-data-permission-starter) — Spring Boot Starter for data permissions, ready to import
@@ -75,7 +78,10 @@ The fourth case study, [production-guardrails](../case-studies/production-guardr
 │   ├── data-permission-model.md     4-level data permissions: SQL-layer row filtering
 │   ├── commission-pipeline.md       Commission pipeline: event-driven state machine + rule snapshots + reversal
 │   ├── audit-and-compliance.md      Audit logging: JSON snapshots + unified entry point
-│   └── mybatis-patterns.md          MyBatis engineering: 3-segment SQL fragments + dual queries
+│   ├── mybatis-patterns.md          MyBatis engineering: 3-segment SQL fragments + dual queries
+│   ├── pii-encryption.md            PII encryption: AES-GCM + HMAC lookup keys + unified masking
+│   ├── admin-rbac.md                Admin RBAC: module-level permissions + sensitive operation control
+│   └── cross-language-contract-testing.md  Cross-language contract testing: outside-the-arbiter + fixture comparison
 │
 ├── decisions/                       Architecture Decision Records (ADR)
 │   ├── why-session-not-jwt.md       Why Session Token over JWT
