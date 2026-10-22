@@ -1,8 +1,11 @@
 # Distribution Architecture
 
+[![Deploy Docs](https://github.com/StevenTsai/distribution-architecture/actions/workflows/deploy.yml/badge.svg)](https://github.com/StevenTsai/distribution-architecture/actions/workflows/deploy.yml)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](../LICENSE)
+
 [中文](../README.md) | English
 
-B2B enterprise architecture design pattern library — reusable architecture solutions refined from production systems. Includes design documents, a reusable Spring Boot Starter library, and production-validated architecture patterns.
+📖 **[Read Online](https://steven83.github.io/distribution-architecture/)** | B2B enterprise architecture design pattern library — reusable architecture solutions refined from production systems.
 
 ## What Is This
 

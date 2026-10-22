@@ -64,6 +64,27 @@ cd distribution-architecture
 # 编辑 Markdown 文件即可
 ```
 
+### 在线书（VitePress）
+
+本项目使用 VitePress 构建在线书，部署到 GitHub Pages。
+
+**本地预览**：
+
+```bash
+npm install
+npm run docs:dev    # 开发模式（热重载）
+npm run docs:build  # 构建生产版本
+npm run docs:preview # 预览构建产物
+```
+
+**添加新页面**：
+
+1. 在对应目录创建 Markdown 文件（如 `architecture/new-pattern.md`）
+2. 在 `.vitepress/config.mts` 的 `sidebar` 中添加链接
+3. 推送到 main 分支后自动部署
+
+**访问在线书**：https://steven83.github.io/distribution-architecture/
+
 ### Starter 项目
 
 ```bash

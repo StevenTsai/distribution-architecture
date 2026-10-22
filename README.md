@@ -1,8 +1,11 @@
 # Distribution Architecture
 
+[![Deploy Docs](https://github.com/StevenTsai/distribution-architecture/actions/workflows/deploy.yml/badge.svg)](https://github.com/StevenTsai/distribution-architecture/actions/workflows/deploy.yml)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
+
 中文 | [English](en/README.md)
 
-B2B 企业级架构设计模式库，从生产系统中提炼的可复用架构方案。包含设计文档、可复用的 Spring Boot Starter 库，以及经过生产验证的架构模式。
+📖 **[在线阅读](https://steven83.github.io/distribution-architecture/)** | B2B 企业级架构设计模式库，从生产系统中提炼的可复用架构方案。
 
 ## 这是什么
 
