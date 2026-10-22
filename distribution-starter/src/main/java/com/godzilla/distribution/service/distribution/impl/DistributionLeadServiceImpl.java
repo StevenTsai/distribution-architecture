@@ -25,45 +25,42 @@ import com.godzilla.distribution.mapper.distribution.DistributionLeadFollowUpMap
 import com.godzilla.distribution.mapper.distribution.DistributionLeadMapper;
 import com.godzilla.distribution.service.distribution.DistributionAuditLogService;
 import com.godzilla.distribution.service.distribution.DistributionLeadService;
+import com.godzilla.distribution.common.pii.PiiCipher;
 import com.godzilla.distribution.service.distribution.DistributionOperatorService;
+import com.godzilla.distribution.service.distribution.support.DistributionLeadDtoAssembler;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
+@Slf4j
 @Service
+@RequiredArgsConstructor
 public class DistributionLeadServiceImpl implements DistributionLeadService {
 
     private static final int DEFAULT_PAGE = 1;
     private static final int DEFAULT_PAGE_SIZE = 10;
     private static final int MAX_PAGE_SIZE = 100;
 
-    @Autowired
-    private DistributionLeadMapper distributionLeadMapper;
-    @Autowired
-    private DistributionLeadFollowUpMapper distributionLeadFollowUpMapper;
-    @Autowired
-    private DistributionDistributorMapper distributionDistributorMapper;
-    @Autowired
-    private DistributionDistributorMemberMapper distributionDistributorMemberMapper;
-    @Autowired
-    private DistributionOperatorService distributionOperatorService;
-    @Autowired
-    private DistributionAuditLogService distributionAuditLogService;
-    @Autowired
-    private DistributionDataPermissionService distributionDataPermissionService;
+    private final DistributionLeadMapper distributionLeadMapper;
+    private final DistributionLeadFollowUpMapper distributionLeadFollowUpMapper;
+    private final DistributionDistributorMapper distributionDistributorMapper;
+    private final DistributionDistributorMemberMapper distributionDistributorMemberMapper;
+    private final DistributionOperatorService distributionOperatorService;
+    private final DistributionAuditLogService distributionAuditLogService;
+    private final DistributionDataPermissionService distributionDataPermissionService;
+    private final PiiCipher piiCipher;
+    private final DistributionLeadDtoAssembler leadDtoAssembler;
 
     @Override
-    public PageResponseDTO<DistributionLeadDTO> listLeads(String leadNo, String patientKeyword, Long sourceDistributorId,
+    public PageResponseDTO<DistributionLeadDTO> listLeads(String leadNo, String contactKeyword, Long sourceDistributorId,
                                                            String intentProductLine, Long ownerUserId, String stage,
                                                            Integer page, Integer pageSize) {
         int safePage = page == null || page < 1 ? DEFAULT_PAGE : page;
@@ -75,23 +72,22 @@ public class DistributionLeadServiceImpl implements DistributionLeadService {
         }
         Long authorizedMemberId = accessScope.isSelfScope() ? accessScope.getMemberId() : null;
         Long authorizedOwnerUserId = accessScope.isSelfScope() ? accessScope.getOperatorUserId() : null;
-        long total = distributionLeadMapper.countByConditionWithScope(trim(leadNo), trim(patientKeyword), sourceDistributorId,
+        String keyword = trim(contactKeyword);
+        // 手机号加密落库后不能 LIKE 查询，只有完整手机号才转成检索键做精确匹配
+        String contactPhoneLookup = isPhoneNumber(keyword) ? piiCipher.lookupKey(keyword) : null;
+        long total = distributionLeadMapper.countByConditionWithScope(trim(leadNo), keyword, contactPhoneLookup, sourceDistributorId,
                 trim(intentProductLine), ownerUserId, trim(stage), authorizedDistributorIds, authorizedMemberId, authorizedOwnerUserId);
-        List<DistributionLeadEntity> entities = distributionLeadMapper.selectByConditionWithScope(trim(leadNo), trim(patientKeyword),
+        List<DistributionLeadEntity> entities = distributionLeadMapper.selectByConditionWithScope(trim(leadNo), keyword, contactPhoneLookup,
                 sourceDistributorId, trim(intentProductLine), ownerUserId, trim(stage), authorizedDistributorIds,
                 authorizedMemberId, authorizedOwnerUserId, (safePage - 1) * safePageSize, safePageSize);
-        return new PageResponseDTO<DistributionLeadDTO>(buildLeadDTOList(entities), total, safePage, safePageSize);
+        return new PageResponseDTO<DistributionLeadDTO>(leadDtoAssembler.toList(entities), total, safePage, safePageSize);
     }
 
     @Override
     public DistributionLeadDetailDTO getLead(Long id) {
         DistributionLeadEntity entity = getLeadEntity(id);
         distributionDataPermissionService.checkAccessPermission(entity.getSourceDistributorId(), entity.getSourceMemberId(), entity.getOwnerUserId());
-        DistributionLeadDetailDTO detailDTO = new DistributionLeadDetailDTO();
-        BeanUtils.copyProperties(toDTO(entity), detailDTO);
-        detailDTO.setCreatedBy(entity.getCreatedBy());
-        detailDTO.setUpdatedBy(entity.getUpdatedBy());
-        return detailDTO;
+        return leadDtoAssembler.toDetail(entity);
     }
 
     @Override
@@ -101,13 +97,13 @@ public class DistributionLeadServiceImpl implements DistributionLeadService {
         validateCreateScope(request.getSourceDistributorId());
         validateMember(request.getSourceMemberId());
         validateProductLine(request.getIntentProductLine());
-        validateDuplicateLead(request.getPatientPhone(), request.getIntentProductLine(), null);
+        validateDuplicateLead(request.getContactPhone(), request.getIntentProductLine(), null);
 
         Long operatorUserId = distributionOperatorService.getCurrentOperatorUserId();
         DistributionLeadEntity entity = new DistributionLeadEntity();
         entity.setLeadNo(generateLeadNo());
-        entity.setPatientName(trim(request.getPatientName()));
-        entity.setPatientPhone(trim(request.getPatientPhone()));
+        entity.setContactName(trim(request.getContactName()));
+        setEncryptedContactPhone(entity, trim(request.getContactPhone()));
         entity.setSourceDistributorId(request.getSourceDistributorId());
         entity.setSourceMemberId(request.getSourceMemberId());
         entity.setIntentProductLine(trim(request.getIntentProductLine()));
@@ -131,12 +127,12 @@ public class DistributionLeadServiceImpl implements DistributionLeadService {
         validateDistributor(request.getSourceDistributorId());
         validateMember(request.getSourceMemberId());
         validateProductLine(request.getIntentProductLine());
-        validateDuplicateLead(trim(request.getPatientPhone()), trim(request.getIntentProductLine()), id);
+        validateDuplicateLead(trim(request.getContactPhone()), trim(request.getIntentProductLine()), id);
 
         DistributionLeadEntity update = new DistributionLeadEntity();
         update.setId(id);
-        update.setPatientName(trim(request.getPatientName()));
-        update.setPatientPhone(trim(request.getPatientPhone()));
+        update.setContactName(trim(request.getContactName()));
+        setEncryptedContactPhone(update, trim(request.getContactPhone()));
         update.setSourceDistributorId(request.getSourceDistributorId());
         update.setSourceMemberId(request.getSourceMemberId());
         update.setIntentProductLine(trim(request.getIntentProductLine()));
@@ -183,7 +179,13 @@ public class DistributionLeadServiceImpl implements DistributionLeadService {
         List<DistributionLeadFollowUpDTO> list = new ArrayList<DistributionLeadFollowUpDTO>();
         for (DistributionLeadFollowUpEntity entity : entities) {
             DistributionLeadFollowUpDTO dto = new DistributionLeadFollowUpDTO();
-            BeanUtils.copyProperties(entity, dto);
+            dto.setId(entity.getId());
+            dto.setLeadId(entity.getLeadId());
+            dto.setFollowUpType(entity.getFollowUpType());
+            dto.setContent(entity.getContent());
+            dto.setNextActionAt(entity.getNextActionAt());
+            dto.setCreatedBy(entity.getCreatedBy());
+            dto.setCreateTime(entity.getCreateTime());
             list.add(dto);
         }
         return list;
@@ -217,48 +219,6 @@ public class DistributionLeadServiceImpl implements DistributionLeadService {
             throw new BizException("线索不存在", ResultCode.DISTRIBUTION_LEAD_NOT_FOUND.getCode());
         }
         return entity;
-    }
-
-    private List<DistributionLeadDTO> buildLeadDTOList(List<DistributionLeadEntity> entities) {
-        if (entities == null || entities.isEmpty()) return Collections.emptyList();
-        Map<Long, String> distributorNameMap = loadDistributorNameMap(entities);
-        Map<Long, String> memberNameMap = loadMemberNameMap(entities);
-        List<DistributionLeadDTO> list = new ArrayList<DistributionLeadDTO>();
-        for (DistributionLeadEntity entity : entities) {
-            DistributionLeadDTO dto = toDTO(entity);
-            dto.setSourceDistributorName(distributorNameMap.get(entity.getSourceDistributorId()));
-            dto.setSourceMemberName(memberNameMap.get(entity.getSourceMemberId()));
-            list.add(dto);
-        }
-        return list;
-    }
-
-    private DistributionLeadDTO toDTO(DistributionLeadEntity entity) {
-        DistributionLeadDTO dto = new DistributionLeadDTO();
-        BeanUtils.copyProperties(entity, dto);
-        return dto;
-    }
-
-    private Map<Long, String> loadDistributorNameMap(List<DistributionLeadEntity> entities) {
-        Map<Long, String> nameMap = new HashMap<Long, String>();
-        for (DistributionLeadEntity entity : entities) {
-            if (entity.getSourceDistributorId() != null && !nameMap.containsKey(entity.getSourceDistributorId())) {
-                DistributionDistributorEntity distributor = distributionDistributorMapper.selectByPrimaryKey(entity.getSourceDistributorId());
-                if (distributor != null) nameMap.put(distributor.getId(), distributor.getName());
-            }
-        }
-        return nameMap;
-    }
-
-    private Map<Long, String> loadMemberNameMap(List<DistributionLeadEntity> entities) {
-        Map<Long, String> nameMap = new HashMap<Long, String>();
-        for (DistributionLeadEntity entity : entities) {
-            if (entity.getSourceMemberId() != null && !nameMap.containsKey(entity.getSourceMemberId())) {
-                DistributionDistributorMemberEntity member = distributionDistributorMemberMapper.selectByPrimaryKey(entity.getSourceMemberId());
-                if (member != null) nameMap.put(member.getId(), member.getName());
-            }
-        }
-        return nameMap;
     }
 
     private void validateCreateScope(Long distributorId) {
@@ -300,11 +260,28 @@ public class DistributionLeadServiceImpl implements DistributionLeadService {
         }
     }
 
-    private void validateDuplicateLead(String patientPhone, String intentProductLine, Long excludeId) {
-        DistributionLeadEntity duplicate = distributionLeadMapper.selectDuplicateLead(patientPhone, intentProductLine, excludeId);
-        if (duplicate != null) {
-            throw new BizException("该患者已存在相同产品线的线索", ResultCode.DISTRIBUTION_LEAD_PHONE_EXISTS.getCode());
+    private void validateDuplicateLead(String contactPhone, String intentProductLine, Long excludeId) {
+        if (StringUtils.isBlank(contactPhone)) {
+            return;
         }
+        DistributionLeadEntity duplicate = distributionLeadMapper.selectDuplicateLead(
+                piiCipher.lookupKey(contactPhone), intentProductLine, excludeId);
+        if (duplicate != null) {
+            throw new BizException("该联系人已存在相同产品线的线索", ResultCode.DISTRIBUTION_LEAD_PHONE_EXISTS.getCode());
+        }
+    }
+
+    /** 写入前加密手机号并同步写入 HMAC 检索键。 */
+    private void setEncryptedContactPhone(DistributionLeadEntity entity, String contactPhone) {
+        if (StringUtils.isBlank(contactPhone)) {
+            return;
+        }
+        entity.setContactPhone(piiCipher.encrypt(contactPhone));
+        entity.setContactPhoneLookup(piiCipher.lookupKey(contactPhone));
+    }
+
+    private boolean isPhoneNumber(String value) {
+        return value != null && value.matches("^1\\d{10}$");
     }
 
     private static final int LEAD_NO_MAX_RETRIES = 3;

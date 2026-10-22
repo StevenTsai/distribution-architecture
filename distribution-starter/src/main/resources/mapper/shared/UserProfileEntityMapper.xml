@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.godzilla.distribution.mapper.shared.MedicalUserInfoEntityMapper">
-    <resultMap id="BaseResultMap" type="com.godzilla.distribution.entity.shared.MedicalUserInfoEntity">
+<mapper namespace="com.godzilla.distribution.mapper.shared.UserProfileEntityMapper">
+    <resultMap id="BaseResultMap" type="com.godzilla.distribution.entity.shared.UserProfileEntity">
         <id column="id" jdbcType="BIGINT" property="id"/>
         <result column="openid" jdbcType="VARCHAR" property="openid"/>
         <result column="name" jdbcType="VARCHAR" property="name"/>
         <result column="avatar" jdbcType="VARCHAR" property="avatar"/>
-        <result column="gender" jdbcType="INTEGER" property="gender"/>
+        <result column="gender" jdbcType="VARCHAR" property="gender"/>
         <result column="country" jdbcType="VARCHAR" property="country"/>
         <result column="province" jdbcType="VARCHAR" property="province"/>
         <result column="city" jdbcType="VARCHAR" property="city"/>
@@ -14,7 +14,7 @@
         <result column="create_time" jdbcType="TIMESTAMP" property="createTime"/>
         <result column="modify_time" jdbcType="TIMESTAMP" property="modifyTime"/>
         <result column="phoneNumber" jdbcType="VARCHAR" property="phoneNumber"/>
-        <result column="role" jdbcType="VARCHAR" property="role"/>
+        <result column="role" jdbcType="TINYINT" property="role"/>
     </resultMap>
 
     <sql id="BaseColumnList">
@@ -24,7 +24,7 @@
     <select id="selectByPrimaryKey" resultMap="BaseResultMap">
         select
         <include refid="BaseColumnList"/>
-        from medical_user_info
+        from user_profile
         where id = #{id}
     </select>
 </mapper>

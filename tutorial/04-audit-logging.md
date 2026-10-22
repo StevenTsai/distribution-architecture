@@ -65,7 +65,7 @@ public class DistributionAuditLogServiceImpl implements DistributionAuditLogServ
     public void record(String bizType, Long bizId, String action,
                        Object beforeSnapshot, Object afterSnapshot, String remark) {
         // 1. 自动获取操作人
-        MedicalUserInfoEntity operator = operatorService.getCurrentOperatorUser();
+        UserProfileEntity operator = operatorService.getCurrentOperatorUser();
 
         // 2. 构建日志实体
         DistributionAuditLogEntity entity = new DistributionAuditLogEntity();
@@ -126,7 +126,7 @@ public void updateLead(Long id, UpdateDistributionLeadRequestDTO request) {
     // 2. 执行更新
     DistributionLeadEntity update = new DistributionLeadEntity();
     update.setId(id);
-    update.setPatientName(request.getPatientName());
+    update.setContactName(request.getContactName());
     // ...
     leadMapper.updateByPrimaryKeySelective(update);
 

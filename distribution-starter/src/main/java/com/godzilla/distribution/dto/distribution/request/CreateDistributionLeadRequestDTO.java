@@ -8,13 +8,13 @@ import jakarta.validation.constraints.Size;
 
 @Data
 public class CreateDistributionLeadRequestDTO {
-    @NotBlank(message = "患者姓名不能为空")
-    @Size(max = 64, message = "患者姓名长度不能超过64")
-    private String patientName;
+    @NotBlank(message = "联系人姓名不能为空")
+    @Size(max = 64, message = "联系人姓名长度不能超过64")
+    private String contactName;
 
-    @NotBlank(message = "患者手机号不能为空")
-    @Size(max = 32, message = "患者手机号长度不能超过32")
-    private String patientPhone;
+    @NotBlank(message = "联系人手机号不能为空")
+    @Size(max = 32, message = "联系人手机号长度不能超过32")
+    private String contactPhone;
 
     @NotNull(message = "来源渠道不能为空")
     private Long sourceDistributorId;

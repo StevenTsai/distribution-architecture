@@ -14,7 +14,7 @@ import java.util.List;
 
 public interface DistributionLeadService {
     PageResponseDTO<DistributionLeadDTO> listLeads(String leadNo,
-                                                   String patientKeyword,
+                                                   String contactKeyword,
                                                    Long sourceDistributorId,
                                                    String intentProductLine,
                                                    Long ownerUserId,

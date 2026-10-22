@@ -1,9 +1,9 @@
 package com.godzilla.distribution.service.distribution;
 
-import com.godzilla.distribution.entity.shared.MedicalUserInfoEntity;
+import com.godzilla.distribution.entity.shared.UserProfileEntity;
 
 public interface DistributionOperatorService {
     Long getCurrentOperatorUserId();
 
-    MedicalUserInfoEntity getCurrentOperatorUser();
+    UserProfileEntity getCurrentOperatorUser();
 }

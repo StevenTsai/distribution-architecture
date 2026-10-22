@@ -11,6 +11,7 @@ public class DistributionDistributorMemberEntity {
     private Long userId;
     private String name;
     private String phone;
+    private String phoneLookup;
     private String roleCode;
     private String dataScope;
     private Long managerMemberId;

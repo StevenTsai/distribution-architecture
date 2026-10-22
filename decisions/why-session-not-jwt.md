@@ -37,7 +37,7 @@
   │                               │
   │  GET /api/manage/xxx          │
   │  Authorization: {token}       │
-  │  x-biz: medical-chaperon      │
+  │  x-biz: jewelry-erp      │
   │ ─────────────────────────────►│
   │                               │ 4. SELECT FROM user_login_session
   │                               │    WHERE skey=? AND expire_time > NOW()
@@ -106,14 +106,14 @@ Session Token 方案下，删除 `user_login_session` 表中的记录即可。JW
 ```sql
 -- 同一个用户可以有多个 session（管理端 + 合作方门户）
 SELECT * FROM user_login_session
-WHERE skey = ? AND biz = 'medical-chaperon' AND expire_time > NOW();
+WHERE skey = ? AND biz = 'jewelry-erp' AND expire_time > NOW();
 ```
 
 JWT 的 `audience` (aud) 字段虽然也能做类似的事情，但不够灵活。
 
 ### 4. 与现有系统兼容
 
-本项目从 `medical-chaperon-server` 提取，该系统已经使用 Session Token 认证。保持一致可以：
+本项目从 `jewelry-erp-server` 提取，该系统已经使用 Session Token 认证。保持一致可以：
 - 共享同一套登录逻辑
 - 无需客户端改造
 - 降低迁移风险

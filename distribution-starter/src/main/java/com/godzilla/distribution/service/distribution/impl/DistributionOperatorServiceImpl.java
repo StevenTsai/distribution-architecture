@@ -1,20 +1,20 @@
 package com.godzilla.distribution.service.distribution.impl;
 
 import com.godzilla.distribution.common.ResultCode;
-import com.godzilla.distribution.entity.shared.MedicalUserInfoEntity;
+import com.godzilla.distribution.entity.shared.UserProfileEntity;
 import com.godzilla.distribution.controller.interceptors.AuthHeaderInterceptor;
 import com.godzilla.distribution.exception.BizException;
-import com.godzilla.distribution.mapper.shared.MedicalUserInfoEntityMapper;
+import com.godzilla.distribution.mapper.shared.UserProfileEntityMapper;
 import com.godzilla.distribution.service.distribution.DistributionOperatorService;
+import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class DistributionOperatorServiceImpl implements DistributionOperatorService {
 
-    @Autowired
-    private MedicalUserInfoEntityMapper medicalUserInfoEntityMapper;
+    private final UserProfileEntityMapper userProfileMapper;
 
     private Long getCurrentOperatorUserIdFromContext() {
         String userIdValue = AuthHeaderInterceptor.getCurrentUserId();
@@ -34,9 +34,9 @@ public class DistributionOperatorServiceImpl implements DistributionOperatorServ
     }
 
     @Override
-    public MedicalUserInfoEntity getCurrentOperatorUser() {
+    public UserProfileEntity getCurrentOperatorUser() {
         Long userId = getCurrentOperatorUserIdFromContext();
-        MedicalUserInfoEntity user = medicalUserInfoEntityMapper.selectByPrimaryKey(userId);
+        UserProfileEntity user = userProfileMapper.selectByPrimaryKey(userId);
         if (user == null) {
             throw new BizException("当前后台账号绑定的业务用户不存在", ResultCode.DISTRIBUTION_OPERATOR_NOT_BOUND.getCode());
         }

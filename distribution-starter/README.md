@@ -11,6 +11,7 @@
 - **MyBatis 三段式 SQL** — BaseColumnList + ConditionWhere + ScopeCondition
 - **审计日志** — JSON 快照 + 统一入口
 - **合规记录** — 主动管理型合规检查
+- **PII 加密** — 手机号 AES-GCM 加密落库 + HMAC 检索键 + 列表脱敏（见 `common/pii/PiiCipher.java`）
 
 ## 快速开始
 
@@ -44,6 +45,9 @@ spring.datasource.url=jdbc:mysql://localhost:3306/distribution_starter?...
 spring.datasource.username=root
 spring.datasource.password=your_password_here
 ```
+
+PII 加密密钥由 `app.pii.key` 控制：开发环境默认 `dev-only-change-me`，
+生产环境必须通过环境变量 `PII_KEY` 注入，否则应用拒绝启动。
 
 ### 4. 启动应用
 

@@ -1,9 +1,7 @@
 package com.godzilla.distribution.service.distribution.impl;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.godzilla.distribution.common.ResultCode;
+import com.godzilla.distribution.common.pii.PiiCipher;
 import com.godzilla.distribution.dto.PageResponseDTO;
 import com.godzilla.distribution.dto.distribution.request.CreateDistributorRequestDTO;
 import com.godzilla.distribution.dto.distribution.request.UpdateDistributorRequestDTO;
@@ -11,20 +9,20 @@ import com.godzilla.distribution.dto.distribution.request.UpdateDistributorStatu
 import com.godzilla.distribution.dto.distribution.response.DistributionDistributorDTO;
 import com.godzilla.distribution.dto.distribution.response.DistributionDistributorDetailDTO;
 import com.godzilla.distribution.dto.distribution.response.DistributionProductLineDTO;
-import com.godzilla.distribution.entity.shared.MedicalUserInfoEntity;
+import com.godzilla.distribution.entity.shared.UserProfileEntity;
 import com.godzilla.distribution.entity.distribution.DistributionDistributorEntity;
 import com.godzilla.distribution.enums.distribution.DistributionAuditBizType;
 import com.godzilla.distribution.enums.distribution.DistributionDataScope;
 import com.godzilla.distribution.enums.distribution.DistributionDistributorStatus;
 import com.godzilla.distribution.exception.BizException;
-import com.godzilla.distribution.mapper.shared.MedicalUserInfoEntityMapper;
+import com.godzilla.distribution.mapper.shared.UserProfileEntityMapper;
 import com.godzilla.distribution.mapper.distribution.DistributionDistributorMapper;
 import com.godzilla.distribution.service.distribution.DistributionAuditLogService;
 import com.godzilla.distribution.service.distribution.DistributionOperatorService;
 import com.godzilla.distribution.service.distribution.DistributionDistributorService;
+import com.godzilla.distribution.service.distribution.support.ProductLineJsonCodec;
+import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,30 +32,20 @@ import java.util.List;
 import java.util.Map;
 
 @Service
+@RequiredArgsConstructor
 public class DistributorServiceImpl implements DistributionDistributorService {
 
     private static final int DEFAULT_PAGE = 1;
     private static final int DEFAULT_PAGE_SIZE = 10;
     private static final int MAX_PAGE_SIZE = 100;
-    private static final TypeReference<List<String>> STRING_LIST_TYPE = new TypeReference<List<String>>() {};
 
-    @Autowired
-    private DistributionDistributorMapper distributionDistributorMapper;
-
-    @Autowired
-    private MedicalUserInfoEntityMapper medicalUserInfoEntityMapper;
-
-    @Autowired
-    private DistributionOperatorService distributionOperatorService;
-
-    @Autowired
-    private DistributionAuditLogService distributionAuditLogService;
-
-    @Autowired
-    private DistributionDataPermissionService distributionDataPermissionService;
-
-    @Autowired
-    private ObjectMapper objectMapper;
+    private final DistributionDistributorMapper distributionDistributorMapper;
+    private final UserProfileEntityMapper userProfileMapper;
+    private final DistributionOperatorService distributionOperatorService;
+    private final DistributionAuditLogService distributionAuditLogService;
+    private final DistributionDataPermissionService distributionDataPermissionService;
+    private final PiiCipher piiCipher;
+    private final ProductLineJsonCodec productLineJsonCodec;
 
     @Override
     public PageResponseDTO<DistributionDistributorDTO> listDistributors(String name, String status, String levelCode, String productLine, Integer page, Integer pageSize) {
@@ -89,10 +77,9 @@ public class DistributorServiceImpl implements DistributionDistributorService {
                 (safePage - 1) * safePageSize,
                 safePageSize
         );
-        Map<String, DistributionProductLineDTO> productLineMap = loadProductLineMap(entities);
         List<DistributionDistributorDTO> list = new ArrayList<DistributionDistributorDTO>();
         for (DistributionDistributorEntity entity : entities) {
-            list.add(toDTO(entity, productLineMap));
+            list.add(toDTO(entity, Collections.<String, DistributionProductLineDTO>emptyMap(), true));
         }
         return new PageResponseDTO<DistributionDistributorDTO>(list, total, safePage, safePageSize);
     }
@@ -102,7 +89,7 @@ public class DistributorServiceImpl implements DistributionDistributorService {
         DistributionDistributorEntity entity = getDistributorEntity(id);
         validateDistributorAccess(id);
         DistributionDistributorDetailDTO detailDTO = new DistributionDistributorDetailDTO();
-        BeanUtils.copyProperties(toDTO(entity, loadProductLineMap(Collections.singletonList(entity))), detailDTO);
+        fillBaseDTO(entity, detailDTO, Collections.<String, DistributionProductLineDTO>emptyMap(), false);
         detailDTO.setCreatedBy(entity.getCreatedBy());
         detailDTO.setUpdatedBy(entity.getUpdatedBy());
         return detailDTO;
@@ -125,13 +112,13 @@ public class DistributorServiceImpl implements DistributionDistributorService {
         entity.setLevelCode(trim(request.getLevelCode()));
         entity.setOwnerUserId(request.getOwnerUserId());
         entity.setContactName(trim(request.getContactName()));
-        entity.setContactPhone(trim(request.getContactPhone()));
+        entity.setContactPhone(encryptPhone(trim(request.getContactPhone())));
         entity.setProvince(trim(request.getProvince()));
         entity.setCity(trim(request.getCity()));
         entity.setSettlementType(trim(request.getSettlementType()));
         entity.setContractStatus(defaultValue(trim(request.getContractStatus()), "pending"));
         entity.setQualificationStatus(defaultValue(trim(request.getQualificationStatus()), "pending"));
-        entity.setProductLinesJson(writeProductLines(request.getProductLines()));
+        entity.setProductLinesJson(productLineJsonCodec.write(request.getProductLines()));
         entity.setStatus(DistributionDistributorStatus.PENDING.getCode());
         entity.setRemark(trim(request.getRemark()));
         entity.setCreatedBy(operatorUserId);
@@ -164,13 +151,13 @@ public class DistributorServiceImpl implements DistributionDistributorService {
         update.setLevelCode(trim(request.getLevelCode()));
         update.setOwnerUserId(request.getOwnerUserId());
         update.setContactName(trim(request.getContactName()));
-        update.setContactPhone(trim(request.getContactPhone()));
+        update.setContactPhone(encryptPhone(trim(request.getContactPhone())));
         update.setProvince(trim(request.getProvince()));
         update.setCity(trim(request.getCity()));
         update.setSettlementType(trim(request.getSettlementType()));
         update.setContractStatus(defaultValue(trim(request.getContractStatus()), existing.getContractStatus()));
         update.setQualificationStatus(defaultValue(trim(request.getQualificationStatus()), existing.getQualificationStatus()));
-        update.setProductLinesJson(writeProductLines(request.getProductLines()));
+        update.setProductLinesJson(productLineJsonCodec.write(request.getProductLines()));
         update.setRemark(trim(request.getRemark()));
         update.setUpdatedBy(distributionOperatorService.getCurrentOperatorUserId());
         distributionDistributorMapper.updateByPrimaryKeySelective(update);
@@ -263,7 +250,7 @@ public class DistributorServiceImpl implements DistributionDistributorService {
         if (ownerUserId == null) {
             return;
         }
-        MedicalUserInfoEntity user = medicalUserInfoEntityMapper.selectByPrimaryKey(ownerUserId);
+        UserProfileEntity user = userProfileMapper.selectByPrimaryKey(ownerUserId);
         if (user == null) {
             throw new BizException("负责人用户不存在", ResultCode.DISTRIBUTOR_OWNER_NOT_FOUND.getCode());
         }
@@ -300,25 +287,40 @@ public class DistributorServiceImpl implements DistributionDistributorService {
     }
 
     private DistributionDistributorDTO toDTO(DistributionDistributorEntity entity,
-                                             Map<String, DistributionProductLineDTO> productLineMap) {
+                                             Map<String, DistributionProductLineDTO> productLineMap,
+                                             boolean maskPhone) {
         DistributionDistributorDTO dto = new DistributionDistributorDTO();
-        BeanUtils.copyProperties(entity, dto);
-        List<String> productLines = readProductLines(entity.getProductLinesJson());
-        dto.setProductLines(productLines);
-        dto.setProductLineMetas(resolveProductLineMetas(productLineMap, productLines));
+        fillBaseDTO(entity, dto, productLineMap, maskPhone);
         return dto;
     }
 
-    private Map<String, DistributionProductLineDTO> loadProductLineMap(List<DistributionDistributorEntity> entities) {
-        if (entities == null || entities.isEmpty()) {
-            return Collections.emptyMap();
-        }
-        List<String> productLineCodes = new ArrayList<String>();
-        for (DistributionDistributorEntity entity : entities) {
-            productLineCodes.addAll(readProductLines(entity.getProductLinesJson()));
-        }
-        // TODO: implement product line metadata lookup (requires ProductLine service/mapper)
-        return Collections.emptyMap();
+    private void fillBaseDTO(DistributionDistributorEntity entity, DistributionDistributorDTO dto,
+                             Map<String, DistributionProductLineDTO> productLineMap, boolean maskPhone) {
+        dto.setId(entity.getId());
+        dto.setCode(entity.getCode());
+        dto.setName(entity.getName());
+        dto.setParentId(entity.getParentId());
+        dto.setLevelCode(entity.getLevelCode());
+        dto.setOwnerUserId(entity.getOwnerUserId());
+        dto.setContactName(entity.getContactName());
+        String plainPhone = piiCipher.decrypt(entity.getContactPhone());
+        dto.setContactPhone(maskPhone ? piiCipher.mask(plainPhone) : plainPhone);
+        dto.setProvince(entity.getProvince());
+        dto.setCity(entity.getCity());
+        dto.setSettlementType(entity.getSettlementType());
+        dto.setContractStatus(entity.getContractStatus());
+        dto.setQualificationStatus(entity.getQualificationStatus());
+        List<String> productLines = productLineJsonCodec.read(entity.getProductLinesJson());
+        dto.setProductLines(productLines);
+        dto.setProductLineMetas(resolveProductLineMetas(productLineMap, productLines));
+        dto.setStatus(entity.getStatus());
+        dto.setRemark(entity.getRemark());
+        dto.setCreateTime(entity.getCreateTime());
+        dto.setModifyTime(entity.getModifyTime());
+    }
+
+    private String encryptPhone(String contactPhone) {
+        return StringUtils.isBlank(contactPhone) ? null : piiCipher.encrypt(contactPhone);
     }
 
     private List<DistributionProductLineDTO> resolveProductLineMetas(Map<String, DistributionProductLineDTO> productLineMap,
@@ -334,28 +336,6 @@ public class DistributorServiceImpl implements DistributionDistributorService {
             }
         }
         return result;
-    }
-
-    private List<String> readProductLines(String productLinesJson) {
-        if (StringUtils.isBlank(productLinesJson)) {
-            return Collections.emptyList();
-        }
-        try {
-            return objectMapper.readValue(productLinesJson, STRING_LIST_TYPE);
-        } catch (JsonProcessingException e) {
-            throw new IllegalStateException("解析产品线配置失败", e);
-        }
-    }
-
-    private String writeProductLines(List<String> productLines) {
-        try {
-            if (productLines == null) {
-                return null;
-            }
-            return objectMapper.writeValueAsString(productLines);
-        } catch (JsonProcessingException e) {
-            throw new IllegalStateException("序列化产品线配置失败", e);
-        }
     }
 
     private String trim(String value) {

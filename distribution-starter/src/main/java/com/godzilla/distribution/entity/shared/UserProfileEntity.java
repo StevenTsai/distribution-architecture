@@ -2,7 +2,7 @@ package com.godzilla.distribution.entity.shared;
 
 import java.util.Date;
 
-public class MedicalUserInfoEntity {
+public class UserProfileEntity {
     private Long id;
     private String openid;
     private String name;
@@ -14,7 +14,7 @@ public class MedicalUserInfoEntity {
     private String language;
     private Date createTime;
     private Date modifyTime;
-    private String phonenumber;
+    private String phoneNumber;
     private Byte role;
 
     public Long getId() { return id; }
@@ -39,8 +39,8 @@ public class MedicalUserInfoEntity {
     public void setCreateTime(Date createTime) { this.createTime = createTime; }
     public Date getModifyTime() { return modifyTime; }
     public void setModifyTime(Date modifyTime) { this.modifyTime = modifyTime; }
-    public String getPhonenumber() { return phonenumber; }
-    public void setPhonenumber(String phonenumber) { this.phonenumber = phonenumber; }
+    public String getPhoneNumber() { return phoneNumber; }
+    public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
     public Byte getRole() { return role; }
     public void setRole(Byte role) { this.role = role; }
 }

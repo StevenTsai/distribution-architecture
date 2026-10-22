@@ -148,7 +148,7 @@ public class PiiCipher {
     private static final int IV_LEN = 12;
     private static final int TAG_BITS = 128;
 
-    private final BmsProperties props;
+    private final String configuredKey;   // @Value("${app.pii.key:}")
     private final SecureRandom random = new SecureRandom();
     private volatile boolean warned = false;
 
@@ -200,9 +200,8 @@ public class PiiCipher {
 
     /** 密钥：SHA-256(PII_KEY) 固定为 32 字节 */
     private byte[] keyBytes() {
-        String key = props.pii() == null ? null : props.pii().key();
-        if (key == null || key.isBlank()) return null;
-        return MessageDigest.getInstance("SHA-256").digest(key.getBytes(UTF_8));
+        if (configuredKey == null || configuredKey.isBlank()) return null;
+        return MessageDigest.getInstance("SHA-256").digest(configuredKey.getBytes(UTF_8));
     }
 }
 ```
@@ -253,6 +252,17 @@ Node (基准)                    Java (现役)
 ```
 
 **注意**：生产使用随机 IV，同一明文每次加密结果不同。对拍测试只验证"能否解出明文"，不验证字节相等。
+
+## 本仓库实现
+
+`distribution-starter` 中已落地同一模式，可直接对照阅读：
+
+- [`common/pii/PiiCipher.java`](../distribution-starter/src/main/java/com/godzilla/distribution/common/pii/PiiCipher.java) — 加解密、脱敏、检索键、生产环境 fail-fast
+- 线索表 `distribution_lead`：`contact_phone` 存密文，`contact_phone_lookup` 存 HMAC 检索键
+- 渠道成员表 `distribution_distributor_member`：`phone` + `phone_lookup` 同理
+- 列表接口返回脱敏手机号，详情接口在数据权限校验通过后返回明文
+- 生产系统还应叠加 RBAC 的 `sensitive` 权限码（见 [管理端 RBAC](admin-rbac.md)），本仓库只保留数据权限这一层
+- 密钥配置：`app.pii.key`，开发环境有默认值，生产环境由 `PII_KEY` 环境变量注入
 
 ## Trade-offs
 

@@ -3,7 +3,7 @@
 中文 | [English](../en/decisions/why-mybatis-not-jpa.md)
 
 > 状态：已采纳
-> 日期：项目初始设计阶段（继承自 medical-chaperon-server）
+> 日期：项目初始设计阶段（继承自 jewelry-erp-server）
 > 决策者：架构团队
 
 ---
@@ -56,7 +56,7 @@ Java 持久层框架的两大主流选择：
 SELECT <include refid="BaseColumnList"/>
 FROM distribution_lead
 WHERE deleted = 0
-  AND (patient_name LIKE '%张%' OR patient_phone LIKE '%张%')  -- 模糊搜索
+  AND (contact_name LIKE '%张%' OR contact_phone_lookup = #{lookupKey})  -- 姓名模糊 + 手机号精确
   AND source_distributor_id IN (1, 5, 23, 47)                  -- 数据权限
   AND stage = 'signed'                                           -- 业务过滤
 ORDER BY create_time DESC, id DESC
@@ -113,7 +113,7 @@ MyBatis 写的 SQL 就是最终执行的 SQL，没有 ORM 的"翻译层"。开�
 
 ### 5. 与现有系统的一致性
 
-本项目从 `medical-chaperon-server` 提取，该系统已经使用 MyBatis。保持一致可以：
+本项目从 `jewelry-erp-server` 提取，该系统已经使用 MyBatis。保持一致可以：
 - 复用已有的 Mapper XML 和 Entity
 - 共享数据库连接池和 MyBatis 配置
 - 降低迁移成本

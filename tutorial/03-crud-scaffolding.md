@@ -69,7 +69,7 @@ public interface DistributionLeadMapper {
     </resultMap>
 
     <!-- 2. 可复用片段 -->
-    <sql id="BaseColumnList">id, lead_no, patient_name, ...</sql>
+    <sql id="BaseColumnList">id, lead_no, contact_name, ...</sql>
 
     <sql id="ConditionWhere">
         where deleted = 0
@@ -109,7 +109,7 @@ public interface DistributionLeadMapper {
 
 ```java
 public interface DistributionLeadService {
-    PageResponseDTO<DistributionLeadDTO> listLeads(String leadNo, String patientKeyword,
+    PageResponseDTO<DistributionLeadDTO> listLeads(String leadNo, String contactKeyword,
         Long sourceDistributorId, String intentProductLine, Long ownerUserId, String stage,
         Integer page, Integer pageSize);
     DistributionLeadDetailDTO getLead(Long id);
@@ -211,12 +211,12 @@ public class DistributionLeadController {
     @Operation(summary = "分页查询线索列表")
     public Result<PageResponseDTO<DistributionLeadDTO>> listLeads(
             @Parameter(description = "线索编号") @RequestParam(required = false) String leadNo,
-            @Parameter(description = "患者姓名或手机号") @RequestParam(required = false) String patientKeyword,
+            @Parameter(description = "联系人姓名或手机号") @RequestParam(required = false) String contactKeyword,
             @Parameter(description = "页码") @RequestParam(defaultValue = "1") Integer page,
             @Parameter(description = "每页数量") @RequestParam(defaultValue = "10") Integer pageSize) {
         try {
             return Result.success(distributionLeadService.listLeads(
-                leadNo, patientKeyword, null, null, null, null, page, pageSize));
+                leadNo, contactKeyword, null, null, null, null, page, pageSize));
         } catch (BizException e) {
             return new Result<>(e.getCode(), e.getMessage(), null);
         } catch (Exception e) {
@@ -267,11 +267,11 @@ public class CreateDistributionLeadRequestDTO {
 
     private Long sourceMemberId;
 
-    @NotBlank(message = "患者姓名不能为空")
-    private String patientName;
+    @NotBlank(message = "联系人姓名不能为空")
+    private String contactName;
 
-    @NotBlank(message = "患者手机号不能为空")
-    private String patientPhone;
+    @NotBlank(message = "联系人手机号不能为空")
+    private String contactPhone;
 
     @NotBlank(message = "意向产品线不能为空")
     private String intentProductLine;
@@ -287,8 +287,8 @@ public class CreateDistributionLeadRequestDTO {
 public class DistributionLeadDTO {
     private Long id;
     private String leadNo;
-    private String patientName;
-    private String patientPhone;
+    private String contactName;
+    private String contactPhone;
     private Long sourceDistributorId;
     private String sourceDistributorName;  // 关联查询的名称
     private Long sourceMemberId;
@@ -368,7 +368,7 @@ curl -X POST \
      -H "Authorization: test-token-123" \
      -H "x-biz: distribution-starter" \
      -H "Content-Type: application/json" \
-     -d '{"sourceDistributorId":1,"patientName":"测试患者","patientPhone":"13900000001","intentProductLine":"gene"}' \
+     -d '{"sourceDistributorId":1,"contactName":"测试联系人","contactPhone":"13900000001","intentProductLine":"gene"}' \
      http://localhost:9030/api/manage/distribution/leads
 ```
 

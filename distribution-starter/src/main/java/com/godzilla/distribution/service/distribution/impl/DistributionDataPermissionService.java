@@ -9,8 +9,8 @@ import com.godzilla.distribution.exception.BizException;
 import com.godzilla.distribution.mapper.distribution.DistributionDistributorMapper;
 import com.godzilla.distribution.mapper.distribution.DistributionDistributorMemberMapper;
 import com.godzilla.distribution.service.distribution.DistributionOperatorService;
+import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -20,16 +20,12 @@ import java.util.List;
 import java.util.Set;
 
 @Service
+@RequiredArgsConstructor
 public class DistributionDataPermissionService {
 
-    @Autowired
-    private DistributionOperatorService distributionOperatorService;
-
-    @Autowired
-    private DistributionDistributorMemberMapper distributionDistributorMemberMapper;
-
-    @Autowired
-    private DistributionDistributorMapper distributionDistributorMapper;
+    private final DistributionOperatorService distributionOperatorService;
+    private final DistributionDistributorMemberMapper distributionDistributorMemberMapper;
+    private final DistributionDistributorMapper distributionDistributorMapper;
 
     public DistributionDataAccessScope resolveCurrentAccessScope() {
         Long operatorUserId = distributionOperatorService.getCurrentOperatorUserId();

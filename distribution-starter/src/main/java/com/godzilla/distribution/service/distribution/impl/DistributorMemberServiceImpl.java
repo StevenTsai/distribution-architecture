@@ -1,16 +1,14 @@
 package com.godzilla.distribution.service.distribution.impl;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.godzilla.distribution.common.ResultCode;
+import com.godzilla.distribution.common.pii.PiiCipher;
 import com.godzilla.distribution.dto.PageResponseDTO;
 import com.godzilla.distribution.dto.distribution.request.CreateDistributorMemberRequestDTO;
 import com.godzilla.distribution.dto.distribution.request.UpdateDistributorMemberRequestDTO;
 import com.godzilla.distribution.dto.distribution.request.UpdateDistributorMemberStatusRequestDTO;
 import com.godzilla.distribution.dto.distribution.response.DistributionDistributorMemberDTO;
 import com.godzilla.distribution.dto.distribution.response.DistributionDistributorMemberDetailDTO;
-import com.godzilla.distribution.entity.shared.MedicalUserInfoEntity;
+import com.godzilla.distribution.entity.shared.UserProfileEntity;
 import com.godzilla.distribution.entity.distribution.DistributionDistributorEntity;
 import com.godzilla.distribution.entity.distribution.DistributionDistributorMemberEntity;
 import com.godzilla.distribution.enums.distribution.DistributionAuditBizType;
@@ -18,15 +16,15 @@ import com.godzilla.distribution.enums.distribution.DistributionDataScope;
 import com.godzilla.distribution.enums.distribution.DistributionMemberStatus;
 import com.godzilla.distribution.enums.distribution.DistributionRoleCode;
 import com.godzilla.distribution.exception.BizException;
-import com.godzilla.distribution.mapper.shared.MedicalUserInfoEntityMapper;
+import com.godzilla.distribution.mapper.shared.UserProfileEntityMapper;
 import com.godzilla.distribution.mapper.distribution.DistributionDistributorMapper;
 import com.godzilla.distribution.mapper.distribution.DistributionDistributorMemberMapper;
 import com.godzilla.distribution.service.distribution.DistributionAuditLogService;
 import com.godzilla.distribution.service.distribution.DistributionDistributorMemberService;
 import com.godzilla.distribution.service.distribution.DistributionOperatorService;
+import com.godzilla.distribution.service.distribution.support.ProductLineJsonCodec;
+import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,27 +37,21 @@ import java.util.Map;
 import java.util.Set;
 
 @Service
+@RequiredArgsConstructor
 public class DistributorMemberServiceImpl implements DistributionDistributorMemberService {
 
     private static final int DEFAULT_PAGE = 1;
     private static final int DEFAULT_PAGE_SIZE = 10;
     private static final int MAX_PAGE_SIZE = 100;
-    private static final TypeReference<List<String>> STRING_LIST_TYPE = new TypeReference<List<String>>() {};
 
-    @Autowired
-    private DistributionDistributorMemberMapper distributionDistributorMemberMapper;
-    @Autowired
-    private DistributionDistributorMapper distributionDistributorMapper;
-    @Autowired
-    private MedicalUserInfoEntityMapper medicalUserInfoEntityMapper;
-    @Autowired
-    private DistributionOperatorService distributionOperatorService;
-    @Autowired
-    private DistributionAuditLogService distributionAuditLogService;
-    @Autowired
-    private DistributionDataPermissionService distributionDataPermissionService;
-    @Autowired
-    private ObjectMapper objectMapper;
+    private final DistributionDistributorMemberMapper distributionDistributorMemberMapper;
+    private final DistributionDistributorMapper distributionDistributorMapper;
+    private final UserProfileEntityMapper userProfileMapper;
+    private final DistributionOperatorService distributionOperatorService;
+    private final DistributionAuditLogService distributionAuditLogService;
+    private final DistributionDataPermissionService distributionDataPermissionService;
+    private final PiiCipher piiCipher;
+    private final ProductLineJsonCodec productLineJsonCodec;
 
     @Override
     public PageResponseDTO<DistributionDistributorMemberDTO> listMembers(Long distributorId, String status, String roleCode, String phone, Integer page, Integer pageSize) {
@@ -71,8 +63,10 @@ public class DistributorMemberServiceImpl implements DistributionDistributorMemb
             return new PageResponseDTO<DistributionDistributorMemberDTO>(Collections.<DistributionDistributorMemberDTO>emptyList(), 0, safePage, safePageSize);
         }
         Long authorizedMemberId = accessScope.isSelfScope() ? accessScope.getMemberId() : null;
-        long total = distributionDistributorMemberMapper.countByConditionWithScope(distributorId, trim(status), trim(roleCode), trim(phone), authorizedDistributorIds, authorizedMemberId);
-        List<DistributionDistributorMemberEntity> entities = distributionDistributorMemberMapper.selectByConditionWithScope(distributorId, trim(status), trim(roleCode), trim(phone), authorizedDistributorIds, authorizedMemberId, (safePage - 1) * safePageSize, safePageSize);
+        // 手机号加密落库后不支持模糊查询，只有完整手机号才转成检索键
+        String phoneLookup = isPhoneNumber(trim(phone)) ? piiCipher.lookupKey(trim(phone)) : null;
+        long total = distributionDistributorMemberMapper.countByConditionWithScope(distributorId, trim(status), trim(roleCode), phoneLookup, authorizedDistributorIds, authorizedMemberId);
+        List<DistributionDistributorMemberEntity> entities = distributionDistributorMemberMapper.selectByConditionWithScope(distributorId, trim(status), trim(roleCode), phoneLookup, authorizedDistributorIds, authorizedMemberId, (safePage - 1) * safePageSize, safePageSize);
         return new PageResponseDTO<DistributionDistributorMemberDTO>(buildMemberDTOList(entities), total, safePage, safePageSize);
     }
 
@@ -81,7 +75,9 @@ public class DistributorMemberServiceImpl implements DistributionDistributorMemb
         DistributionDistributorMemberEntity entity = getMemberEntity(id);
         validateMemberAccess(entity.getDistributorId(), entity.getId());
         DistributionDistributorMemberDetailDTO detailDTO = new DistributionDistributorMemberDetailDTO();
-        BeanUtils.copyProperties(toDTO(entity, loadDistributorNameMap(Collections.singletonList(entity)), loadManagerNameMap(Collections.singletonList(entity))), detailDTO);
+        fillBaseDTO(entity, detailDTO,
+                loadDistributorNameMap(Collections.singletonList(entity)),
+                loadManagerNameMap(Collections.singletonList(entity)), false);
         detailDTO.setCreatedBy(entity.getCreatedBy());
         detailDTO.setUpdatedBy(entity.getUpdatedBy());
         return detailDTO;
@@ -102,11 +98,11 @@ public class DistributorMemberServiceImpl implements DistributionDistributorMemb
         entity.setDistributorId(request.getDistributorId());
         entity.setUserId(request.getUserId());
         entity.setName(trim(request.getName()));
-        entity.setPhone(trim(request.getPhone()));
+        setEncryptedPhone(entity, trim(request.getPhone()));
         entity.setRoleCode(trim(request.getRoleCode()));
         entity.setDataScope(trim(request.getDataScope()));
         entity.setManagerMemberId(request.getManagerMemberId());
-        entity.setProductLinesJson(writeProductLines(request.getProductLines()));
+        entity.setProductLinesJson(productLineJsonCodec.write(request.getProductLines()));
         entity.setTrainingStatus("pending");
         entity.setStatus(DistributionMemberStatus.ACTIVE.getCode());
         entity.setRemark(trim(request.getRemark()));
@@ -134,11 +130,11 @@ public class DistributorMemberServiceImpl implements DistributionDistributorMemb
         update.setDistributorId(request.getDistributorId());
         update.setUserId(request.getUserId());
         update.setName(trim(request.getName()));
-        update.setPhone(trim(request.getPhone()));
+        setEncryptedPhone(update, trim(request.getPhone()));
         update.setRoleCode(trim(request.getRoleCode()));
         update.setDataScope(trim(request.getDataScope()));
         update.setManagerMemberId(request.getManagerMemberId());
-        update.setProductLinesJson(writeProductLines(request.getProductLines()));
+        update.setProductLinesJson(productLineJsonCodec.write(request.getProductLines()));
         update.setTrainingStatus(trim(request.getTrainingStatus()));
         update.setRemark(trim(request.getRemark()));
         update.setUpdatedBy(distributionOperatorService.getCurrentOperatorUserId());
@@ -174,7 +170,9 @@ public class DistributorMemberServiceImpl implements DistributionDistributorMemb
         Map<Long, String> managerNameMap = loadManagerNameMap(entities);
         List<DistributionDistributorMemberDTO> list = new ArrayList<DistributionDistributorMemberDTO>();
         for (DistributionDistributorMemberEntity entity : entities) {
-            list.add(toDTO(entity, distributorNameMap, managerNameMap));
+            DistributionDistributorMemberDTO dto = new DistributionDistributorMemberDTO();
+            fillBaseDTO(entity, dto, distributorNameMap, managerNameMap, true);
+            list.add(dto);
         }
         return list;
     }
@@ -200,13 +198,38 @@ public class DistributorMemberServiceImpl implements DistributionDistributorMemb
         return nameMap;
     }
 
-    private DistributionDistributorMemberDTO toDTO(DistributionDistributorMemberEntity entity, Map<Long, String> distributorNameMap, Map<Long, String> managerNameMap) {
-        DistributionDistributorMemberDTO dto = new DistributionDistributorMemberDTO();
-        BeanUtils.copyProperties(entity, dto);
+    private void fillBaseDTO(DistributionDistributorMemberEntity entity, DistributionDistributorMemberDTO dto,
+                             Map<Long, String> distributorNameMap, Map<Long, String> managerNameMap, boolean maskPhone) {
+        dto.setId(entity.getId());
+        dto.setDistributorId(entity.getDistributorId());
         dto.setDistributorName(distributorNameMap.get(entity.getDistributorId()));
+        dto.setUserId(entity.getUserId());
+        dto.setName(entity.getName());
+        String plainPhone = piiCipher.decrypt(entity.getPhone());
+        dto.setPhone(maskPhone ? piiCipher.mask(plainPhone) : plainPhone);
+        dto.setRoleCode(entity.getRoleCode());
+        dto.setDataScope(entity.getDataScope());
+        dto.setManagerMemberId(entity.getManagerMemberId());
         dto.setManagerMemberName(managerNameMap.get(entity.getManagerMemberId()));
-        dto.setProductLines(readProductLines(entity.getProductLinesJson()));
-        return dto;
+        dto.setProductLines(productLineJsonCodec.read(entity.getProductLinesJson()));
+        dto.setTrainingStatus(entity.getTrainingStatus());
+        dto.setStatus(entity.getStatus());
+        dto.setLastActiveAt(entity.getLastActiveAt());
+        dto.setRemark(entity.getRemark());
+        dto.setCreateTime(entity.getCreateTime());
+        dto.setModifyTime(entity.getModifyTime());
+    }
+
+    private void setEncryptedPhone(DistributionDistributorMemberEntity entity, String phone) {
+        if (StringUtils.isBlank(phone)) {
+            return;
+        }
+        entity.setPhone(piiCipher.encrypt(phone));
+        entity.setPhoneLookup(piiCipher.lookupKey(phone));
+    }
+
+    private boolean isPhoneNumber(String value) {
+        return value != null && value.matches("^1\\d{10}$");
     }
 
     private void validateDistributor(Long distributorId) {
@@ -256,7 +279,11 @@ public class DistributorMemberServiceImpl implements DistributionDistributorMemb
     }
 
     private void validateMemberPhone(Long distributorId, String phone, Long currentId) {
-        DistributionDistributorMemberEntity existing = distributionDistributorMemberMapper.selectByDistributorAndPhone(distributorId, trim(phone));
+        if (StringUtils.isBlank(phone)) {
+            return;
+        }
+        DistributionDistributorMemberEntity existing = distributionDistributorMemberMapper.selectByDistributorAndPhone(
+                distributorId, piiCipher.lookupKey(phone));
         if (existing == null) return;
         if (currentId != null && currentId.equals(existing.getId())) return;
         throw new BizException("同一渠道下成员手机号已存在", ResultCode.DISTRIBUTOR_MEMBER_PHONE_EXISTS.getCode());
@@ -264,7 +291,7 @@ public class DistributorMemberServiceImpl implements DistributionDistributorMemb
 
     private void validateUserBinding(Long userId, Long currentId) {
         if (userId == null) return;
-        MedicalUserInfoEntity user = medicalUserInfoEntityMapper.selectByPrimaryKey(userId);
+        UserProfileEntity user = userProfileMapper.selectByPrimaryKey(userId);
         if (user == null) throw new BizException("绑定用户不存在", ResultCode.DISTRIBUTOR_MEMBER_USER_NOT_FOUND.getCode());
         DistributionDistributorMemberEntity existing = distributionDistributorMemberMapper.selectByUserId(userId);
         if (existing == null) return;
@@ -278,19 +305,6 @@ public class DistributorMemberServiceImpl implements DistributionDistributorMemb
         DistributionDistributorMemberEntity manager = distributionDistributorMemberMapper.selectByPrimaryKey(managerMemberId);
         if (manager == null || (manager.getDeleted() != null && manager.getDeleted() == 1)) throw new BizException("直属上级成员不存在", ResultCode.DISTRIBUTOR_MEMBER_MANAGER_INVALID.getCode());
         if (!distributorId.equals(manager.getDistributorId())) throw new BizException("直属上级成员必须属于同一渠道", ResultCode.DISTRIBUTOR_MEMBER_MANAGER_INVALID.getCode());
-    }
-
-    private String writeProductLines(List<String> productLines) {
-        try {
-            if (productLines == null) return null;
-            return objectMapper.writeValueAsString(productLines);
-        } catch (JsonProcessingException e) { throw new IllegalStateException("序列化失败", e); }
-    }
-
-    private List<String> readProductLines(String productLinesJson) {
-        if (StringUtils.isBlank(productLinesJson)) return Collections.emptyList();
-        try { return objectMapper.readValue(productLinesJson, STRING_LIST_TYPE); }
-        catch (JsonProcessingException e) { throw new IllegalStateException("解析失败", e); }
     }
 
     private String trim(String value) { return StringUtils.trimToNull(value); }

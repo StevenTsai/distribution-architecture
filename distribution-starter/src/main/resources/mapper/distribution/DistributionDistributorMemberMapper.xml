@@ -7,6 +7,7 @@
         <result column="user_id" jdbcType="BIGINT" property="userId"/>
         <result column="name" jdbcType="VARCHAR" property="name"/>
         <result column="phone" jdbcType="VARCHAR" property="phone"/>
+        <result column="phone_lookup" jdbcType="VARCHAR" property="phoneLookup"/>
         <result column="role_code" jdbcType="VARCHAR" property="roleCode"/>
         <result column="data_scope" jdbcType="VARCHAR" property="dataScope"/>
         <result column="manager_member_id" jdbcType="BIGINT" property="managerMemberId"/>
@@ -23,7 +24,7 @@
     </resultMap>
 
     <sql id="BaseColumnList">
-        id, distributor_id, user_id, name, phone, role_code, data_scope, manager_member_id, product_lines_json,
+        id, distributor_id, user_id, name, phone, phone_lookup, role_code, data_scope, manager_member_id, product_lines_json,
         training_status, status, last_active_at, remark, created_by, updated_by, create_time, modify_time, deleted
     </sql>
 
@@ -38,8 +39,8 @@
         <if test="roleCode != null and roleCode != ''">
             and role_code = #{roleCode}
         </if>
-        <if test="phone != null and phone != ''">
-            and phone like concat('%', #{phone}, '%')
+        <if test="phoneLookup != null and phoneLookup != ''">
+            and phone_lookup = #{phoneLookup}
         </if>
     </sql>
 
@@ -109,7 +110,7 @@
         <include refid="BaseColumnList"/>
         from distribution_distributor_member
         where distributor_id = #{distributorId}
-          and phone = #{phone}
+          and phone_lookup = #{phoneLookup}
           and deleted = 0
         limit 1
     </select>
@@ -149,6 +150,9 @@
             </if>
             <if test="phone != null">
                 phone,
+            </if>
+            <if test="phoneLookup != null">
+                phone_lookup,
             </if>
             <if test="roleCode != null">
                 role_code,
@@ -202,6 +206,9 @@
             </if>
             <if test="phone != null">
                 #{phone,jdbcType=VARCHAR},
+            </if>
+            <if test="phoneLookup != null">
+                #{phoneLookup,jdbcType=VARCHAR},
             </if>
             <if test="roleCode != null">
                 #{roleCode,jdbcType=VARCHAR},
@@ -259,6 +266,9 @@
             </if>
             <if test="phone != null">
                 phone = #{phone,jdbcType=VARCHAR},
+            </if>
+            <if test="phoneLookup != null">
+                phone_lookup = #{phoneLookup,jdbcType=VARCHAR},
             </if>
             <if test="roleCode != null">
                 role_code = #{roleCode,jdbcType=VARCHAR},

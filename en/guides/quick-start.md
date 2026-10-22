@@ -128,7 +128,7 @@ INSERT INTO admin_user (id, username, password, status, user_id, create_time, mo
 VALUES (1, 'admin', MD5('admin123'), 1, 1, NOW(), NOW());
 
 -- 2. Insert business user
-INSERT INTO medical_user_info (id, name, phone, create_time, modify_time)
+INSERT INTO user_profile (id, name, phone, create_time, modify_time)
 VALUES (1, 'Test Admin', '13800138000', NOW(), NOW());
 
 -- 3. Insert login session

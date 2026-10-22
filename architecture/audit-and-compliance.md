@@ -291,7 +291,7 @@ failClosed 由**调用点显式传参**，不是全局开关——判定"这个�
 public void record(String bizType, Long bizId, String action,
                    Object beforeSnapshot, Object afterSnapshot, String remark) {
     // 1. 自动获取当前操作人（从 ThreadLocal）
-    MedicalUserInfoEntity operator = distributionOperatorService.getCurrentOperatorUser();
+    UserProfileEntity operator = distributionOperatorService.getCurrentOperatorUser();
 
     // 2. 构建审计日志实体
     DistributionAuditLogEntity entity = new DistributionAuditLogEntity();
@@ -516,7 +516,7 @@ ALTER TABLE distribution_audit_log ADD INDEX idx_audit_log_operator (operator_us
 
 ### 5. 脱敏问题
 
-当前快照直接序列化完整对象，可能包含敏感信息（如患者手机号、身份证号）。审计日志本身也需要访问控制。
+当前快照直接序列化完整对象，可能包含敏感信息（如联系人手机号、身份证号）。审计日志本身也需要访问控制。
 
 **改进方向**：
 - 在 `writeSnapshot()` 中增加字段脱敏逻辑（如手机号中间 4 位打码）

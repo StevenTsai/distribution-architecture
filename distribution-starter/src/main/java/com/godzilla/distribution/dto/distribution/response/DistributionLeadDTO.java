@@ -8,8 +8,8 @@ import java.util.Date;
 public class DistributionLeadDTO {
     private Long id;
     private String leadNo;
-    private String patientName;
-    private String patientPhone;
+    private String contactName;
+    private String contactPhone;
     private Long sourceDistributorId;
     private String sourceDistributorName;
     private Long sourceMemberId;

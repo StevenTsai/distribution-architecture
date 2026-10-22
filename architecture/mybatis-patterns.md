@@ -60,7 +60,7 @@ MyBatis 的 XML Mapper 是一种"半手写 SQL"的方式——SQL 写在 XML 中
 ```xml
 <!-- 1. 列名列表：表结构变更时只改一处 -->
 <sql id="BaseColumnList">
-    id, biz_order_no, lead_id, patient_id, status, ...
+    id, biz_order_no, lead_id, contact_id, status, ...
 </sql>
 
 <!-- 2. 业务查询条件：通用的 WHERE 子句 -->
@@ -219,7 +219,7 @@ MyBatis 的 XML Mapper 是一种"半手写 SQL"的方式——SQL 写在 XML 中
 
     <!-- ===== 2. 可复用 SQL 片段 ===== -->
     <sql id="BaseColumnList">
-        id, biz_order_no, lead_id, patient_id, status, signed_amount, ...
+        id, biz_order_no, lead_id, contact_id, status, signed_amount, ...
     </sql>
 
     <sql id="ConditionWhere">

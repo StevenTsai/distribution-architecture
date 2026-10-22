@@ -4,7 +4,7 @@
 -- ============================================================
 
 -- 共享表：用户信息
-CREATE TABLE IF NOT EXISTS `medical_user_info` (
+CREATE TABLE IF NOT EXISTS `user_profile` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,
   `openid` varchar(64) DEFAULT NULL,
   `name` varchar(64) DEFAULT NULL,
@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS `admin_user` (
   `username` varchar(64) NOT NULL,
   `password` varchar(128) NOT NULL,
   `status` tinyint(4) DEFAULT '1' COMMENT '状态: 0-禁用, 1-启用',
-  `user_id` bigint(20) DEFAULT NULL COMMENT '关联的medical_user_info.id',
+  `user_id` bigint(20) DEFAULT NULL COMMENT '关联的user_profile.id',
   `create_time` datetime DEFAULT CURRENT_TIMESTAMP,
   `modify_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
@@ -53,5 +53,5 @@ CREATE TABLE IF NOT EXISTS `user_login_session` (
 INSERT INTO `admin_user` (`id`, `username`, `password`, `status`, `user_id`) VALUES
 (1, 'admin', 'CHANGE_ME_BEFORE_USE', 1, 1);
 
-INSERT INTO `medical_user_info` (`id`, `openid`, `name`, `role`) VALUES
+INSERT INTO `user_profile` (`id`, `openid`, `name`, `role`) VALUES
 (1, '1', '系统管理员', 1);

@@ -8,8 +8,9 @@ import java.util.Date;
 public class DistributionLeadEntity {
     private Long id;
     private String leadNo;
-    private String patientName;
-    private String patientPhone;
+    private String contactName;
+    private String contactPhone;
+    private String contactPhoneLookup;
     private Long sourceDistributorId;
     private Long sourceMemberId;
     private String intentProductLine;

@@ -35,7 +35,7 @@ CREATE DATABASE distribution_server DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb
 ## 第三步：执行建表脚本
 
 ```bash
-# 共享表（用户、患者、管理员、会话）
+# 共享表（用户、联系人、管理员、会话）
 mysql -u root -p distribution_server < 01_shared_tables.sql
 
 # 分销业务表（19 张）
@@ -128,7 +128,7 @@ INSERT INTO admin_user (id, username, password, status, user_id, create_time, mo
 VALUES (1, 'admin', MD5('admin123'), 1, 1, NOW(), NOW());
 
 -- 2. 插入业务用户
-INSERT INTO medical_user_info (id, name, phone, create_time, modify_time)
+INSERT INTO user_profile (id, name, phone, create_time, modify_time)
 VALUES (1, '测试管理员', '13800138000', NOW(), NOW());
 
 -- 3. 插入登录 session
