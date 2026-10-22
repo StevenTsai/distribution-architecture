@@ -140,4 +140,4 @@ Cleaner than the decision—drop `RedisStateStore` and remove `spring-boot-start
 
 ---
 
-See also: [Why MyBatis over JPA](why-mybatis-not-jpa.md) · [Data Permission Model](../../architecture/data-permission-model.md)
+See also: [Why MyBatis over JPA](why-mybatis-not-jpa.md) · [Data Permission Model](../architecture/data-permission-model.md)

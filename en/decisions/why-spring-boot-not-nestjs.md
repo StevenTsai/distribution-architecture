@@ -93,4 +93,4 @@ Choosing Spring also does not mean accepting its ecosystem wholesale—the **del
 
 ---
 
-See also: [State Storage: Redis Optional](why-redis-optional.md) · [Why MyBatis over JPA](why-mybatis-not-jpa.md) · [Audit Snapshot Pattern](../../architecture/audit-and-compliance.md)
+See also: [State Storage: Redis Optional](why-redis-optional.md) · [Why MyBatis over JPA](why-mybatis-not-jpa.md) · [Audit Snapshot Pattern](../architecture/audit-and-compliance.md)

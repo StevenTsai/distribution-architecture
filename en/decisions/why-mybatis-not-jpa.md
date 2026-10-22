@@ -56,7 +56,7 @@ Distribution system query scenarios are inherently complex:
 SELECT <include refid="BaseColumnList"/>
 FROM distribution_lead
 WHERE deleted = 0
-  AND (contact_name LIKE '%张%' OR contact_phone_lookup = #{lookupKey})  -- name fuzzy + phone exact
+  AND (contact_name LIKE '%Zhang%' OR contact_phone_lookup = #{lookupKey})  -- name fuzzy + phone exact
   AND source_distributor_id IN (1, 5, 23, 47)                  -- Data permissions
   AND stage = 'signed'                                           -- Business filter
 ORDER BY create_time DESC, id DESC

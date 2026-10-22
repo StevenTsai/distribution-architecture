@@ -136,6 +136,23 @@ The fourth case study, [production-guardrails](../case-studies/production-guardr
 |---------|-------------|------------|
 | `spring-data-permission-starter` | Spring Boot Starter for data permissions, ready to import | [GitHub](https://github.com/StevenTsai/spring-data-permission-starter) |
 
+## English Documentation
+
+This directory mirrors the Chinese book: the preface, all 7 architecture patterns, all 6 ADRs, all 4 practical guides, the 7-step tutorial, and the case-study READMEs plus their evolution notes.
+
+| Section | Documents |
+|---------|-----------|
+| Overview | [Preface](preface.md) |
+| Architecture | [Data Permission Model](architecture/data-permission-model.md) · [Commission Pipeline](architecture/commission-pipeline.md) · [Audit Snapshot](architecture/audit-and-compliance.md) · [MyBatis Engineering](architecture/mybatis-patterns.md) · [PII Encryption](architecture/pii-encryption.md) · [Admin RBAC](architecture/admin-rbac.md) · [Cross-Language Contract Testing](architecture/cross-language-contract-testing.md) |
+| Decisions | [Session vs JWT](decisions/why-session-not-jwt.md) · [MyBatis vs JPA](decisions/why-mybatis-not-jpa.md) · [Logical Delete](decisions/why-logical-delete.md) · [Spring Boot over NestJS](decisions/why-spring-boot-not-nestjs.md) · [Redis Optional](decisions/why-redis-optional.md) · [JavaScript over TypeScript](decisions/why-javascript-not-typescript.md) |
+| Guides | [Quick Start](guides/quick-start.md) · [Extend a New Module](guides/extend-new-module.md) · [Customize Permissions](guides/customize-permission.md) · [Spring Boot 3 Migration](guides/spring-boot-3-migration.md) |
+| Tutorial | [01 Domain Model](tutorial/01-domain-model.md) · [02 Data Permissions](tutorial/02-data-permission.md) · [03 CRUD Scaffolding](tutorial/03-crud-scaffolding.md) · [04 Audit Logging](tutorial/04-audit-logging.md) · [05 Commission Flow](tutorial/05-commission-flow.md) · [06 Settlement](tutorial/06-settlement.md) · [07 Compliance](tutorial/07-compliance.md) |
+| Case studies | [MTO Workflow Engine](case-studies/mto-workflow-engine/README.md) · [Piecework Wage Engine](case-studies/piecework-wage-engine/README.md) · [Spring Events Decoupling](case-studies/spring-events-decoupling/README.md) · [Production Guardrails](case-studies/production-guardrails/README.md) |
+
+Each English page links back to its Chinese original at the top. Translations track the Chinese source; if you change either version, update both.
+
+Project-level documents are also available in English: [Contributing](CONTRIBUTING.md) · [Security Policy](SECURITY.md) · [Starter README](distribution-starter/README.md).
+
 ## Recommended Reading
 
 **If you want to try it out**: Go to `distribution-starter/` and follow the README to get running in 5 minutes.

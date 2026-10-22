@@ -205,8 +205,14 @@ English translations of the core documents are available in the [`en/`](en/) dir
 | Document | Description |
 |----------|-------------|
 | [en/README.md](en/README.md) | Full project overview |
+| [en/preface.md](en/preface.md) | Preface: what this book is and where the patterns come from |
 | [en/architecture/data-permission-model.md](en/architecture/data-permission-model.md) | Row-Level Data Permission Model |
 | [en/architecture/commission-pipeline.md](en/architecture/commission-pipeline.md) | Commission Pipeline: State-Machine-Driven Flow |
+| [en/architecture/audit-and-compliance.md](en/architecture/audit-and-compliance.md) | Audit Snapshot: Audit Log and Compliance Record Pattern |
+| [en/architecture/mybatis-patterns.md](en/architecture/mybatis-patterns.md) | MyBatis Engineering: SQL Fragments and Permission Injection |
+| [en/architecture/pii-encryption.md](en/architecture/pii-encryption.md) | PII Encryption: AES-GCM, HMAC Lookup Keys, Masking |
+| [en/architecture/admin-rbac.md](en/architecture/admin-rbac.md) | Admin RBAC: Module-Level Permissions |
+| [en/architecture/cross-language-contract-testing.md](en/architecture/cross-language-contract-testing.md) | Cross-Language Contract Testing |
 | [en/decisions/why-javascript-not-typescript.md](en/decisions/why-javascript-not-typescript.md) | ADR: Zero Build Chain — JavaScript over TypeScript |
 | [en/decisions/why-logical-delete.md](en/decisions/why-logical-delete.md) | ADR: Why Logical Delete |
 | [en/decisions/why-mybatis-not-jpa.md](en/decisions/why-mybatis-not-jpa.md) | ADR: Why MyBatis over JPA |
@@ -214,5 +220,15 @@ English translations of the core documents are available in the [`en/`](en/) dir
 | [en/decisions/why-session-not-jwt.md](en/decisions/why-session-not-jwt.md) | ADR: Why Session Token over JWT |
 | [en/decisions/why-spring-boot-not-nestjs.md](en/decisions/why-spring-boot-not-nestjs.md) | ADR: Spring Boot Single Track over NestJS |
 | [en/guides/quick-start.md](en/guides/quick-start.md) | Quick Start Guide |
+| [en/guides/extend-new-module.md](en/guides/extend-new-module.md) | Extending a New Module |
+| [en/guides/customize-permission.md](en/guides/customize-permission.md) | Customizing the Permission Model |
+| [en/guides/spring-boot-3-migration.md](en/guides/spring-boot-3-migration.md) | Spring Boot 3.x Migration Guide |
+| [en/tutorial/](en/tutorial/) | Build-from-scratch tutorial, steps 01–07 |
+| [en/case-studies/](en/case-studies/) | Case-study READMEs and evolution notes |
+| [en/CONTRIBUTING.md](en/CONTRIBUTING.md) | Contributing guide |
+| [en/SECURITY.md](en/SECURITY.md) | Security policy |
+| [en/distribution-starter/README.md](en/distribution-starter/README.md) | Starter quick start and project structure |
 
-For Spring Boot 2.7 users, see [migration guide](guides/spring-boot-3-migration.md).
+The English directory covers every book page except the VitePress homepage (`index.md`); the internal `doc/open-source-strategy.md` remains Chinese-only.
+
+For Spring Boot 2.7 users, see the [migration guide](guides/spring-boot-3-migration.md) (also available in [English](en/guides/spring-boot-3-migration.md)).
