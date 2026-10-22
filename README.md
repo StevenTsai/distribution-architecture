@@ -5,7 +5,7 @@
 
 中文 | [English](en/README.md)
 
-📖 **[在线阅读](https://steven83.github.io/distribution-architecture/)** | B2B 企业级架构设计模式库，从生产系统中提炼的可复用架构方案。
+📖 **[在线阅读《架构炼金术：从真实系统提炼可复用的 Java 架构模式》](https://steven83.github.io/distribution-architecture/)** | B2B 企业级架构设计模式库，从生产系统中提炼的可复用架构方案。
 
 ## 这是什么
 

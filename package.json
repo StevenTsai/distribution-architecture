@@ -1,7 +1,7 @@
 {
   "name": "distribution-architecture",
   "version": "1.0.0",
-  "description": "从生产到通用：Java 架构模式实战 — 从真实生产系统提炼的可复用架构模式",
+  "description": "《架构炼金术：从真实系统提炼可复用的 Java 架构模式》— 从真实生产系统提炼的可复用架构模式",
   "type": "module",
   "scripts": {
     "docs:dev": "vitepress dev",

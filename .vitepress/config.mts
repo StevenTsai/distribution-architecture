@@ -1,8 +1,9 @@
 import { defineConfig } from 'vitepress'
 
 export default defineConfig({
-  title: '从生产到通用：Java 架构模式实战',
-  description: '从真实生产系统提炼的可复用架构模式，包含设计文档、ADR 和可运行案例',
+  // 导航栏使用短书名，完整书名在首页 hero 和 description 中展示
+  title: '架构炼金术',
+  description: '《架构炼金术：从真实系统提炼可复用的 Java 架构模式》—— Java / Spring Boot / MyBatis 实战，7 个可复用模式 + 6 篇 ADR + 可运行代码与测试',
   lang: 'zh-CN',
 
   // GitHub Pages 部署路径

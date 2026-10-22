@@ -1,10 +1,12 @@
 ---
 layout: home
+title: 架构炼金术：从真实系统提炼可复用的 Java 架构模式
+titleTemplate: false
 
 hero:
-  name: 从生产到通用
-  text: Java 架构模式实战
-  tagline: 从真实生产系统提炼的可复用架构模式
+  name: 架构炼金术
+  text: 从真实系统提炼可复用的 Java 架构模式
+  tagline: 7 个模式 · 6 篇 ADR · 可运行代码与测试
   image:
     src: /logo.svg
     alt: Distribution Architecture
