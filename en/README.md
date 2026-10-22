@@ -3,7 +3,7 @@
 [![Deploy Docs](https://github.com/StevenTsai/distribution-architecture/actions/workflows/deploy.yml/badge.svg)](https://github.com/StevenTsai/distribution-architecture/actions/workflows/deploy.yml)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](../LICENSE)
 
-[中文](../README.md) | English
+[中文](https://github.com/StevenTsai/distribution-architecture/blob/main/README.md) | English
 
 📖 **[Read Online](https://steventsai.github.io/distribution-architecture/)** | B2B enterprise architecture design pattern library — reusable architecture solutions refined from production systems.
 

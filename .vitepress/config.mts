@@ -6,6 +6,127 @@ export default withMermaid({
   description: '《架构炼金术：从真实系统提炼可复用的 Java 架构模式》—— Java / Spring Boot / MyBatis 实战，7 个可复用模式 + 6 篇 ADR + 可运行代码与测试',
   lang: 'zh-CN',
 
+  locales: {
+    root: { label: '中文', lang: 'zh-CN' },
+    en: {
+      label: 'English',
+      lang: 'en',
+      link: '/en/',
+      title: 'Architecture Alchemy',
+      description:
+        'Java / Spring Boot / MyBatis architecture patterns extracted from production systems',
+      themeConfig: {
+        nav: [
+          { text: 'Home', link: '/en/' },
+          { text: 'GitHub', link: 'https://github.com/StevenTsai/distribution-architecture' },
+        ],
+
+        sidebar: [
+          {
+            text: 'Overview',
+            items: [{ text: 'Preface', link: '/en/preface' }],
+          },
+          {
+            text: 'Part I: Foundations',
+            items: [
+              { text: 'Data Permissions at the SQL Layer', link: '/en/architecture/data-permission-model' },
+              { text: 'Event-Driven State Machine', link: '/en/architecture/commission-pipeline' },
+              { text: 'Audit Log & Compliance Records', link: '/en/architecture/audit-and-compliance' },
+              { text: 'MyBatis Engineering', link: '/en/architecture/mybatis-patterns' },
+            ],
+          },
+          {
+            text: 'Part II: Advanced Patterns',
+            items: [
+              { text: 'PII Encryption & Masking', link: '/en/architecture/pii-encryption' },
+              { text: 'Admin RBAC', link: '/en/architecture/admin-rbac' },
+              { text: 'Cross-Language Contract Testing', link: '/en/architecture/cross-language-contract-testing' },
+            ],
+          },
+          {
+            text: 'Part III: Decisions',
+            items: [
+              { text: 'Session vs JWT', link: '/en/decisions/why-session-not-jwt' },
+              { text: 'MyBatis vs JPA', link: '/en/decisions/why-mybatis-not-jpa' },
+              { text: 'Logical vs Physical Delete', link: '/en/decisions/why-logical-delete' },
+              { text: 'Spring Boot vs NestJS', link: '/en/decisions/why-spring-boot-not-nestjs' },
+              { text: 'Redis Optional', link: '/en/decisions/why-redis-optional' },
+              { text: 'JavaScript vs TypeScript', link: '/en/decisions/why-javascript-not-typescript' },
+            ],
+          },
+          {
+            text: 'Part IV: Case Studies',
+            items: [
+              { text: 'MTO Workflow Engine', link: '/en/case-studies/mto-workflow-engine/' },
+              { text: 'Piecework Wage Engine', link: '/en/case-studies/piecework-wage-engine/' },
+              { text: 'Spring Events Decoupling', link: '/en/case-studies/spring-events-decoupling/' },
+              { text: 'Production Guardrails', link: '/en/case-studies/production-guardrails/' },
+            ],
+          },
+          {
+            text: 'Part V: Build from Scratch',
+            items: [
+              { text: '01 Domain Model', link: '/en/tutorial/01-domain-model' },
+              { text: '02 Data Permissions', link: '/en/tutorial/02-data-permission' },
+              { text: '03 CRUD Scaffolding', link: '/en/tutorial/03-crud-scaffolding' },
+              { text: '04 Audit Logging', link: '/en/tutorial/04-audit-logging' },
+              { text: '05 Commission Flow', link: '/en/tutorial/05-commission-flow' },
+              { text: '06 Settlement', link: '/en/tutorial/06-settlement' },
+              { text: '07 Compliance', link: '/en/tutorial/07-compliance' },
+            ],
+          },
+          {
+            text: 'Guides',
+            items: [
+              { text: 'Quick Start', link: '/en/guides/quick-start' },
+              { text: 'Extend a New Module', link: '/en/guides/extend-new-module' },
+              { text: 'Customize Permissions', link: '/en/guides/customize-permission' },
+              { text: 'Spring Boot 3 Migration', link: '/en/guides/spring-boot-3-migration' },
+            ],
+          },
+        ],
+
+        outline: {
+          level: [2, 3],
+          label: 'On this page',
+        },
+
+        docFooter: {
+          prev: 'Previous',
+          next: 'Next',
+        },
+
+        search: {
+          provider: 'local',
+          options: {
+            translations: {
+              button: { buttonText: 'Search', buttonAriaLabel: 'Search' },
+              modal: {
+                noResultsText: 'No results found',
+                resetButtonTitle: 'Clear query',
+                footer: { selectText: 'Select', navigateText: 'Navigate' },
+              },
+            },
+          },
+        },
+
+        footer: {
+          message: 'Released under the Apache License 2.0',
+          copyright: 'Copyright © 2026 Steven Tsai',
+        },
+
+        socialLinks: [
+          { icon: 'github', link: 'https://github.com/StevenTsai/distribution-architecture' },
+        ],
+
+        editLink: {
+          pattern: 'https://github.com/StevenTsai/distribution-architecture/edit/main/:path',
+          text: 'Edit this page on GitHub',
+        },
+      },
+    },
+  },
+
   // GitHub Pages 部署路径
   base: '/distribution-architecture/',
 
@@ -14,16 +135,15 @@ export default withMermaid({
 
   // 只处理文档目录，排除代码和其他文件
   srcExclude: [
-    'en/**',           // 英文版（单独维护）
     'node_modules/**',
-    'distribution-starter/**',  // 代码示例
-    'case-studies/*/src/**',    // 案例代码
-    'case-studies/*/docs/**',   // 案例演进文档（单独链接）
+    'distribution-starter/src/**',    // 代码示例
+    'distribution-starter/target/**',
+    'distribution-starter/pom.xml',
+    'distribution-starter/.gitignore',
+    'case-studies/*/src/**',          // 案例代码
     'doc/**',          // 项目文档
     'scripts/**',
     'README.md',       // 仓库 README 不作为书籍页面
-    'CONTRIBUTING.md',
-    'guides/**',       // 实操指南（可后续加入）
   ],
 
   // 案例目录只有 README.md，重写为 index，使 /case-studies/xxx/ 可以直接访问
@@ -32,6 +152,11 @@ export default withMermaid({
     'case-studies/piecework-wage-engine/README.md': 'case-studies/piecework-wage-engine/index.md',
     'case-studies/spring-events-decoupling/README.md': 'case-studies/spring-events-decoupling/index.md',
     'case-studies/production-guardrails/README.md': 'case-studies/production-guardrails/index.md',
+    'en/README.md': 'en/index.md',
+    'en/case-studies/mto-workflow-engine/README.md': 'en/case-studies/mto-workflow-engine/index.md',
+    'en/case-studies/piecework-wage-engine/README.md': 'en/case-studies/piecework-wage-engine/index.md',
+    'en/case-studies/spring-events-decoupling/README.md': 'en/case-studies/spring-events-decoupling/index.md',
+    'en/case-studies/production-guardrails/README.md': 'en/case-studies/production-guardrails/index.md',
   },
 
   // Mermaid 图表配置（插件会自动跟随明暗主题）
@@ -109,6 +234,15 @@ export default withMermaid({
           { text: '05 佣金流转', link: '/tutorial/05-commission-flow' },
           { text: '06 结算流程', link: '/tutorial/06-settlement' },
           { text: '07 合规检查', link: '/tutorial/07-compliance' },
+        ],
+      },
+      {
+        text: '实操指南',
+        items: [
+          { text: '快速开始', link: '/guides/quick-start' },
+          { text: '扩展新模块', link: '/guides/extend-new-module' },
+          { text: '自定义权限', link: '/guides/customize-permission' },
+          { text: 'Spring Boot 3 迁移', link: '/guides/spring-boot-3-migration' },
         ],
       },
     ],

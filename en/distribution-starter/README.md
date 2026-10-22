@@ -1,6 +1,6 @@
 # Distribution Starter
 
-[中文](../../distribution-starter/README.md) | English
+[中文](https://github.com/StevenTsai/distribution-architecture/blob/main/distribution-starter/README.md) | English
 
 A runnable skeleton for a distribution management system, built on the [distribution-architecture](../README.md) design documents. It demonstrates how core patterns — data permissions, audit logging, compliance checks — are implemented in a Spring Boot + MyBatis stack.
 

@@ -1,6 +1,6 @@
 # Contributing Guide
 
-[中文](../CONTRIBUTING.md) | English
+[中文](https://github.com/StevenTsai/distribution-architecture/blob/main/CONTRIBUTING.md) | English
 
 Thank you for your interest in Distribution Architecture! Here is how you can contribute.
 
