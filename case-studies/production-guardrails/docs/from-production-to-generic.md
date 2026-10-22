@@ -1,75 +1,75 @@
-# From Production to Generic: The Guardrails Extraction Journey
+# 从生产到通用：护栏提炼之旅
 
-This document records what changed, what was preserved, and why—when extracting two production guardrails (fail-fast startup + pluggable state store) from a private IoT device-management backend into this runnable case study.
+本文记录在将两个生产护栏（快速失败启动 + 可插拔状态存储）从一个私有 IoT 设备管理后端提炼为本可运行实战案例的过程中，改变了什么、保留了什么，以及为什么。
 
-## Original System Overview
+## 原系统概览
 
-The source is a Java 17 + Spring Boot 3.2 backend for an IoT device platform (battery-telemetry domain, ~600k registered-user capacity envelope, 24 REST endpoints, 155 unit tests).
+源系统是一个 Java 17 + Spring Boot 3.2 后端，面向 IoT 设备平台（电池遥测领域，约 60 万注册用户容量包络，24 个 REST 端点，155 个单元测试）。
 
-Two facts shaped the guardrails:
+两个事实塑造了这些护栏：
 
-1. **Short-lived state lived on Redis beside MySQL**—verification codes, token denylists, and handshake material. Access-pattern analysis (short TTL, key-level atomicity, regenerable data, few hundred QPS peak) showed a single MySQL table absorbs the load with 15–50× headroom.
-2. **Configuration could silently degrade production.** The starkest example: the only SMS sender printed codes to logs in debug mode, and nothing structurally prevented that debug switch from reaching production—where phone-number login would then fail 100% of the time, or worse, appear to work in testing and never deliver in production. The startup guard exists to make that failure class **impossible to deploy**, not merely visible.
+1. **短生命周期状态存放在 MySQL 旁边的 Redis 上**——验证码、token 拒绝名单和握手材料。访问模式分析（短 TTL、键级原子性、可重新生成的数据、数百 QPS 峰值）表明，单张 MySQL 表就能以 15–50 倍余量吸收该负载。
+2. **配置可能让生产静默降级。** 最典型的例子：唯一的短信发送器在 debug 模式下把验证码打印到日志，而没有任何结构性机制阻止该 debug 开关进入生产——届时手机号登录会 100% 失败；更糟的是，在测试中看起来正常，生产却永远收不到验证码。启动护栏的存在，是为了让这类故障**无法被部署**，而不仅仅是可见。
 
-## What Changed and Why
+## 改变了什么，以及为什么
 
-### 1. Config namespace: product prefix → neutral `app.*`
+### 1. 配置命名空间：产品前缀 → 中性的 `app.*`
 
-The production config prefix carried the product's name. The case study uses a deliberately domain-neutral `app.*`—the guard patterns are about *config hygiene*, not about any product.
+生产配置前缀带有产品名称。本实战案例刻意使用领域中性的 `app.*`——护栏模式关乎的是*配置卫生*，而不是任何具体产品。
 
-### 2. Business-specific checks → generic archetypes
+### 2. 业务专用检查 → 通用原型
 
-Production checks included third-party app secrets and a PII-encryption key. Those are business wiring, not patterns. The case study keeps the **archetypes** that generalize:
+生产检查包括第三方应用密钥和 PII 加密密钥。那些属于业务装配，而非模式。本实战案例保留了可泛化的**原型**：
 
-| Production check | Kept as | Why it generalizes |
+| 生产检查 | 保留为 | 为什么可泛化 |
 |---|---|---|
-| Third-party app secret missing | `app.storage.base-url` missing | "Missing required production config" with stated consequence |
-| Debug SMS switch | `app.sms.debug` | "Fake I/O in production" switch |
-| Placeholder JWT secret | `app.jwt.secret` (`change-me*` prefix) | "Template value shipped to prod" |
-| Storage-mode enum | `app.state.store` enum | "Typo silently selects nothing" |
+| 第三方应用密钥缺失 | `app.storage.base-url` 缺失 | "缺少必需的生产配置"，并陈述后果 |
+| Debug 短信开关 | `app.sms.debug` | "生产中的伪造 I/O"开关 |
+| 占位符 JWT 密钥 | `app.jwt.secret`（`change-me*` 前缀） | "模板值被带到生产" |
+| 存储模式枚举 | `app.state.store` 枚举 | "拼写错误会静默地选不到任何实现" |
 
-Every rejection message keeps the production discipline: **state the consequence inline** ("otherwise … happens"), so logs are self-explanatory.
+每条拒绝消息都保持生产纪律：**内联陈述后果**（"否则会发生……"），因此日志自解释。
 
 ### 3. MyBatis mapper → `JdbcTemplate`
 
-The production `app_state` access was already entity-free raw SQL through a MyBatis mapper. The case study drops MyBatis for `JdbcTemplate`: same visible-SQL discipline, two fewer moving parts, and a test suite that needs no mapper XML or MyBatis context. (The repository's broader MyBatis-vs-ORM position lives in [the MyBatis ADR](../../../decisions/why-mybatis-not-jpa.md); this case study simply refuses to make ORM the story.)
+生产环境的 `app_state` 访问本来就是通过 MyBatis mapper 执行的、无实体的裸 SQL。本实战案例去掉 MyBatis，改用 `JdbcTemplate`：同样是 SQL 可见的纪律，少了两个活动部件，而且测试套件不需要 mapper XML 或 MyBatis 上下文。（本仓库更广泛的 MyBatis 与 ORM 之争的立场见 [MyBatis ADR](../../../decisions/why-mybatis-not-jpa.md)；本实战案例只是拒绝让 ORM 成为主角。）
 
-### 4. `UNIX_TIMESTAMP()`-in-SQL → parameterized application clock
+### 4. SQL 内的 `UNIX_TIMESTAMP()` → 参数化的应用时钟
 
-The most substantive technical change. Production judged expiry inside SQL (`WHERE expire_time > UNIX_TIMESTAMP()`) while *writing* `expire_time` from the application clock—two clock domains in one implementation, flagged as a defect in its own architecture review.
+这是最具实质性的技术改动。生产在 SQL 内部判断过期（`WHERE expire_time > UNIX_TIMESTAMP()`），同时却用应用时钟*写入* `expire_time`——一个实现里出现两个时钟域，这在其自身的架构评审中被标记为缺陷。
 
-The case study **pushes `now` as a parameter** on every read/write path:
+本实战案例在每条读/写路径上**把 `now` 作为参数传入**：
 
-- one clock domain (application), written into the contract javadoc;
-- expiry semantics become testable against H2 without emulating MySQL's clock functions;
-- this implements the production ADR's own "future evolution" item (clock-ownership convergence)—the case study is what that remediation looks like.
+- 单一时钟域（应用），写入契约 javadoc；
+- 过期语义可针对 H2 测试，而无需模拟 MySQL 的时钟函数；
+- 这落实了生产 ADR 自己的"未来演进"条目（时钟归属收敛）——本实战案例就是该修复应有的样子。
 
-### 5. Added `InMemoryStateStore` + `memory` mode (not in production)
+### 5. 新增 `InMemoryStateStore` + `memory` 模式（生产中没有）
 
-Production had two implementations (MySQL, Redis). A third—pure in-memory—serves as the **contract's first reference**: semantic disputes are settled here first, with zero external dependencies, before the MySQL/Redis implementations are required to agree. Adding it is also the pattern's extensibility demo: one class + one `@Bean` + one enum value.
+生产有两个实现（MySQL、Redis）。第三个——纯内存——充当**契约的第一参考**：语义争议先在这里裁定，无需任何外部依赖，然后才要求 MySQL/Redis 实现达成一致。新增它同时也是该模式的可扩展性演示：一个类 + 一个 `@Bean` + 一个枚举值。
 
-### 6. Added the contract test suite production lacked
+### 6. 补上生产所缺少的契约测试套件
 
-The production `StateStore` interface's javadoc *claimed* a contract test class that did not exist. The abstraction shipped on documentation faith alone.
+生产 `StateStore` 接口的 javadoc *声称*有一个契约测试类，但它并不存在。这套抽象仅凭对文档的信任就交付了。
 
-This case study closes that gap: one abstract assertion set (`StateStoreContractTest`) executed against the in-memory and H2/MySQL implementations, covering JSON round-trip, tolerant read, expiry, `setIfAbsent`, and atomic concurrent increment (final value must be exact; concurrent read-back may be pessimistically high, matching the documented "stricter is safer" semantics). Wiring is locked by an `ApplicationContextRunner` suite whose sharpest case is **illegal value → zero beans**—silent fallback is the most dangerous wiring failure mode.
+本实战案例补上了这一空白：一套抽象断言集（`StateStoreContractTest`）分别针对内存实现和 H2/MySQL 实现执行，覆盖 JSON 往返、宽容读取、过期、`setIfAbsent` 以及并发原子自增（最终值必须精确；并发回读可能偏悲观地偏高，与文档中"更严格更安全"的语义一致）。装配由 `ApplicationContextRunner` 套件锁定，其中最尖锐的用例是**非法值 → 零个 bean**——静默回退是最危险的装配故障模式。
 
-### 7. DDL: `TEXT` → `VARCHAR(2048)`, dual-dialect
+### 7. DDL：`TEXT` → `VARCHAR(2048)`，双方言
 
-`increment`'s `CAST(state_value AS BIGINT)` needs a string-typed column H2 can cast; production used `TEXT` (fine for MySQL, opaque to H2's cast). `VARCHAR(2048)` runs identically under MySQL and H2 `MODE=MySQL`. The schema file documents the production alternative for anyone promoting the pattern.
+`increment` 的 `CAST(state_value AS BIGINT)` 需要一个 H2 能够转换的字符串类型列；生产使用 `TEXT`（对 MySQL 没问题，但对 H2 的转换不透明）。`VARCHAR(2048)` 在 MySQL 和 H2 `MODE=MySQL` 下表现一致。schema 文件注明了生产替代方案，供任何提升该模式的人参考。
 
-## What Was Preserved
+## 保留了什么
 
-- **Six primitives + JSON values + tolerant read** (corrupt value → treated as missing, key deleted)—the interface contract is byte-for-byte the production semantics.
-- **`matchIfMissing = true`**: the operational default is the path with fewest components (MySQL), never the path with most (Redis).
-- **Atomicity visible in SQL**: `INSERT IGNORE` for set-if-absent, single-statement `ON DUPLICATE KEY UPDATE` for increment—nothing hidden in ORM flush timing.
-- **Fail-fast guard semantics**: refuse to start, never silently degrade; placeholder-prefix detection; dev/test leniency with warnings; rejection messages that teach.
-- **`RedisStateStore` resident**: the rollback path ships in the codebase, selected by one config line—the escape hatch stays warm.
+- **六原语 + JSON 值 + 宽容读取**（损坏的值 → 视为缺失，键被删除）——接口契约与生产语义逐字节一致。
+- **`matchIfMissing = true`**：运维默认值是最少组件的路径（MySQL），绝不是组件最多的路径（Redis）。
+- **原子性在 SQL 中可见**：`INSERT IGNORE` 用于 set-if-absent，单语句 `ON DUPLICATE KEY UPDATE` 用于 increment——没有任何东西藏在 ORM flush 时机里。
+- **快速失败护栏语义**：拒绝启动，绝不静默降级；占位符前缀检测；dev/test 宽容但给出警告；拒绝消息具有教学性。
+- **`RedisStateStore` 常驻**：回滚路径随代码库交付，由一行配置选择——逃生通道始终保持可用。
 
-## Lessons Learned
+## 经验教训
 
-1. **An abstraction without contract tests is a promise nobody is enforcing.** The production interface documented its semantics carefully—and nothing verified them. Ship the shared assertion set in the same commit as the interface.
-2. **Clock ownership must be written into the contract, not discovered in an incident.** "Who judges expiry, with which clock" is a cross-implementation concern the moment a rollback path exists.
-3. **Guard messages should teach, not just block.** A rejection log line that states the consequence turns an on-call night into a 30-second config fix.
-4. **The default path should be the minimal-middleware path.** `matchIfMissing` on the MySQL implementation encodes an operations opinion in one annotation—reviewable, testable, reversible by config.
-5. **Silent fallback is worse than absence.** A typo'd store mode wiring *nothing* (caught at startup by the guard) beats a typo quietly selecting the wrong implementation forever.
+1. **没有契约测试的抽象，是一个无人执行的承诺。** 生产接口仔细记录了其语义——却没有任何东西验证它们。请在交付接口的同一个提交里交付共享断言集。
+2. **时钟归属必须写进契约，而不是在事故中发现。** 只要存在回滚路径，"谁用哪个时钟判断过期"就是跨实现关注点。
+3. **护栏消息应当教学，而不只是拦截。** 一条陈述后果的拒绝日志，能把一个值班之夜变成 30 秒的配置修复。
+4. **默认路径应当是最少中间件的路径。** MySQL 实现上的 `matchIfMissing` 用一个注解编码了运维观点——可评审、可测试、可通过配置回退。
+5. **静默回退比缺失更糟。** 拼错的存储模式*什么都不装配*（在启动时被护栏捕获），胜过拼写错误悄悄选中错误实现并永远如此。

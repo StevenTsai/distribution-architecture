@@ -274,8 +274,8 @@ You have completed the entire distribution management system from scratch. Let's
 
 ## Next Steps
 
-- Read the [architecture design documents](../architecture/) to gain a deeper understanding of the design decisions behind each pattern
+- Read the [architecture design documents](../architecture/data-permission-model.md) to gain a deeper understanding of the design decisions behind each pattern
 - Read the [extend a new module guide](../guides/extend-new-module.md) to learn how to add new features
-- Read the [ADR documents](../decisions/) to understand the trade-offs behind technology choices
+- Read the [ADR documents](../decisions/why-session-not-jwt.md) to understand the trade-offs behind technology choices
 
 ---

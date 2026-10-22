@@ -170,11 +170,11 @@ mapper.selectByCondition(...);
 
 ## 相关文档
 
-- [架构设计文档](../architecture/) — 核心设计模式详解
-- [从零构建教程](../tutorial/) — 7 步完整叙事线
+- [架构设计文档](../architecture/data-permission-model.md) — 核心设计模式详解
+- [从零构建教程](../tutorial/01-domain-model.md) — 7 步完整叙事线
 - [Spring Boot 3.x 迁移指南](../guides/spring-boot-3-migration.md) — 升级到 Java 17+
 - [贡献指南](../CONTRIBUTING.md) — 如何参与贡献
 
 ## License
 
-[Apache License 2.0](../LICENSE)
+[Apache License 2.0](https://github.com/StevenTsai/distribution-architecture/blob/main/LICENSE)

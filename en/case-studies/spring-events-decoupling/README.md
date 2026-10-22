@@ -1,6 +1,6 @@
 # Case Study: Spring Events Cross-Module Decoupling
 
-[中文](../../../case-studies/spring-events-decoupling/README.md) | English
+[中文](../../../case-studies/spring-events-decoupling/) | English
 
 Demonstrates how to decouple cross-module interactions using Spring Events, extracted from a production jewelry ERP and generalized for any industry.
 
@@ -218,7 +218,7 @@ public class WorkOrderToInventoryListener {
 
 ## Related Documents
 
-- [MTO Workflow Engine](../mto-workflow-engine/README.md) — The work order state machine that publishes `WorkOrderFinishedEvent`
+- [MTO Workflow Engine](../mto-workflow-engine/) — The work order state machine that publishes `WorkOrderFinishedEvent`
 - [Commission Pipeline](../../architecture/commission-pipeline.md) — Event-driven pattern for commission calculation
 - [Data Permission Model](../../architecture/data-permission-model.md) — Cross-cutting concern pattern
 

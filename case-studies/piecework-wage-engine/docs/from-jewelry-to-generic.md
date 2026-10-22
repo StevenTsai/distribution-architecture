@@ -1,94 +1,97 @@
-# From Jewelry to Generic: Piecework Wage Engine
+# 从珠宝到通用：计件工资引擎
 
-This document explains the design decisions when extracting the piecework wage calculation from the jewelry ERP into a generic engine.
+本文说明在将计件工资计算从珠宝 ERP 抽取为通用引擎时所做的设计决策。
 
-## Original System
+## 原始系统
 
-The jewelry ERP's wage calculation lived in `BizPieceworkWageServiceImpl` (142 lines). It was straightforward:
+珠宝 ERP 的工资计算位于 `BizPieceworkWageServiceImpl`（142 行）。它非常直接：
 
 ```java
-// Original formula (actual code)
+// 原始公式（实际代码）
 int totalQty = reports.stream().mapToInt(BizProcessReport::getReportQty).sum();
 BigDecimal wageAmount = process.getPiecePrice().multiply(BigDecimal.valueOf(totalQty));
 ```
 
-The settlement flow was linear method calls:
-1. `calculateWage()` — compute wage
-2. `adjustWage()` — manual adjustment
-3. `confirmWage()` — status change
-4. `getMonthlySummary()` — SQL aggregation
+结算流程是一系列线性方法调用：
 
-## What Changed
+1. `calculateWage()` —— 计算工资
+2. `adjustWage()` —— 手动调整
+3. `confirmWage()` —— 状态变更
+4. `getMonthlySummary()` —— SQL 聚合
 
-### 1. Formula: Simple → Multiplied
+## 变更内容
 
-**Original:** `wage = piecePrice × totalQty`
+### 1. 公式：简单相乘 → 多系数相乘
 
-**Generic:** `wage = unitPrice × quantity × difficultyCoeff × qualityCoeff`
+**原始：** `wage = piecePrice × totalQty`
 
-**Why:** The original formula treated all processes equally. In reality:
-- Stone setting is harder than polishing (difficulty coefficient)
-- Poor quality output should be penalized (quality coefficient)
-- Different industries have different multiplier needs
+**通用：** `wage = unitPrice × quantity × difficultyCoeff × qualityCoeff`
 
-**What was added:**
-- `WageConfig.difficultyCoefficient` — process difficulty multiplier
-- `WageConfig.qualityThreshold` — quality pass rate threshold
-- `WageConfig.qualityPenaltyFactor` — penalty when below threshold
+**原因：** 原始公式对所有工序一视同仁。而在现实中：
 
-### 2. Settlement: Linear → Pipeline
+- 镶石比抛光更难（难度系数）
+- 质量不佳的产出应被扣减（质量系数）
+- 不同行业有不同的系数需求
 
-**Original:** Sequential method calls in `BizPieceworkWageServiceImpl`
+**新增内容：**
 
-**Generic:** `WageSettlementPipeline` with pluggable `SettlementStage` instances
+- `WageConfig.difficultyCoefficient` —— 工序难度系数
+- `WageConfig.qualityThreshold` —— 质量合格率阈值
+- `WageConfig.qualityPenaltyFactor` —— 低于阈值时的扣减系数
 
-**Why:** The original couldn't easily add new processing steps. If you wanted to add tax calculation, you had to modify the service. The Pipeline pattern makes it extensible.
+### 2. 结算：线性调用 → 流水线（Pipeline）
 
-### 3. Worker: "Master" → Generic Worker
+**原始：** 在 `BizPieceworkWageServiceImpl` 中的顺序方法调用
 
-**Original:** `masterId`, `masterName` (jewelry craftsman)
+**通用：** 由可插拔的 `SettlementStage` 实例组成的 `WageSettlementPipeline`
 
-**Generic:** `workerId`, `workerName` (any worker/employee)
+**原因：** 原始实现难以方便地新增处理步骤。若想增加税额计算，必须修改服务类。流水线（Pipeline）模式使其具备可扩展性。
 
-**Why:** "Master" is jewelry terminology. Generic terms work for any industry.
+### 3. 工人：“师傅” → 通用工人
 
-### 4. Material Loss: Removed
+**原始：** `masterId`、`masterName`（珠宝工匠）
 
-**Original:** `goldLoss`, `stoneLoss` on `BizProcessReport`
+**通用：** `workerId`、`workerName`（任意工人/员工）
 
-**Generic:** Not included
+**原因：** “师傅”是珠宝行业术语。通用术语适用于任何行业。
 
-**Why:** Material loss tracking belongs in a separate domain (inventory/material management), not in wage calculation. The original conflated two concerns.
+### 4. 物料损耗：移除
 
-### 5. Precision: Implicit → Explicit
+**原始：** `BizProcessReport` 上的 `goldLoss`、`stoneLoss`
 
-**Original:** `BigDecimal` operations without explicit scale or rounding mode
+**通用：** 不包含
 
-**Generic:** `setScale(2, RoundingMode.HALF_UP)` on all monetary values
+**原因：** 物料损耗跟踪属于独立领域（库存/物料管理），而不属于工资计算。原始实现把两个关注点混在了一起。
 
-**Why:** The original relied on database column precision (`DECIMAL(10,2)`) to handle rounding. Explicit rounding in code is more predictable and testable.
+### 5. 精度：隐式 → 显式
 
-## What Was Preserved
+**原始：** 未指定精度（scale）或舍入模式的 `BigDecimal` 运算
 
-1. **WageStatus lifecycle** — PENDING → CONFIRMED → PAID (same as original)
-2. **Adjustment mechanism** — `finalAmount = wageAmount + adjustmentAmount`
-3. **Monthly settlement period** — `yyyy-MM` format
-4. **Worker summary aggregation** — group by worker, sum final amounts
-5. **BigDecimal for all monetary values** — no floating point
+**通用：** 对所有金额值使用 `setScale(2, RoundingMode.HALF_UP)`
 
-## What Was Added
+**原因：** 原始实现依赖数据库列精度（`DECIMAL(10,2)`）来处理舍入。在代码中显式舍入更可预测、更易测试。
 
-1. **`WageConfig`** — Configurable wage parameters per process (didn't exist in original)
-2. **`WageSettlementPipeline`** — Extensible pipeline pattern (original was linear)
-3. **`SettlementStage` interface** — Pluggable processing stages
-4. **`CalculateStage`** — Explicit calculation stage (original was inline in service)
-5. **`AdjustStage` with `AdjustmentProvider`** — Auto-adjustment capability (original was manual only)
-6. **`ConfirmStage` with `AutoConfirmCriteria`** — Auto-confirmation (original was always manual)
-7. **`SummaryStage`** — In-memory summary collection (original was SQL query)
+## 保留内容
 
-## Pipeline Extensibility Examples
+1. **WageStatus 生命周期** —— PENDING → CONFIRMED → PAID（与原始实现相同）
+2. **调整项机制** —— `finalAmount = wageAmount + adjustmentAmount`
+3. **按月结算周期** —— `yyyy-MM` 格式
+4. **工人汇总聚合** —— 按工人分组，对最终金额求和
+5. **所有金额值均使用 BigDecimal** —— 不使用浮点数
 
-### Standard Manufacturing
+## 新增内容
+
+1. **`WageConfig`** —— 按工序可配置的工资参数（原始实现中不存在）
+2. **`WageSettlementPipeline`** —— 可扩展的流水线模式（原始实现为线性）
+3. **`SettlementStage` 接口** —— 可插拔的处理阶段
+4. **`CalculateStage`** —— 显式计算阶段（原始实现内联在服务类中）
+5. **带 `AdjustmentProvider` 的 `AdjustStage`** —— 自动调整能力（原始实现仅支持手动）
+6. **带 `AutoConfirmCriteria` 的 `ConfirmStage`** —— 自动确认（原始实现始终为手动）
+7. **`SummaryStage`** —— 内存内汇总收集（原始实现为 SQL 查询）
+
+## 流水线扩展示例
+
+### 标准制造业
 ```java
 pipeline.addStage(new CalculateStage())
         .addStage(new AdjustStage())
@@ -96,32 +99,32 @@ pipeline.addStage(new CalculateStage())
         .addStage(new SummaryStage());
 ```
 
-### With Tax Calculation
+### 带税额计算
 ```java
 pipeline.addStage(new CalculateStage())
         .addStage(new AdjustStage())
-        .addStage(new TaxDeductionStage())  // custom stage
+        .addStage(new TaxDeductionStage())  // 自定义阶段
         .addStage(new ConfirmStage())
         .addStage(new SummaryStage());
 ```
 
-### With Compliance Check
+### 带合规检查
 ```java
 pipeline.addStage(new CalculateStage())
         .addStage(new AdjustStage())
-        .addStage(new ComplianceCheckStage())  // custom stage
+        .addStage(new ComplianceCheckStage())  // 自定义阶段
         .addStage(new ConfirmStage())
         .addStage(new SummaryStage());
 ```
 
-## Lessons Learned
+## 经验总结
 
-1. **Simple formulas are fine for v1:** The jewelry system's `piecePrice × quantity` formula worked for years. Don't over-engineer early.
+1. **简单公式在 v1 阶段就够用：** 珠宝系统的 `piecePrice × quantity` 公式用了多年。不要过早过度设计。
 
-2. **Coefficients add complexity:** Difficulty and quality coefficients require configuration management, threshold decisions, and edge case handling. Only add them when there's a real business need.
+2. **系数会带来复杂度：** 难度系数和质量系数需要配置管理、阈值决策和边界情况处理。只有存在真实业务需求时才应引入。
 
-3. **Pipeline > linear for extensibility:** If you anticipate adding processing steps, start with a Pipeline. Retrofitting is harder than building it right the first time.
+3. **在可扩展性上流水线优于线性调用：** 如果预计会新增处理步骤，就应从流水线开始。事后改造比一开始就做对比更难。
 
-4. **Separate concerns:** Material loss tracking (goldLoss/stoneLoss) doesn't belong in wage calculation. Keep domains clean during extraction.
+4. **分离关注点：** 物料损耗跟踪（goldLoss/stoneLoss）不属于工资计算。抽取过程中保持领域边界清晰。
 
-5. **Explicit precision:** Always specify `setScale()` and `RoundingMode` on `BigDecimal` operations. Don't rely on database columns to handle rounding.
+5. **显式精度：** 在 `BigDecimal` 运算中始终指定 `setScale()` 和 `RoundingMode`。不要依赖数据库列来处理舍入。

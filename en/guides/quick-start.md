@@ -209,6 +209,6 @@ Redis is not a hard dependency for core features. If you don't need it temporari
 
 ## Next Steps
 
-- Read the [Architecture Design Documents](../architecture/) to understand core design patterns
+- Read the [Architecture Design Documents](../architecture/data-permission-model.md) to understand core design patterns
 - Read the [Extend New Module Guide](extend-new-module.md) to learn how to add new features
 - Read the [Data Permission Model](../architecture/data-permission-model.md) to understand permission control mechanisms

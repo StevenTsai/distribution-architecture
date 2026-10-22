@@ -287,7 +287,7 @@ sequenceDiagram
 
 The same pattern is already implemented in `distribution-starter` and can be read side by side:
 
-- [`common/pii/PiiCipher.java`](../../distribution-starter/src/main/java/com/godzilla/distribution/common/pii/PiiCipher.java) — encryption/decryption, masking, lookup keys, production fail-fast
+- [`common/pii/PiiCipher.java`](https://github.com/StevenTsai/distribution-architecture/blob/main/distribution-starter/src/main/java/com/godzilla/distribution/common/pii/PiiCipher.java) — encryption/decryption, masking, lookup keys, production fail-fast
 - Lead table `distribution_lead`: `contact_phone` stores ciphertext, `contact_phone_lookup` stores the HMAC lookup key
 - Distributor member table `distribution_distributor_member`: `phone` + `phone_lookup` likewise
 - List endpoints return masked mobile numbers; detail endpoints return plaintext only after data permission validation passes

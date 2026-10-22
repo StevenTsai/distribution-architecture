@@ -1,6 +1,6 @@
 # Case Study: Production Guardrails
 
-[中文](../../../case-studies/production-guardrails/README.md) | English
+[中文](../../../case-studies/production-guardrails/) | English
 
 Two production guardrails extracted from a live IoT device-management backend: a **fail-fast startup guard** (refuse to start rather than run degraded) and a **pluggable state store** that cut mandatory production middleware from two components to one while keeping a zero-code rollback path.
 

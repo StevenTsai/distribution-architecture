@@ -112,4 +112,4 @@ mvn test
 
 ## License
 
-By submitting a contribution, you agree that it will be released under the [Apache License 2.0](../LICENSE).
+By submitting a contribution, you agree that it will be released under the [Apache License 2.0](https://github.com/StevenTsai/distribution-architecture/blob/main/LICENSE).

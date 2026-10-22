@@ -285,7 +285,7 @@ sequenceDiagram
 
 `distribution-starter` 中已落地同一模式，可直接对照阅读：
 
-- [`common/pii/PiiCipher.java`](../distribution-starter/src/main/java/com/godzilla/distribution/common/pii/PiiCipher.java) — 加解密、脱敏、检索键、生产环境 fail-fast
+- [`common/pii/PiiCipher.java`](https://github.com/StevenTsai/distribution-architecture/blob/main/distribution-starter/src/main/java/com/godzilla/distribution/common/pii/PiiCipher.java) — 加解密、脱敏、检索键、生产环境 fail-fast
 - 线索表 `distribution_lead`：`contact_phone` 存密文，`contact_phone_lookup` 存 HMAC 检索键
 - 渠道成员表 `distribution_distributor_member`：`phone` + `phone_lookup` 同理
 - 列表接口返回脱敏手机号，详情接口在数据权限校验通过后返回明文

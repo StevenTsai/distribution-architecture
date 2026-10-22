@@ -1,37 +1,37 @@
-# Case Study: Production Guardrails
+# 实战案例：生产护栏
 
-Two production guardrails extracted from a live IoT device-management backend: a **fail-fast startup guard** (refuse to start rather than run degraded) and a **pluggable state store** that cut mandatory production middleware from two components to one while keeping a zero-code rollback path.
+两个生产护栏提炼自一个在运行的 IoT 设备管理后端：一个是**快速失败的启动护栏**（宁可拒绝启动，也不降级运行），另一个是**可插拔的状态存储**——它将生产环境必需的中间件从两个组件缩减为一个，同时保留了一条零代码改动的回滚路径。
 
-## What Is This
+## 这是什么
 
-Both guards address the same failure class: **misconfiguration that fails silently in production and loudly in hindsight**. One turns configuration violations into startup failures; the other turns a middleware decision into a configuration switch with a tested escape hatch.
+两个护栏针对的是同一类故障：**在生产中静默失败、事后才大张旗鼓暴露的配置错误**。一个把配置违规转化为启动失败；另一个把中间件选型变成一次配置切换，并附带一条经过测试的逃生通道。
 
-## Background
+## 背景
 
-The source system is a Spring Boot backend serving an IoT device platform (~600k registered-user capacity envelope). Before converging, its short-lived state (verification codes, token denylists, handshake material) was hosted on Redis next to MySQL. Access-pattern analysis showed three shared properties—short TTL, key-level atomicity, regenerable data—and a few hundred QPS peak that a single MySQL table absorbs with 15–50× headroom. The question became: *is a resident Redis worth it?*
+源系统是一个 Spring Boot 后端，服务于一个 IoT 设备平台（约 60 万注册用户的容量包络）。在收敛之前，它的短生命周期状态（验证码、token 拒绝名单、握手材料）托管在 MySQL 旁边的 Redis 上。访问模式分析显示出三个共同属性——短 TTL、键级原子性、数据可重新生成——以及数百 QPS 的峰值，而单张 MySQL 表就能以 15–50 倍的余量吸收。问题于是变成：*常驻的 Redis 值得吗？*
 
-The full decision narrative lives in the ADRs; this case study is the **runnable code** behind them:
+完整的决策叙述记录在 ADR 中；本实战案例是它们背后的**可运行代码**：
 
-- [ADR: State Storage in MySQL, Redis Optional](../../decisions/why-redis-optional.md)
-- [ADR: Spring Boot Single Track over NestJS](../../decisions/why-spring-boot-not-nestjs.md)
+- [ADR：MySQL 中的状态存储，Redis 可选](../../decisions/why-redis-optional.md)
+- [ADR：选择 Spring Boot 单轨而非 NestJS](../../decisions/why-spring-boot-not-nestjs.md)
 
-## Guard 1: StartupGuard — Fail-Fast on Misconfiguration
+## 护栏 1：StartupGuard —— 配置错误时快速失败
 
-`@PostConstruct` runs one check pass; any violation in a non-dev/test profile **aborts context startup** instead of letting the app run degraded:
+`@PostConstruct` 执行一次检查；在非 dev/test 的 profile 中，任何违规都会**中止上下文启动**，而不是让应用降级运行：
 
-| Check | dev/test | prod | Consequence stated in the rejection |
+| 检查项 | dev/test | prod | 拒绝消息中陈述的后果 |
 |---|---|---|---|
-| `app.state.store` ∈ {mysql, redis, memory} | reject (always) | reject (always) | typo would wire no `StateStore` at all |
-| `app.jwt.secret` placeholder (`change-me*`) | warn, allow | **reject** | anyone could forge tokens |
-| `app.sms.debug=true` | allow | **reject** | codes only printed to logs, never delivered |
-| `app.storage.base-url` missing | allow | **reject** | download URLs fall back to request Host header (Host-injection surface) |
+| `app.state.store` ∈ {mysql, redis, memory} | 拒绝（始终） | 拒绝（始终） | 拼写错误会导致完全没有 `StateStore` 被装配 |
+| `app.jwt.secret` 占位符（`change-me*`） | 警告，放行 | **拒绝** | 任何人都可以伪造 token |
+| `app.sms.debug=true` | 放行 | **拒绝** | 验证码只打印到日志，永远不会送达 |
+| `app.storage.base-url` 缺失 | 放行 | **拒绝** | 下载 URL 回退到请求的 Host 头（Host 注入攻击面） |
 
-Two design points worth copying:
+两个值得复制的设计要点：
 
-1. **Every rejection message names the consequence** ("otherwise … happens"), so the startup log is self-explanatory at 3 a.m. — no wiki lookup required.
-2. **The guard only works because the framework guarantees the semantics**: a failed `@PostConstruct` = failed bean creation = the application never comes up. That is the mechanism-level reason the single-track Spring Boot decision was made (see ADR).
+1. **每条拒绝消息都点名后果**（"否则会发生……"），因此凌晨三点看启动日志就能自解释——无需翻 wiki。
+2. **护栏之所以有效，是因为框架保证了语义**：`@PostConstruct` 失败 = bean 创建失败 = 应用永远不会启动。这正是做出 Spring Boot 单轨决策的机制层原因（见 ADR）。
 
-## Guard 2: StateStore — Middleware 2→1 with Zero-Code Rollback
+## 护栏 2：StateStore —— 中间件从 2 到 1，附带零代码回滚
 
 ```mermaid
 flowchart LR
@@ -55,15 +55,15 @@ flowchart LR
     classDef muted fill:#f1f5f9,stroke:#94a3b8,color:#334155,stroke-width:1.5px
 ```
 
-Six primitives (`set` / `get` / `setIfAbsent` / `delete` / `exists` / `increment`) with a written semantic contract; JSON values; tolerant read (corrupt value → treated as missing and deleted).
+六个原语（`set` / `get` / `setIfAbsent` / `delete` / `exists` / `increment`），配有一份成文的语义契约；JSON 值；宽容读取（损坏的值视为缺失并删除）。
 
-The MySQL implementation keeps atomicity **visible in SQL**—no ORM flush timing to audit:
+MySQL 实现让原子性**在 SQL 中可见**——没有需要审计的 ORM flush 时机：
 
 ```sql
--- setIfAbsent: primary-key conflict = key still live, naturally atomic
+-- setIfAbsent：主键冲突 = key 仍然存活，天然原子
 INSERT IGNORE INTO app_state (state_key, state_value, expire_time, update_time) VALUES (?, ?, ?, ?);
 
--- increment: single-statement row-lock increment, aligned with Redis INCR semantics
+-- increment：单语句行锁自增，与 Redis INCR 语义对齐
 INSERT INTO app_state (state_key, state_value, expire_time, update_time)
 VALUES (?, '1', ?, ?)
 ON DUPLICATE KEY UPDATE
@@ -71,77 +71,77 @@ ON DUPLICATE KEY UPDATE
   expire_time = CASE WHEN expire_time <= ? THEN ? ELSE expire_time END;
 ```
 
-**Clock ownership** (an evolution over the production original): expiry is judged by an **application-supplied `now` parameter** on every read/write path—one clock domain, no `UNIX_TIMESTAMP()`-in-SQL mixing, and contract-testable against H2. The production variant and the reasoning difference are recorded in [docs/from-production-to-generic.md](docs/from-production-to-generic.md).
+**时钟归属**（相对生产原版的一次演进）：每次读/写路径的过期判断都使用**应用传入的 `now` 参数**——单一时钟域，不在 SQL 中混用 `UNIX_TIMESTAMP()`，并且可以针对 H2 做契约测试。生产变体及其推理差异记录在 [docs/from-production-to-generic.md](docs/from-production-to-generic.md)。
 
-## The Contract Test Suite — The Gap, Honestly Recorded
+## 契约测试套件 —— 如实记录的空白
 
-The production system shipped the abstraction **without contract tests** (its javadoc referenced a test class that did not exist). This case study ships the missing piece:
+生产系统交付这套抽象时**没有契约测试**（它的 javadoc 引用的测试类并不存在）。本实战案例补上了缺失的那一块：
 
-| Suite | What it locks | Count |
+| 套件 | 锁定什么 | 数量 |
 |---|---|---|
-| `StateStoreContractTest` (abstract) | Six-primitive semantics: JSON round-trip, tolerant read, expiry, setIfAbsent, atomic concurrent increment (final value exact) | 13 assertions-cases × 2 impls |
-| `InMemoryStateStoreContractTest` | Reference implementation—the first arbiter of semantic disputes | 13 |
-| `MysqlStateStoreContractTest` | Real SQL against H2 `MODE=MySQL` (`INSERT IGNORE`, `ON DUPLICATE KEY UPDATE`) | 13 |
-| `StateStoreWiringTest` | Condition → implementation mapping; illegal value wires **nothing** (no silent fallback) | 5 |
-| `StartupGuardTest` | The full rejection matrix, one executable assertion per production red line | 9 |
+| `StateStoreContractTest`（抽象） | 六原语语义：JSON 往返、宽容读取、过期、setIfAbsent、并发原子自增（最终值精确） | 13 个断言用例 × 2 个实现 |
+| `InMemoryStateStoreContractTest` | 参考实现——语义争议的第一裁判 | 13 |
+| `MysqlStateStoreContractTest` | 针对 H2 `MODE=MySQL` 的真实 SQL（`INSERT IGNORE`、`ON DUPLICATE KEY UPDATE`） | 13 |
+| `StateStoreWiringTest` | 条件 → 实现的映射；非法值**什么都不装配**（无静默回退） | 5 |
+| `StartupGuardTest` | 完整的拒绝矩阵，每条生产红线对应一个可执行断言 | 9 |
 
-**40 tests, zero external services.** Redis semantics are pinned by the interface contract and identical JSON handling; live-Redis contract tests are listed under Not Included.
+**40 个测试，零外部服务。** Redis 语义由接口契约和一致的 JSON 处理固定；针对真实 Redis 的契约测试列在"未包含内容"下。
 
-## Project Structure
+## 项目结构
 
 ```
 src/main/java/com/distribution/casestudy/guardrails/
 ├── config/
-│   ├── GuardProperties.java          # app.* config surface (deliberately domain-neutral)
-│   └── StartupGuard.java             # @PostConstruct fail-fast checks
+│   ├── GuardProperties.java          # app.* 配置面（刻意保持领域中性）
+│   └── StartupGuard.java             # @PostConstruct 快速失败检查
 └── state/
-    ├── StateStore.java               # interface + written semantic contract
-    ├── InMemoryStateStore.java       # contract reference (memory mode)
-    ├── MysqlStateStore.java          # default: app_state, atomic SQL visible
-    ├── RedisStateStore.java          # rollback path: config switch, zero code change
-    └── StateStoreConfig.java         # @ConditionalOnProperty wiring (3 lines of selection logic)
+    ├── StateStore.java               # 接口 + 成文的语义契约
+    ├── InMemoryStateStore.java       # 契约参考（memory 模式）
+    ├── MysqlStateStore.java          # 默认：app_state，原子 SQL 可见
+    ├── RedisStateStore.java          # 回滚路径：配置切换，零代码改动
+    └── StateStoreConfig.java         # @ConditionalOnProperty 装配（3 行选择逻辑）
 src/main/resources/
-└── app-state-schema.sql              # app_state DDL (dual-dialect: H2 MySQL-mode + MySQL)
+└── app-state-schema.sql              # app_state DDL（双方言：H2 MySQL 模式 + MySQL）
 src/test/java/.../
-├── config/StartupGuardTest.java      # rejection matrix
+├── config/StartupGuardTest.java      # 拒绝矩阵
 └── state/
-    ├── StateStoreContractTest.java   # abstract shared assertions
+    ├── StateStoreContractTest.java   # 抽象共享断言
     ├── InMemoryStateStoreContractTest.java
     ├── MysqlStateStoreContractTest.java
-    └── StateStoreWiringTest.java     # ApplicationContextRunner wiring lock
+    └── StateStoreWiringTest.java     # ApplicationContextRunner 装配锁定
 ```
 
-## How to Run
+## 如何运行
 
 ```bash
 cd case-studies/production-guardrails
-mvn test        # JDK 17+; no MySQL, no Redis required
+mvn test        # JDK 17+；无需 MySQL，无需 Redis
 ```
 
-## Not Included
+## 未包含内容
 
-Deliberately out of scope—each with a reason:
+有意排除在范围之外——每一项都给出理由：
 
-- **Expired-row cleanup job** (the production system pruned `app_state` every 10 minutes in batches): semantics stay correct without it (read-path filter makes expired rows invisible); only the table grows. Physical cleanup is an operations concern.
-- **A runnable Spring Boot application**: this is a library-style case study. Wire `StateStoreConfig` + `StartupGuard` into your app and enable `@ConfigurationProperties` binding (`@ConfigurationPropertiesScan` or `@EnableConfigurationProperties(GuardProperties.class)`).
-- **Live-Redis contract tests**: require a running Redis; the interface javadoc plus identical JSON/serialization behavior carry the contract in this repo's zero-service test budget.
+- **过期行清理任务**（生产系统每 10 分钟分批清理 `app_state`）：没有它语义仍然正确（读路径过滤使过期行不可见）；只是表会增长。物理清理属于运维关切。
+- **可运行的 Spring Boot 应用**：这是一个库式实战案例。把 `StateStoreConfig` + `StartupGuard` 装配进你的应用，并启用 `@ConfigurationProperties` 绑定（`@ConfigurationPropertiesScan` 或 `@EnableConfigurationProperties(GuardProperties.class)`）。
+- **真实 Redis 的契约测试**：需要运行中的 Redis；接口 javadoc 加上一致的 JSON/序列化行为，在本仓库零外部服务的测试预算内承载了契约。
 
-## Trade-offs
+## 权衡
 
-| Choice | Cost | Mitigation |
+| 选择 | 成本 | 缓解措施 |
 |---|---|---|
-| H2 `MODE=MySQL` for SQL tests | Not bit-identical to real MySQL (dialect corners differ) | Contract tests lock *semantics*, not a dialect version; the SQL uses only widely-supported constructs |
-| Application-clock `now` parameters | App clock drift now affects expiry judgment | One clock domain is strictly better than two; drift handling belongs to NTP/infra, not mixed in-SQL/app clocks |
-| `memory` mode (not in production) | Third implementation to keep contract-aligned | It *is* the contract's first reference—the alignment burden is the point |
-| `VARCHAR(2048)` over `TEXT` for `state_value` | Smaller JSON ceiling than production's TEXT | Suits the demo's value sizes; noted in the schema for anyone promoting it |
+| 用 H2 `MODE=MySQL` 做 SQL 测试 | 与真实 MySQL 并非逐位一致（方言角落存在差异） | 契约测试锁定的是*语义*，而非某个方言版本；SQL 只使用广泛支持的构造 |
+| 应用时钟的 `now` 参数 | 应用时钟漂移现在会影响过期判断 | 单一时钟域严格优于两个；漂移处理属于 NTP/基础设施，不应混入 SQL 内与应用时钟 |
+| `memory` 模式（未用于生产） | 多一个需要与契约保持一致的实现 | 它*就是*契约的第一个参考——对齐负担正是重点 |
+| `state_value` 用 `VARCHAR(2048)` 而非 `TEXT` | JSON 上限小于生产的 TEXT | 适合演示的值大小；schema 中已注明，供任何提升该模式的人参考 |
 
-## Related Documents
+## 相关文档
 
-- [ADR: State Storage in MySQL, Redis Optional](../../decisions/why-redis-optional.md) — the decision behind Guard 2
-- [ADR: Spring Boot Single Track over NestJS](../../decisions/why-spring-boot-not-nestjs.md) — why `@PostConstruct` fail-fast was possible at all
-- [Audit Snapshot Pattern](../../architecture/audit-and-compliance.md) — the same fail-fast philosophy applied to audit writes (fail-open / fail-closed grading)
-- [Extraction Narrative: From Production to Generic](docs/from-production-to-generic.md)
+- [ADR：MySQL 中的状态存储，Redis 可选](../../decisions/why-redis-optional.md) —— 护栏 2 背后的决策
+- [ADR：选择 Spring Boot 单轨而非 NestJS](../../decisions/why-spring-boot-not-nestjs.md) —— 为什么 `@PostConstruct` 快速失败能够实现
+- [审计快照模式](../../architecture/audit-and-compliance.md) —— 同样的快速失败哲学应用于审计写入（fail-open / fail-closed 分级）
+- [提炼叙述：从生产到通用](docs/from-production-to-generic.md)
 
-## Source
+## 来源
 
-Extracted from a private production IoT device-management backend (battery-telemetry domain). Only generic architecture patterns are carried over—no client names, brands, protocol details, credentials, or business-field semantics. Capacity figures are order-of-magnitude envelopes, not measured production metrics.
+提炼自一个私有生产 IoT 设备管理后端（电池遥测领域）。仅迁移通用架构模式——不包含客户名称、品牌、协议细节、凭据或业务字段语义。容量数字是数量级包络，而非实测生产指标。

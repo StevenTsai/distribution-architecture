@@ -1,25 +1,26 @@
-# Case Study: Piecework Wage Calculation Engine
+# 实战案例：计件工资计算引擎
 
-A generic piecework wage calculation engine with a Pipeline pattern, extracted from a production jewelry ERP and generalized for any manufacturing industry.
+一个采用流水线（Pipeline）模式的通用计件工资计算引擎，抽取自生产环境中的珠宝 ERP，并泛化为适用于任何制造业。
 
-## What Is This
+## 这是什么
 
-This case study demonstrates how to build a configurable piecework wage calculation engine. The original jewelry ERP had a simple `piecePrice × quantity` formula. This generic version introduces difficulty and quality coefficients, and uses a Pipeline pattern for the settlement flow.
+本实战案例演示如何构建一个可配置的计件工资计算引擎。原始珠宝 ERP 只有简单的 `piecePrice × quantity` 公式。这个通用版本引入了难度系数和质量系数，并使用流水线（Pipeline）模式承载结算流程。
 
-## Background
+## 背景
 
-The jewelry ERP's `BizPieceworkWageServiceImpl` (142 lines) managed:
-- Single process wage calculation
-- Batch calculation per work order
-- Manual adjustments
-- Confirmation workflow
-- Monthly summary
+珠宝 ERP 的 `BizPieceworkWageServiceImpl`（142 行）负责：
 
-The original formula was simple: `wageAmount = piecePrice × totalQty`
+- 单工序工资计算
+- 按工单批量计算
+- 手动调整
+- 确认流程
+- 月度汇总
 
-This case study extends it to: `wage = unitPrice × quantity × difficultyCoeff × qualityCoeff`
+原始公式很简单：`wageAmount = piecePrice × totalQty`
 
-## Formula
+本实战案例将其扩展为：`wage = unitPrice × quantity × difficultyCoeff × qualityCoeff`
+
+## 计算公式
 
 ```
 baseWage     = unitPrice × completedQuantity
@@ -27,23 +28,23 @@ adjustedWage = baseWage × difficultyCoefficient × qualityCoefficient
 finalAmount  = adjustedWage + adjustmentAmount
 ```
 
-### Quality Coefficient Logic
+### 质量系数逻辑
 
-| Qualification Rate | Quality Coefficient | Effect |
+| 合格率 | 质量系数 | 效果 |
 |-------------------|--------------------|----|
-| ≥ 95% (threshold) | 1.0 | Full pay |
-| < 95% | 0.8 (penalty factor) | 80% pay |
+| ≥ 95%（阈值） | 1.0 | 全额支付 |
+| < 95% | 0.8（扣减系数） | 按 80% 支付 |
 
-Configurable per process — different processes can have different thresholds and penalty factors.
+可按工序配置 —— 不同工序可以有不同的阈值和扣减系数。
 
-## Settlement Pipeline
+## 结算流水线
 
 ```mermaid
 flowchart LR
-    A[PieceworkRecord] --> B["CalculateStage<br/>baseWage + coefficients"]
-    B --> C["AdjustStage<br/>adjustments（optional）"]
-    C --> D["ConfirmStage<br/>auto-confirm（criteria-based）"]
-    D --> E["SummaryStage<br/>worker summary（running total）"]
+    A[PieceworkRecord] --> B["CalculateStage<br/>baseWage + 系数"]
+    B --> C["AdjustStage<br/>调整项（可选）"]
+    C --> D["ConfirmStage<br/>自动确认（基于条件）"]
+    D --> E["SummaryStage<br/>工人汇总（累计值）"]
 
     class A entry
     class E success
@@ -51,80 +52,84 @@ flowchart LR
     classDef success fill:#dcfce7,stroke:#22c55e,color:#14532d,stroke-width:1.5px
 ```
 
-### Pipeline Stages
+### 流水线阶段
 
-| Stage | Purpose | Configurable? |
+| 阶段 | 作用 | 是否可配置？ |
 |-------|---------|--------------|
-| `CalculateStage` | Compute base wage and apply coefficients | Fixed logic |
-| `AdjustStage` | Apply manual/auto adjustments | Via `AdjustmentProvider` |
-| `ConfirmStage` | Auto-confirm if criteria met | Via `AutoConfirmCriteria` |
-| `SummaryStage` | Aggregate wages by worker | Side-effect collector |
+| `CalculateStage` | 计算基础工资并应用系数 | 固定逻辑 |
+| `AdjustStage` | 应用手动/自动调整项 | 通过 `AdjustmentProvider` |
+| `ConfirmStage` | 满足条件时自动确认 | 通过 `AutoConfirmCriteria` |
+| `SummaryStage` | 按工人汇总工资 | 副作用收集器 |
 
-### Why a Pipeline?
+### 为什么采用流水线（Pipeline）？
 
-The original jewelry ERP used a linear sequence of method calls. The Pipeline pattern:
-- **Extensible**: add tax calculation, compliance check, etc. without modifying existing stages
-- **Testable**: each stage can be tested independently
-- **Configurable**: different industries use different stage combinations
+原始珠宝 ERP 采用的是一系列线性的方法调用。流水线（Pipeline）模式：
 
-## Project Structure
+- **可扩展**：无需修改现有阶段即可新增税额计算、合规检查等
+- **可测试**：每个阶段可以独立测试
+- **可配置**：不同行业使用不同的阶段组合
+
+## 项目结构
 
 ```
 src/main/java/com/distribution/casestudy/wage/
-├── WageCalculator.java              # Core calculation engine
-├── WageSettlementPipeline.java      # Pipeline orchestrator
+├── WageCalculator.java              # 核心计算引擎
+├── WageSettlementPipeline.java      # 流水线编排器
 ├── model/
-│   ├── PieceworkRecord.java         # Production record (work report)
-│   ├── WageConfig.java              # Process wage configuration
-│   ├── WageSettlement.java          # Finalized settlement record
-│   └── WageStatus.java              # Lifecycle status enum
+│   ├── PieceworkRecord.java         # 生产记录（报工单）
+│   ├── WageConfig.java              # 工序工资配置
+│   ├── WageSettlement.java          # 最终结算记录
+│   └── WageStatus.java              # 生命周期状态枚举
 └── pipeline/
-    ├── SettlementStage.java         # Stage interface
-    ├── CalculateStage.java          # Base wage + coefficients
-    ├── AdjustStage.java             # Manual/auto adjustments
-    ├── ConfirmStage.java            # Auto-confirmation
-    └── SummaryStage.java            # Worker summary aggregation
+    ├── SettlementStage.java         # 阶段接口
+    ├── CalculateStage.java          # 基础工资 + 系数
+    ├── AdjustStage.java             # 手动/自动调整项
+    ├── ConfirmStage.java            # 自动确认
+    └── SummaryStage.java            # 工人汇总聚合
 ```
 
-## Key Design Decisions
+## 关键设计决策
 
-### 1. Configurable Multipliers
+### 1. 可配置的系数
 
-The original had no difficulty/quality coefficients. These were introduced to:
-- Reward workers on harder processes (difficulty > 1.0)
-- Penalize poor quality output (quality coefficient < 1.0)
-- Allow per-process configuration
+原始实现没有难度/质量系数。引入这些系数是为了：
 
-### 2. BigDecimal Precision
+- 奖励承担高难度工序的工人（难度 > 1.0）
+- 对质量不佳的产出进行扣减（质量系数 < 1.0）
+- 支持按工序配置
 
-All monetary calculations use `BigDecimal` with:
-- `HALF_UP` rounding mode (standard financial rounding)
-- Scale 2 for final amounts (currency precision)
-- Scale 4 for intermediate calculations (qualification rate)
+### 2. BigDecimal 精度
 
-### 3. Immutable Calculations
+所有金额计算均使用 `BigDecimal`，并遵循：
 
-`WageSettlement` calculation methods (`calculateBaseWage`, `applyCoefficients`, `calculateFinalAmount`) are explicit steps, not auto-computed on field change. This makes the calculation order clear and debuggable.
+- `HALF_UP` 舍入模式（标准财务舍入）
+- 最终金额保留 2 位小数（货币精度）
+- 中间计算保留 4 位小数（合格率）
 
-### 4. Status Guards
+### 3. 不可变的计算
 
-State transitions are guarded:
-- Only PENDING settlements can be adjusted or confirmed
-- Only CONFIRMED settlements can be marked as paid
-- PAID settlements cannot be cancelled
+`WageSettlement` 的计算方法（`calculateBaseWage`、`applyCoefficients`、`calculateFinalAmount`）是显式步骤，而不是在字段变更时自动计算。这让计算顺序清晰且便于调试。
 
-## How to Use
+### 4. 状态守卫
 
-### 1. Configure Wage Rates
+状态转换受到守卫约束：
+
+- 只有 PENDING 状态的结算单可以调整或确认
+- 只有 CONFIRMED 状态的结算单可以标记为已支付
+- PAID 状态的结算单不能取消
+
+## 使用方式
+
+### 1. 配置计件单价
 
 ```java
 WageConfig config = new WageConfig(1L, "Stone Setting", new BigDecimal("5.00"));
-config.setDifficultyCoefficient(new BigDecimal("1.2"));   // 20% harder
-config.setQualityThreshold(new BigDecimal("0.95"));       // 95% pass rate
-config.setQualityPenaltyFactor(new BigDecimal("0.8"));    // 80% pay if below threshold
+config.setDifficultyCoefficient(new BigDecimal("1.2"));   // 难度高 20%
+config.setQualityThreshold(new BigDecimal("0.95"));       // 合格率 95%
+config.setQualityPenaltyFactor(new BigDecimal("0.8"));    // 低于阈值时按 80% 支付
 ```
 
-### 2. Calculate a Single Wage
+### 2. 计算单条工资
 
 ```java
 WageCalculator calculator = new WageCalculator();
@@ -136,7 +141,7 @@ WageSettlement settlement = calculator.calculate(record, config);
 // settlement.getFinalAmount()   = 600.00
 ```
 
-### 3. Process Through Pipeline
+### 3. 通过流水线处理
 
 ```java
 WageSettlementPipeline pipeline = new WageSettlementPipeline()
@@ -148,25 +153,25 @@ WageSettlementPipeline pipeline = new WageSettlementPipeline()
 List<WageSettlement> results = pipeline.processAll(settlements);
 ```
 
-## Abstraction Mapping
+## 抽象映射
 
-| Jewelry (Original) | Generic (This Case Study) | Industry Examples |
+| 珠宝（原始） | 通用（本实战案例） | 行业示例 |
 |--------------------|--------------------------|--------------------|
-| `BizPieceworkWage` | `WageSettlement` | Any piecework record |
-| `BizProcessReport` | `PieceworkRecord` | Work report, time sheet |
-| `piecePrice` | `unitPrice` | Rate per piece/unit |
-| `masterId` / `masterName` | `workerId` / `workerName` | Employee, operator |
-| `goldLoss` / `stoneLoss` | (removed — material loss tracked elsewhere) | — |
-| `wageMonth` | `settlementPeriod` | Pay period |
-| Simple `piecePrice × qty` | `unitPrice × qty × difficulty × quality` | Configurable multipliers |
-| Linear method calls | Pipeline pattern | Extensible stages |
+| `BizPieceworkWage` | `WageSettlement` | 任意计件记录 |
+| `BizProcessReport` | `PieceworkRecord` | 报工单、工时表 |
+| `piecePrice` | `unitPrice` | 每件/每单位单价 |
+| `masterId` / `masterName` | `workerId` / `workerName` | 员工、操作工 |
+| `goldLoss` / `stoneLoss` | （已移除——物料损耗在其他地方跟踪） | — |
+| `wageMonth` | `settlementPeriod` | 薪资周期 |
+| 简单的 `piecePrice × qty` | `unitPrice × qty × difficulty × quality` | 可配置系数 |
+| 线性方法调用 | 流水线（Pipeline）模式 | 可扩展阶段 |
 
-## Related Documents
+## 相关文档
 
-- [MTO Workflow Engine](../mto-workflow-engine/) — The work order state machine that generates piecework records
-- [Spring Events](../spring-events-decoupling/) — Event-driven pattern for cross-module wage notifications
-- [Commission Pipeline](../../architecture/commission-pipeline.md) — Similar pipeline pattern for commission calculation
+- [工单工作流引擎（MTO）](../mto-workflow-engine/) — 生成计件记录的工单状态机
+- [Spring 事件](../spring-events-decoupling/) — 跨模块工资通知的事件驱动模式
+- [佣金流水线](../../architecture/commission-pipeline.md) — 用于佣金计算的类似流水线模式
 
-## Source
+## 来源
 
-Extracted from the `jewelry` production ERP system. The original `BizPieceworkWageServiceImpl` was 142 lines with a simple `piecePrice × quantity` formula. This generic version adds configurable multipliers and a Pipeline pattern for extensibility.
+抽取自 `jewelry` 生产 ERP 系统。原始的 `BizPieceworkWageServiceImpl` 共 142 行，采用简单的 `piecePrice × quantity` 公式。这个通用版本增加了可配置系数和流水线（Pipeline）模式，以提升可扩展性。

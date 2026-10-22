@@ -110,4 +110,4 @@ mvn test
 
 ## 许可证
 
-提交贡献即表示你同意你的贡献将在 [Apache License 2.0](LICENSE) 下发布。
+提交贡献即表示你同意你的贡献将在 [Apache License 2.0](https://github.com/StevenTsai/distribution-architecture/blob/main/LICENSE) 下发布。

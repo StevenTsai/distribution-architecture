@@ -2,7 +2,7 @@
 
 [中文](https://github.com/StevenTsai/distribution-architecture/blob/main/distribution-starter/README.md) | English
 
-A runnable skeleton for a distribution management system, built on the [distribution-architecture](../README.md) design documents. It demonstrates how core patterns — data permissions, audit logging, compliance checks — are implemented in a Spring Boot + MyBatis stack.
+A runnable skeleton for a distribution management system, built on the [distribution-architecture](../) design documents. It demonstrates how core patterns — data permissions, audit logging, compliance checks — are implemented in a Spring Boot + MyBatis stack.
 
 ## What Is This
 
@@ -171,11 +171,11 @@ Every mutating operation automatically records before/after snapshots:
 
 ## Related Documentation
 
-- [Architecture design documents](../architecture/) — detailed design patterns
-- [Build-from-scratch tutorial](../../tutorial/) — a complete 7-step narrative (Chinese)
+- [Architecture design documents](../architecture/data-permission-model.md) — detailed design patterns
+- [Build-from-scratch tutorial](../tutorial/01-domain-model.md) — a complete 7-step narrative (Chinese)
 - [Spring Boot 3.x migration guide](../guides/spring-boot-3-migration.md) — upgrading to Java 17+
 - [Contributing guide](../CONTRIBUTING.md) — how to get involved
 
 ## License
 
-[Apache License 2.0](../../LICENSE)
+[Apache License 2.0](https://github.com/StevenTsai/distribution-architecture/blob/main/LICENSE)

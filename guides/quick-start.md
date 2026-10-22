@@ -210,6 +210,6 @@ Redis 不是核心功能的强依赖。如果暂时不需要，可以忽略 Redi
 
 ## 下一步
 
-- 阅读 [架构设计文档](../architecture/) 了解核心设计模式
+- 阅读 [架构设计文档](../architecture/data-permission-model.md) 了解核心设计模式
 - 阅读 [扩展新模块指南](extend-new-module.md) 了解如何添加新功能
 - 阅读 [数据权限模型](../architecture/data-permission-model.md) 了解权限控制机制

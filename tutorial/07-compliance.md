@@ -272,9 +272,9 @@ curl -X POST \
 
 ## 下一步
 
-- 阅读 [架构设计文档](../architecture/) 深入理解每个模式的设计决策
+- 阅读 [架构设计文档](../architecture/data-permission-model.md) 深入理解每个模式的设计决策
 - 阅读 [扩展新模块指南](../guides/extend-new-module.md) 了解如何添加新功能
-- 阅读 [ADR 文档](../decisions/) 了解技术选型的 trade-off
+- 阅读 [ADR 文档](../decisions/why-session-not-jwt.md) 了解技术选型的 trade-off
 
 ---
 

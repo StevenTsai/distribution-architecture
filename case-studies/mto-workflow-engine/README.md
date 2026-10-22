@@ -1,43 +1,43 @@
-# Case Study: MTO Workflow Engine
+# 实战案例：MTO 工单引擎
 
-A generic Make-To-Order (MTO) workflow engine extracted from a production jewelry ERP system.
+一个从生产级珠宝 ERP 系统中提炼出的通用按订单生产（MTO）工作流引擎。
 
-## What Is This
+## 这是什么
 
-This case study demonstrates how to abstract a domain-specific workflow engine into a reusable, industry-agnostic component. The original implementation managed jewelry production orders with 17 fixed processes (casting, setting, polishing, plating...). This version uses configurable YAML routes and generic models, making it applicable to furniture, electronics, apparel, and other manufacturing industries.
+本实战案例演示如何将领域特定的工作流引擎抽象为可复用、与行业无关的组件。原始实现管理珠宝生产订单，包含 17 道固定工序（铸造、镶嵌、抛光、电镀……）。本版本使用可配置的 YAML 工艺路线和通用模型，可适用于家具、电子、服装等其他制造行业。
 
-## Background
+## 背景
 
-The original jewelry ERP system (`jewelry`) has:
-- **152 API endpoints** across 6 modules
-- **44 database tables**
-- **909 test cases**
-- **Production-validated** in a real jewelry processing business
+原始珠宝 ERP 系统（`jewelry`）包含：
+- 6 个模块中的 **152 个 API 端点**
+- **44 张数据库表**
+- **909 个测试用例**
+- 在真实珠宝加工业务中经过**生产验证**
 
-The MTO workflow engine is the core of its production module, managing the complete lifecycle of production orders.
+MTO 工单引擎是其生产模块的核心，管理生产订单的完整生命周期。
 
-## State Machine
+## 状态机
 
 ```mermaid
 stateDiagram-v2
-    [*] --> PENDING: create
-    PENDING --> SCHEDULED: schedule
-    PENDING --> MATERIAL_READY: markAsMaterialReady
-    MATERIAL_READY --> SCHEDULED: schedule
-    SCHEDULED --> PRODUCING: startWork
-    PRODUCING --> PARTIAL_FINISHED: finishProcess（partial）
-    PRODUCING --> ALL_FINISHED: finishProcess（all done）/ finishWork
-    PARTIAL_FINISHED --> ALL_FINISHED: finishProcess（all done）/ finishWork
+    [*] --> PENDING: create（创建）
+    PENDING --> SCHEDULED: schedule（排产）
+    PENDING --> MATERIAL_READY: markAsMaterialReady（物料齐套）
+    MATERIAL_READY --> SCHEDULED: schedule（排产）
+    SCHEDULED --> PRODUCING: startWork（开工）
+    PRODUCING --> PARTIAL_FINISHED: finishProcess（部分完成）
+    PRODUCING --> ALL_FINISHED: finishProcess（全部完成）/ finishWork
+    PARTIAL_FINISHED --> ALL_FINISHED: finishProcess（全部完成）/ finishWork
     ALL_FINISHED --> WAREHOUSED
-    WAREHOUSED --> CLOSED: closeWork
-    ALL_FINISHED --> CLOSED: closeWork
-    PENDING --> VOID: voidWork
-    MATERIAL_READY --> VOID: voidWork
-    SCHEDULED --> VOID: voidWork
-    PRODUCING --> VOID: voidWork
-    PARTIAL_FINISHED --> VOID: voidWork
-    ALL_FINISHED --> VOID: voidWork
-    WAREHOUSED --> VOID: voidWork
+    WAREHOUSED --> CLOSED: closeWork（结案）
+    ALL_FINISHED --> CLOSED: closeWork（结案）
+    PENDING --> VOID: voidWork（作废）
+    MATERIAL_READY --> VOID: voidWork（作废）
+    SCHEDULED --> VOID: voidWork（作废）
+    PRODUCING --> VOID: voidWork（作废）
+    PARTIAL_FINISHED --> VOID: voidWork（作废）
+    ALL_FINISHED --> VOID: voidWork（作废）
+    WAREHOUSED --> VOID: voidWork（作废）
     CLOSED --> [*]
     VOID --> [*]
 
@@ -55,23 +55,23 @@ stateDiagram-v2
     class VOID danger
 ```
 
-### State Transitions
+### 状态转换
 
-| Transition | Guard Condition | Side Effect |
-|-----------|----------------|-------------|
-| `create()` | — | Generates WO number, builds process route |
-| `schedule()` | PENDING or MATERIAL_READY | Assigns work center + worker |
-| `startWork()` | SCHEDULED | Records actual start date |
-| `finishProcess()` | PRODUCING or PARTIAL_FINISHED | Auto-detects if all processes done |
-| `finishWork()` | PRODUCING or PARTIAL_FINISHED | Marks all processes complete |
-| `closeWork()` | ALL_FINISHED or WAREHOUSED | Archives the work order |
-| `voidWork()` | Not CLOSED, not VOID | Records cancellation reason |
+| 转换 | 守卫条件 | 副作用 |
+|------|---------|--------|
+| `create()` | — | 生成工单号，构建工艺路线 |
+| `schedule()` | PENDING 或 MATERIAL_READY | 分配工作中心 + 工人 |
+| `startWork()` | SCHEDULED | 记录实际开工日期 |
+| `finishProcess()` | PRODUCING 或 PARTIAL_FINISHED | 自动检测是否所有工序均已完成 |
+| `finishWork()` | PRODUCING 或 PARTIAL_FINISHED | 将所有工序标记为完成 |
+| `closeWork()` | ALL_FINISHED 或 WAREHOUSED | 归档工单 |
+| `voidWork()` | 非 CLOSED，非 VOID | 记录取消原因 |
 
-## Key Design Patterns
+## 关键设计模式
 
-### 1. Process Route via YAML Configuration
+### 1. 通过 YAML 配置定义工艺路线
 
-Instead of storing process IDs as comma-separated strings in the database (original approach), routes are defined in YAML:
+不再将工序 ID 以逗号分隔的字符串形式存储在数据库中（原始做法），而是在 YAML 中定义路线：
 
 ```yaml
 mto:
@@ -86,55 +86,55 @@ mto:
           plannedHours: 1.5
 ```
 
-### 2. Process Completion Auto-Detection
+### 2. 工序完成自动检测
 
-When a process finishes, the engine checks ALL sibling processes. If none are incomplete, the work order automatically advances to ALL_FINISHED. This pattern was critical in the jewelry system where 17 processes could complete in any order.
+当一道工序完成时，引擎会检查所有同级工序。若没有未完成的工序，工单会自动推进到 ALL_FINISHED。这一模式在珠宝系统中至关重要——那里的 17 道工序可能以任意顺序完成。
 
-### 3. Interface-Based Inventory Query
+### 3. 基于接口的库存查询
 
-Material readiness checks are decoupled from specific inventory implementations via `InventoryQueryService`. The original was tightly coupled to gold and stone inventory tables.
+物料齐套检查通过 `InventoryQueryService` 与具体的库存实现解耦。原始实现与黄金、宝石库存表紧密耦合。
 
-### 4. Event-Driven Side Effects
+### 4. 事件驱动的副作用
 
-The original `finishWork()` directly created finished goods inventory records. This version only does the state transition; side effects should be handled by event listeners (see `distribution-architecture/architecture/commission-pipeline.md` for the event pattern).
+原始的 `finishWork()` 会直接创建成品库存记录。本版本只做状态转换；副作用应由事件监听器处理（事件模式参见 `distribution-architecture/architecture/commission-pipeline.md`）。
 
-## Project Structure
+## 项目结构
 
 ```
 src/main/java/com/distribution/casestudy/mto/
 ├── model/
-│   ├── WorkOrder.java              # Core work order entity
-│   ├── WorkOrderProcess.java       # Process within a work order
-│   ├── WorkOrderStatus.java        # 9-state lifecycle enum
-│   ├── ProcessStatus.java          # 4-state process enum
-│   ├── MaterialRequirement.java    # Material requirement tracking
-│   ├── Quantity.java               # Value object: amount + unit
-│   ├── Worker.java                 # Generic worker model
-│   └── WorkCenter.java             # Production work center model
+│   ├── WorkOrder.java              # 核心工单实体
+│   ├── WorkOrderProcess.java       # 工单内的工序
+│   ├── WorkOrderStatus.java        # 九状态生命周期枚举
+│   ├── ProcessStatus.java          # 四状态工序枚举
+│   ├── MaterialRequirement.java    # 物料需求跟踪
+│   ├── Quantity.java               # 值对象：数量 + 单位
+│   ├── Worker.java                 # 通用工人模型
+│   └── WorkCenter.java             # 生产工作中心模型
 ├── service/
-│   ├── WorkOrderStateMachine.java  # State machine core
-│   ├── MaterialCheckService.java   # Material readiness check
-│   └── InventoryQueryService.java  # Inventory query interface
+│   ├── WorkOrderStateMachine.java  # 状态机核心
+│   ├── MaterialCheckService.java   # 物料齐套检查
+│   └── InventoryQueryService.java  # 库存查询接口
 └── config/
-    └── ProcessRouteConfig.java     # YAML route configuration
+    └── ProcessRouteConfig.java     # YAML 路线配置
 ```
 
-## Abstraction Mapping
+## 抽象映射
 
-| Jewelry (Original) | Generic (This Case Study) | Industry Examples |
+| 珠宝（原始） | 通用（本案例） | 行业示例 |
 |--------------------|--------------------------|--------------------|
-| 17 fixed processes (casting, setting...) | YAML-configurable routes | Cutting, SMT, Sewing |
-| Gold / Stone / Auxiliary | MaterialCategory + MaterialName | Wood, PCB, Fabric |
-| Grams / Carats | `Quantity(amount, unit)` | kg, pcs, meters |
-| Master / Craftsman | `Worker(workerId, name, skillType)` | Operator, Technician |
-| Workshop + Team | `WorkCenter(id, name, location)` | Production Line, Cell |
-| goldLoss / stoneLoss | `materialLoss` (generic) | Waste, Scrap |
-| styleNo | `productCode` | SKU, Part Number |
-| material / purity / color | `productSpec` (Map) | Configurable attributes |
+| 17 道固定工序（铸造、镶嵌……） | 可配置的 YAML 路线 | 切割、SMT、缝纫 |
+| 黄金 / 宝石 / 辅料 | MaterialCategory + MaterialName | 木材、PCB、面料 |
+| 克 / 克拉 | `Quantity(amount, unit)` | kg、pcs、米 |
+| 师傅 / 工匠 | `Worker(workerId, name, skillType)` | 操作员、技术员 |
+| 车间 + 班组 | `WorkCenter(id, name, location)` | 生产线、单元 |
+| goldLoss / stoneLoss | `materialLoss`（通用） | 损耗、废料 |
+| styleNo | `productCode` | SKU、部件号 |
+| material / purity / color | `productSpec`（Map） | 可配置属性 |
 
-## How to Use
+## 如何使用
 
-### 1. Define a Process Route in YAML
+### 1. 在 YAML 中定义工艺路线
 
 ```yaml
 mto:
@@ -149,34 +149,34 @@ mto:
           plannedHours: 2.0
 ```
 
-### 2. Create and Manage a Work Order
+### 2. 创建并管理工单
 
 ```java
-// Create from YAML route
+// 从 YAML 路线创建
 WorkOrderStateMachine stateMachine = new WorkOrderStateMachine(routeConfig);
 WorkOrder wo = stateMachine.create("WO-001", "my-production-route");
 
-// Schedule
+// 排产
 stateMachine.schedule(wo, new WorkCenter(1L, "Line A"), new Worker(1L, "Alice"));
 
-// Start production
+// 开始生产
 stateMachine.startWork(wo);
 
-// Complete processes one by one
+// 逐道完成工序
 stateMachine.finishProcess(wo, processId);
 
-// When all processes done → auto ALL_FINISHED
-// Then close
+// 所有工序完成后 → 自动转为 ALL_FINISHED
+// 然后结案
 stateMachine.closeWork(wo);
 ```
 
-## Related Documents
+## 相关文档
 
-- [Data Permission Model](../architecture/data-permission-model.md) — The permission pattern used in the original system
-- [Commission Pipeline](../architecture/commission-pipeline.md) — Event-driven pattern for side effects
-- [MyBatis Patterns](../architecture/mybatis-patterns.md) — SQL patterns used in the original implementation
-- [Open Source Strategy](../doc/open-source-strategy.md) — The strategy behind this extraction
+- [数据权限模型](../../architecture/data-permission-model.md) — 原始系统中使用的权限模式
+- [佣金流转流水线](../../architecture/commission-pipeline.md) — 事件驱动的副作用模式
+- [MyBatis 模式](../../architecture/mybatis-patterns.md) — 原始实现中使用的 SQL 模式
+- [开源策略](https://github.com/StevenTsai/distribution-architecture/blob/main/doc/open-source-strategy.md) — 本次抽取背后的策略
 
-## Source
+## 来源
 
-Extracted from the `jewelry` production ERP system (private repository). The original code has been validated in a real business environment with 152 API endpoints and 44 database tables.
+抽取自 `jewelry` 生产 ERP 系统（私有仓库）。原始代码已在真实业务环境中验证，包含 152 个 API 端点和 44 张数据库表。

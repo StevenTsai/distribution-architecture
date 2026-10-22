@@ -1,26 +1,26 @@
-# Case Study: Spring Events Cross-Module Decoupling
+# 实战案例：Spring Events 跨模块解耦
 
-Demonstrates how to decouple cross-module interactions using Spring Events, extracted from a production jewelry ERP and generalized for any industry.
+演示如何使用 Spring Events 解耦跨模块交互。该模式提取自一个生产环境的珠宝 ERP 系统，并做了通用化处理，适用于任何行业。
 
-## What Is This
+## 这是什么
 
-This case study shows three event-driven patterns that replace direct synchronous service calls between modules. In the original jewelry ERP, modules were tightly coupled — the production module directly called inventory services, the quality module directly called production services. This case study refactors those into events, making each module independent.
+本实战案例展示三种事件驱动模式，用于替代模块之间直接的同步服务调用。在原始的珠宝 ERP 中，各模块紧耦合——生产模块直接调用库存服务，质检模块直接调用生产服务。本案例将这些调用重构为事件，使每个模块彼此独立。
 
-## Background
+## 背景
 
-The jewelry ERP has 6 modules (`jewelry-sales`, `jewelry-production`, `jewelry-quality`, `jewelry-finance`, `jewelry-inventory`, `jewelry-system`). Cross-module interactions are the main source of coupling.
+珠宝 ERP 包含 6 个模块（`jewelry-sales`、`jewelry-production`、`jewelry-quality`、`jewelry-finance`、`jewelry-inventory`、`jewelry-system`）。跨模块交互是耦合的主要来源。
 
-**Original coupling patterns found:**
+**在原系统中发现的耦合模式：**
 
-| Interaction | Original Pattern | This Case Study |
+| 交互 | 原实现方式 | 本实战案例 |
 |------------|-----------------|-----------------|
-| Delivery → Receivable | ✅ Already uses `@EventListener` | Extracted and generalized |
-| Work Order → Inventory | ❌ Direct `finishedInventoryService.createInventory()` call | Refactored to event |
-| Quality Defect → Rework | ❌ Direct `workOrderService.updateById()` call | Refactored to event |
+| 发货 → 应收账款 | ✅ 已经使用 `@EventListener` | 提取并通用化 |
+| 工单 → 库存 | ❌ 直接调用 `finishedInventoryService.createInventory()` | 重构为事件 |
+| 质检不良 → 返工 | ❌ 直接调用 `workOrderService.updateById()` | 重构为事件 |
 
-## The Three Event Patterns
+## 三种事件模式
 
-### 1. Delivery → Accounts Receivable
+### 1. 发货 → 应收账款
 
 ```mermaid
 sequenceDiagram
@@ -34,9 +34,9 @@ sequenceDiagram
     Note over F: 30 天账期
 ```
 
-**Source:** Real pattern from `jewelry-finance/DeliveryEventListener.java`
+**来源：** 来自 `jewelry-finance/DeliveryEventListener.java` 的真实模式
 
-### 2. Work Order → Finished Goods Inventory
+### 2. 工单 → 成品入库
 
 ```mermaid
 sequenceDiagram
@@ -46,48 +46,48 @@ sequenceDiagram
     P->>P: set ALL_FINISHED
     P-)I: publishEvent(WorkOrderFinishedEvent)
     I->>I: @EventListener createFinishedGoods()
-    Note over P: BEFORE：直接调用 finishedInventoryService
+    Note over P: 重构前：直接调用 finishedInventoryService
 ```
 
-**Source:** Refactored from `jewelry-production/BizWorkOrderServiceImpl.finishWork()` which directly called `finishedInventoryService.createInventory()`.
+**来源：** 重构自 `jewelry-production/BizWorkOrderServiceImpl.finishWork()`，该方法原先直接调用 `finishedInventoryService.createInventory()`。
 
-### 3. Quality Defect → Rework Work Order
+### 3. 质检不良 → 返工工单
 
 ```mermaid
 sequenceDiagram
     participant Q as 质检模块
     participant P as 生产模块
     Q->>Q: handleDefect()
-    Q->>Q: record defect
+    Q->>Q: 记录质检不良
     Q-)P: publishEvent(QualityDefectEvent)
     P->>P: @EventListener createReworkOrder()
-    Note over Q: BEFORE：跨模块无任何副作用
+    Note over Q: 重构前：跨模块无任何副作用
 ```
 
-**Source:** Refactored from `jewelry-quality/BizQualityServiceImpl.handleDefect()` which only inserted a defect record without triggering rework.
+**来源：** 重构自 `jewelry-quality/BizQualityServiceImpl.handleDefect()`，该方法原先只插入一条不良记录，不会触发返工。
 
-## Key Design Patterns
+## 关键设计模式
 
-### 1. Fire-and-Forget with Error Isolation
+### 1. 发后即忘与错误隔离
 
-All listeners wrap their logic in try/catch. Failures are logged but never propagated to the publisher. This prevents a downstream failure from rolling back the upstream transaction.
+所有监听器都用 try/catch 包裹自身逻辑。失败会被记录日志，但绝不会向上抛给发布方。这样可以避免下游失败导致上游事务回滚。
 
 ```java
 @EventListener
 @Async("eventAsyncExecutor")
 public void onDeliveryComplete(DeliveryCompleteEvent event) {
     try {
-        // ... create receivable
+        // ... 创建应收账款
     } catch (Exception e) {
         log.error("Failed: {}", e.getMessage(), e);
-        // Don't propagate — fire-and-forget
+        // 不向上抛出 —— 发后即忘
     }
 }
 ```
 
-### 2. Callback Interface for Testability
+### 2. 面向可测试性的回调接口
 
-Each listener accepts a callback interface instead of a concrete service. This makes unit testing trivial — no Spring context, no mocking framework needed.
+每个监听器接收一个回调接口，而不是具体的服务类。这让单元测试变得非常简单——无需 Spring 上下文，也无需 mock 框架。
 
 ```java
 public class DeliveryToReceivableListener {
@@ -99,15 +99,15 @@ public class DeliveryToReceivableListener {
 }
 ```
 
-### 3. @Async for Non-Blocking Processing
+### 3. 使用 @Async 实现非阻塞处理
 
-The `@Async("eventAsyncExecutor")` annotation ensures listeners run in a thread pool, not blocking the publisher's transaction. Combined with `@TransactionalEventListener` considerations for transaction-aware processing.
+`@Async("eventAsyncExecutor")` 注解确保监听器在线程池中运行，不会阻塞发布方的事务。同时需要结合 `@TransactionalEventListener` 来考虑事务感知的处理。
 
-### 4. Dedicated Thread Pool
+### 4. 专用线程池
 
-Extracted from the jewelry ERP's `AsyncConfig` (core 2, max 8, queue 100, CallerRunsPolicy). The CallerRunsPolicy provides backpressure — when the pool is saturated, the publisher thread handles the event itself, preventing event loss.
+提取自珠宝 ERP 的 `AsyncConfig`（core 2、max 8、queue 100、CallerRunsPolicy）。CallerRunsPolicy 提供了背压能力——当线程池饱和时，由发布方线程自己处理事件，从而避免事件丢失。
 
-## Project Structure
+## 项目结构
 
 ```
 src/main/java/com/distribution/casestudy/events/
@@ -123,19 +123,19 @@ src/main/java/com/distribution/casestudy/events/
     └── EventConfig.java              # 异步线程池 + 监听器注册
 ```
 
-## How to Use
+## 使用方法
 
-### 1. Define an Event
+### 1. 定义事件
 
 ```java
 public class DeliveryCompleteEvent extends ApplicationEvent {
     private final Long deliveryId;
     private final Long orderId;
-    // ... other fields
+    // ... 其他字段
 }
 ```
 
-### 2. Publish the Event
+### 2. 发布事件
 
 ```java
 @Service
@@ -144,7 +144,7 @@ public class DeliveryService {
     private final ApplicationEventPublisher eventPublisher;
 
     public void shipDelivery(Long id) {
-        // ... update status
+        // ... 更新状态
         eventPublisher.publishEvent(new DeliveryCompleteEvent(
                 this, delivery.getId(), order.getId(),
                 order.getOrderNo(), order.getCustomerId(), order.getAmount()));
@@ -152,7 +152,7 @@ public class DeliveryService {
 }
 ```
 
-### 3. Listen for the Event
+### 3. 监听事件
 
 ```java
 @Slf4j
@@ -169,12 +169,12 @@ public class DeliveryToReceivableListener {
 }
 ```
 
-## Migration Guide: Direct Call → Event
+## 迁移指南：从直接调用到事件
 
-### Before (tightly coupled)
+### 改造前（紧耦合）
 
 ```java
-// Production module directly depends on Inventory module
+// 生产模块直接依赖库存模块
 @Service
 public class WorkOrderServiceImpl {
     private final FinishedInventoryService inventoryService;
@@ -182,16 +182,16 @@ public class WorkOrderServiceImpl {
     public void finishWork(Long woId) {
         wo.setStatus("ALL_FINISHED");
         updateById(wo);
-        // Direct cross-module dependency!
+        // 直接的跨模块依赖！
         inventoryService.createInventory(finished);
     }
 }
 ```
 
-### After (decoupled)
+### 改造后（已解耦）
 
 ```java
-// Production module — no dependency on Inventory module
+// 生产模块 —— 不依赖库存模块
 @Service
 public class WorkOrderServiceImpl {
     private final ApplicationEventPublisher eventPublisher;
@@ -203,7 +203,7 @@ public class WorkOrderServiceImpl {
     }
 }
 
-// Inventory module — listens independently
+// 库存模块 —— 独立监听
 @Slf4j
 public class WorkOrderToInventoryListener {
     @EventListener
@@ -214,12 +214,12 @@ public class WorkOrderToInventoryListener {
 }
 ```
 
-## Related Documents
+## 相关文档
 
-- [MTO Workflow Engine](../mto-workflow-engine/) — The work order state machine that publishes `WorkOrderFinishedEvent`
-- [Commission Pipeline](../../architecture/commission-pipeline.md) — Event-driven pattern for commission calculation
-- [Data Permission Model](../../architecture/data-permission-model.md) — Cross-cutting concern pattern
+- [MTO 工单引擎](../mto-workflow-engine/) — 发布 `WorkOrderFinishedEvent` 的工单状态机
+- [佣金流转流水线](../../architecture/commission-pipeline.md) — 佣金计算的事件驱动模式
+- [数据权限模型](../../architecture/data-permission-model.md) — 横切关注点的模式
 
-## Source
+## 来源
 
-Extracted from the `jewelry` production ERP system. The delivery→receivable event was the only actual Spring Event implementation; the other two patterns were refactored from direct service calls to demonstrate the event-driven approach.
+提取自 `jewelry` 生产 ERP 系统。发货→应收账款事件是其中唯一真正采用 Spring Event 的实现；另外两种模式则由直接服务调用重构而来，用于演示事件驱动的思路。

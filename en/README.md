@@ -1,7 +1,7 @@
 # Distribution Architecture
 
 [![Deploy Docs](https://github.com/StevenTsai/distribution-architecture/actions/workflows/deploy.yml/badge.svg)](https://github.com/StevenTsai/distribution-architecture/actions/workflows/deploy.yml)
-[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](../LICENSE)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://github.com/StevenTsai/distribution-architecture/blob/main/LICENSE)
 
 [中文](https://github.com/StevenTsai/distribution-architecture/blob/main/README.md) | English
 
@@ -29,10 +29,10 @@ This is a collection of **design documents** + a **reusable Starter library** + 
 - [spring-data-permission-starter](https://github.com/StevenTsai/spring-data-permission-starter) — Spring Boot Starter for data permissions, ready to import
 
 ### Production-Validated Case Studies
-- [MTO Workflow Engine](../case-studies/mto-workflow-engine/) — Generic work order state machine extracted from a jewelry ERP, reusable across furniture/electronics/apparel industries
-- [Spring Events Decoupling](../case-studies/spring-events-decoupling/) — Event-driven cross-module decoupling: delivery→receivable / work order→inventory / quality→rework
-- [Piecework Wage Engine](../case-studies/piecework-wage-engine/) — Pipeline-based piecework wage calculation with configurable difficulty and quality coefficients
-- [Production Guardrails: fail-fast startup + pluggable state store](../case-studies/production-guardrails/) — Mandatory middleware 2→1, zero-code rollback, contract tests filled in (from an IoT backend, not the jewelry ERP)
+- [MTO Workflow Engine](case-studies/mto-workflow-engine/) — Generic work order state machine extracted from a jewelry ERP, reusable across furniture/electronics/apparel industries
+- [Spring Events Decoupling](case-studies/spring-events-decoupling/) — Event-driven cross-module decoupling: delivery→receivable / work order→inventory / quality→rework
+- [Piecework Wage Engine](case-studies/piecework-wage-engine/) — Pipeline-based piecework wage calculation with configurable difficulty and quality coefficients
+- [Production Guardrails: fail-fast startup + pluggable state store](case-studies/production-guardrails/) — Mandatory middleware 2→1, zero-code rollback, contract tests filled in (from an IoT backend, not the jewelry ERP)
 
 ### Architecture Decision Records (6)
 - Session vs JWT, MyBatis vs JPA, Logical vs Physical Delete
@@ -58,7 +58,7 @@ The case study code is extracted and abstracted from a **real production system*
 
 > The source project is a private repository. Only generic architecture patterns are extracted; no business-sensitive configuration or customer data is included.
 
-The fourth case study, [production-guardrails](../case-studies/production-guardrails/), is extracted from **a second private production system** (an IoT device-management backend, battery-telemetry domain): ~600k registered-user capacity envelope, 24 REST endpoints, 155 unit tests. Only generic architecture patterns are carried over.
+The fourth case study, [production-guardrails](case-studies/production-guardrails/), is extracted from **a second private production system** (an IoT device-management backend, battery-telemetry domain): ~600k registered-user capacity envelope, 24 REST endpoints, 155 unit tests. Only generic architecture patterns are carried over.
 
 ## Who Is This For
 
@@ -147,7 +147,7 @@ This directory mirrors the Chinese book: the preface, all 7 architecture pattern
 | Decisions | [Session vs JWT](decisions/why-session-not-jwt.md) · [MyBatis vs JPA](decisions/why-mybatis-not-jpa.md) · [Logical Delete](decisions/why-logical-delete.md) · [Spring Boot over NestJS](decisions/why-spring-boot-not-nestjs.md) · [Redis Optional](decisions/why-redis-optional.md) · [JavaScript over TypeScript](decisions/why-javascript-not-typescript.md) |
 | Guides | [Quick Start](guides/quick-start.md) · [Extend a New Module](guides/extend-new-module.md) · [Customize Permissions](guides/customize-permission.md) · [Spring Boot 3 Migration](guides/spring-boot-3-migration.md) |
 | Tutorial | [01 Domain Model](tutorial/01-domain-model.md) · [02 Data Permissions](tutorial/02-data-permission.md) · [03 CRUD Scaffolding](tutorial/03-crud-scaffolding.md) · [04 Audit Logging](tutorial/04-audit-logging.md) · [05 Commission Flow](tutorial/05-commission-flow.md) · [06 Settlement](tutorial/06-settlement.md) · [07 Compliance](tutorial/07-compliance.md) |
-| Case studies | [MTO Workflow Engine](case-studies/mto-workflow-engine/README.md) · [Piecework Wage Engine](case-studies/piecework-wage-engine/README.md) · [Spring Events Decoupling](case-studies/spring-events-decoupling/README.md) · [Production Guardrails](case-studies/production-guardrails/README.md) |
+| Case studies | [MTO Workflow Engine](case-studies/mto-workflow-engine/) · [Piecework Wage Engine](case-studies/piecework-wage-engine/) · [Spring Events Decoupling](case-studies/spring-events-decoupling/) · [Production Guardrails](case-studies/production-guardrails/) |
 
 Each English page links back to its Chinese original at the top. Translations track the Chinese source; if you change either version, update both.
 
@@ -211,4 +211,4 @@ Four principles for extracting generic patterns from domain-specific systems:
 
 ## License
 
-[Apache License 2.0](../LICENSE)
+[Apache License 2.0](https://github.com/StevenTsai/distribution-architecture/blob/main/LICENSE)

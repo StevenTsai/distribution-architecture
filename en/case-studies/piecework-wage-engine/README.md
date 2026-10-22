@@ -1,6 +1,6 @@
 # Case Study: Piecework Wage Calculation Engine
 
-[中文](../../../case-studies/piecework-wage-engine/README.md) | English
+[中文](../../../case-studies/piecework-wage-engine/) | English
 
 A generic piecework wage calculation engine with a Pipeline pattern, extracted from a production jewelry ERP and generalized for any manufacturing industry.
 
@@ -165,8 +165,8 @@ List<WageSettlement> results = pipeline.processAll(settlements);
 
 ## Related Documents
 
-- [MTO Workflow Engine](../mto-workflow-engine/README.md) — The work order state machine that generates piecework records
-- [Spring Events](../spring-events-decoupling/README.md) — Event-driven pattern for cross-module wage notifications
+- [MTO Workflow Engine](../mto-workflow-engine/) — The work order state machine that generates piecework records
+- [Spring Events](../spring-events-decoupling/) — Event-driven pattern for cross-module wage notifications
 - [Commission Pipeline](../../architecture/commission-pipeline.md) — Similar pipeline pattern for commission calculation
 
 ## Source
