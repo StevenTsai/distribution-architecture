@@ -33,9 +33,11 @@ flowchart TB
         N --> O["自动添加 WHERE deleted=0"]
     end
 
-    style C fill:#ff9,stroke:#333,stroke-width:2px
-    style F fill:#9f9,stroke:#333,stroke-width:2px
-    style O fill:#ff9,stroke:#333
+    class C warning
+    class F success
+    class O warning
+    classDef success fill:#dcfce7,stroke:#22c55e,color:#14532d,stroke-width:1.5px
+    classDef warning fill:#fef9c3,stroke:#eab308,color:#713f12,stroke-width:1.5px
 ```
 
 ---

@@ -35,9 +35,12 @@ flowchart TB
         P --> Q
     end
 
-    style F fill:#ff9,stroke:#333
-    style K fill:#9f9,stroke:#333
-    style L fill:#f99,stroke:#333
+    class F warning
+    class K success
+    class L danger
+    classDef success fill:#dcfce7,stroke:#22c55e,color:#14532d,stroke-width:1.5px
+    classDef warning fill:#fef9c3,stroke:#eab308,color:#713f12,stroke-width:1.5px
+    classDef danger fill:#fee2e2,stroke:#ef4444,color:#7f1d1d,stroke-width:1.5px
 ```
 
 ---

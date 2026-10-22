@@ -35,10 +35,12 @@ flowchart TB
         P --> Q[业务代码读取当前管理员]
     end
 
-    style F fill:#f99,stroke:#333
-    style I fill:#f99,stroke:#333
-    style O fill:#f99,stroke="#333"
-    style P fill:#9f9,stroke:#333
+    class F danger
+    class I danger
+    class O danger
+    class P success
+    classDef success fill:#dcfce7,stroke:#22c55e,color:#14532d,stroke-width:1.5px
+    classDef danger fill:#fee2e2,stroke:#ef4444,color:#7f1d1d,stroke-width:1.5px
 ```
 
 ---

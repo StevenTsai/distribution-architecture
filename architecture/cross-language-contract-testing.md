@@ -34,10 +34,13 @@ flowchart TB
     E --> F
     E --> L
 
-    style A fill:#9cf,stroke:#333,stroke-width:2px
-    style E fill:#ff9,stroke:#333
-    style J fill:#9f9,stroke:#333
-    style P fill:#9f9,stroke:#333
+    class A entry
+    class E warning
+    class J success
+    class P success
+    classDef entry fill:#dbeafe,stroke:#3b82f6,color:#1e3a8a,stroke-width:1.5px
+    classDef success fill:#dcfce7,stroke:#22c55e,color:#14532d,stroke-width:1.5px
+    classDef warning fill:#fef9c3,stroke:#eab308,color:#713f12,stroke-width:1.5px
 ```
 
 ---

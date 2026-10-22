@@ -37,8 +37,10 @@ flowchart TB
     N --> O[Returns filtered data]
     M --> O
 
-    style F fill:#f9f,stroke:#333,stroke-width:2px
-    style N fill:#9f9,stroke:#333,stroke-width:2px
+    class F decision
+    class N success
+    classDef decision fill:#ede9fe,stroke:#8b5cf6,color:#4c1d95,stroke-width:1.5px
+    classDef success fill:#dcfce7,stroke:#22c55e,color:#14532d,stroke-width:1.5px
 ```
 
 ---

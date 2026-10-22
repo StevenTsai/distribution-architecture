@@ -1,6 +1,6 @@
-import { defineConfig } from 'vitepress'
+import { withMermaid } from 'vitepress-plugin-mermaid'
 
-export default defineConfig({
+export default withMermaid({
   // 导航栏使用短书名，完整书名在首页 hero 和 description 中展示
   title: '架构炼金术',
   description: '《架构炼金术：从真实系统提炼可复用的 Java 架构模式》—— Java / Spring Boot / MyBatis 实战，7 个可复用模式 + 6 篇 ADR + 可运行代码与测试',
@@ -25,6 +25,32 @@ export default defineConfig({
     'CONTRIBUTING.md',
     'guides/**',       // 实操指南（可后续加入）
   ],
+
+  // 案例目录只有 README.md，重写为 index，使 /case-studies/xxx/ 可以直接访问
+  rewrites: {
+    'case-studies/mto-workflow-engine/README.md': 'case-studies/mto-workflow-engine/index.md',
+    'case-studies/piecework-wage-engine/README.md': 'case-studies/piecework-wage-engine/index.md',
+    'case-studies/spring-events-decoupling/README.md': 'case-studies/spring-events-decoupling/index.md',
+    'case-studies/production-guardrails/README.md': 'case-studies/production-guardrails/index.md',
+  },
+
+  // Mermaid 图表配置（插件会自动跟随明暗主题）
+  mermaid: {
+    theme: 'default',
+    flowchart: {
+      curve: 'basis',
+      padding: 12,
+      nodeSpacing: 30,
+      rankSpacing: 40,
+      htmlLabels: true,
+    },
+    // 统一节点圆角，避免默认直角方框显得粗糙
+    themeCSS: `
+      .node rect { rx: 6px; ry: 6px; }
+      .node polygon { stroke-linejoin: round; }
+      .cluster rect { rx: 8px; ry: 8px; }
+    `,
+  },
 
   // 忽略死链接（README 中的相对链接在 VitePress 中不适用）
   ignoreDeadLinks: true,

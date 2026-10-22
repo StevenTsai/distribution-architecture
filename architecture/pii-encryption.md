@@ -37,8 +37,10 @@ flowchart TB
         U --> V["[pii] 手机号访问 action=xxx mobile=138****5678"]
     end
 
-    style C fill:#f9f,stroke:#333,stroke-width:2px
-    style E fill:#9f9,stroke:#333
+    class C decision
+    class E success
+    classDef decision fill:#ede9fe,stroke:#8b5cf6,color:#4c1d95,stroke-width:1.5px
+    classDef success fill:#dcfce7,stroke:#22c55e,color:#14532d,stroke-width:1.5px
 ```
 
 ---
