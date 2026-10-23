@@ -1,12 +1,12 @@
 ---
 layout: home
-title: 架构炼金术：从真实系统提炼可复用的 Java 架构模式
+title: 架构炼金术：从真实系统提炼可复用的架构模式
 titleTemplate: false
 
 hero:
   name: 架构炼金术
-  text: 从真实系统提炼可复用的 Java 架构模式
-  tagline: 7 个模式 · 6 篇 ADR · 可运行代码与测试
+  text: 从真实系统提炼可复用的架构模式
+  tagline: Java / Spring Boot 实战 · 7 个模式 · 6 篇 ADR · 可运行代码与测试
   image:
     src: /logo.svg
     alt: Distribution Architecture
