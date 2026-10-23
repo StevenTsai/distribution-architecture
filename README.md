@@ -5,11 +5,11 @@
 
 中文 | [English](en/README.md)
 
-📖 **[在线阅读《架构炼金术：从真实系统提炼可复用的 Java 架构模式》](https://steventsai.github.io/distribution-architecture/)** | B2B 企业级架构设计模式库，从生产系统中提炼的可复用架构方案。
+📖 **[在线阅读《架构炼金术：从真实系统提炼可复用的架构模式》](https://steventsai.github.io/distribution-architecture/)** | B2B 企业级架构设计模式库，从生产系统中提炼的可复用架构方案（Java 实战 + 跨语言交付方法论）。
 
 ## 这是什么
 
-这是一套**设计文档** + **可复用 Starter 库** + **生产验证案例**，记录了一个企业级系统从零构建的完整过程。
+这是一套**设计文档** + **可复用 Starter 库** + **生产验证案例** + **交付方法论**，记录了一个企业级系统从零构建的完整过程，并沉淀了「怎么接手别人的系统」的评估与止损方法。
 
 > 我在生产系统中遇到了数据权限、工作流引擎、事件驱动解耦、计件工资等通用问题。
 > 我先在真实项目中用 Spring Boot + MyBatis 实现了这些模式，
@@ -67,6 +67,7 @@ Case Study 的代码从一个**真实生产系统**（珠宝加工 ERP）中提�
 | **后端架构师** | 数据权限、工单状态机、事件驱动解耦等通用模式的落地方案 |
 | **中级 Java 开发者** | "不只是 CRUD"的业务系统怎么写，以及如何设计 Starter 库 |
 | **技术负责人** | 技术选型的 trade-off 分析（ADR） |
+| **售前 / 商务 / 决策者** | [接手工程工具箱](playbooks/takeover-engineering/)：接手前怎么评估、怎么报价、什么时候止损 |
 | **需要数据权限的开发者** | 直接使用 [spring-data-permission-starter](https://github.com/StevenTsai/spring-data-permission-starter) |
 
 ## 文档结构
@@ -118,6 +119,15 @@ Case Study 的代码从一个**真实生产系统**（珠宝加工 ERP）中提�
 │       ├── StateStore               六原语契约 + 三实现（mysql/redis/memory）
 │       └── 契约测试套件              40 用例零外部服务（H2 MODE=MySQL）
 │
+├── playbooks/                       交付方法论
+│   └── takeover-engineering/        接手工程工具箱
+│       ├── README.md                导言：与主仓库的关系 + 三层用法
+│       ├── 00-methodology.md        方法论总纲：四原则 + 六阶段 + 止损闸门
+│       ├── 01-investment-discipline.md  签约前投入纪律：L0–L3 封顶 + 杠杆对称
+│       ├── case-walkthrough.md      附录：虚构案例串跑（教学示例，走完六阶段）
+│       ├── templates/               可直接填写的模板 01–10
+│       └── hooks/21-questions.md    接手前必须问清的 21 个问题（免费钩子）
+│
 ├── CONTRIBUTING.md                  贡献指南
 │
 └── tutorial/                        从零构建系列（推荐阅读顺序）
@@ -147,6 +157,8 @@ Case Study 的代码从一个**真实生产系统**（珠宝加工 ERP）中提�
 **如果你想从头理解**：按 `tutorial/` 的 01→07 顺序阅读，这是从零构建的完整叙事线。
 
 **如果你要做技术选型**：读 `decisions/` 下的 6 篇 ADR，看 trade-off 分析。
+
+**如果你要接手别人的系统**：读 `playbooks/takeover-engineering/`，从 [21 个问题](playbooks/takeover-engineering/hooks/21-questions.md)开始，再按需取用 10 份模板。
 
 **如果你要基于此做二次开发**：读 `guides/` 下的实操指南。
 

@@ -3,7 +3,7 @@ import { withMermaid } from 'vitepress-plugin-mermaid'
 export default withMermaid({
   // 导航栏使用短书名，完整书名在首页 hero 和 description 中展示
   title: '架构炼金术',
-  description: '《架构炼金术：从真实系统提炼可复用的 Java 架构模式》—— Java / Spring Boot / MyBatis 实战，7 个可复用模式 + 6 篇 ADR + 可运行代码与测试',
+  description: '《架构炼金术：从真实系统提炼可复用的架构模式》—— Java / Spring Boot / MyBatis 实战，7 个可复用模式 + 6 篇 ADR + 可运行代码与测试，以及跨语言的交付方法论',
   lang: 'zh-CN',
 
   locales: {
@@ -152,6 +152,7 @@ export default withMermaid({
     'case-studies/piecework-wage-engine/README.md': 'case-studies/piecework-wage-engine/index.md',
     'case-studies/spring-events-decoupling/README.md': 'case-studies/spring-events-decoupling/index.md',
     'case-studies/production-guardrails/README.md': 'case-studies/production-guardrails/index.md',
+    'playbooks/takeover-engineering/README.md': 'playbooks/takeover-engineering/index.md',
     'en/README.md': 'en/index.md',
     'en/case-studies/mto-workflow-engine/README.md': 'en/case-studies/mto-workflow-engine/index.md',
     'en/case-studies/piecework-wage-engine/README.md': 'en/case-studies/piecework-wage-engine/index.md',
@@ -234,6 +235,32 @@ export default withMermaid({
           { text: '05 佣金流转', link: '/tutorial/05-commission-flow' },
           { text: '06 结算流程', link: '/tutorial/06-settlement' },
           { text: '07 合规检查', link: '/tutorial/07-compliance' },
+        ],
+      },
+      {
+        text: '第六部分：交付方法论',
+        items: [
+          { text: '接手工程工具箱', link: '/playbooks/takeover-engineering/' },
+          { text: '方法论总纲', link: '/playbooks/takeover-engineering/00-methodology' },
+          { text: '签约前投入纪律', link: '/playbooks/takeover-engineering/01-investment-discipline' },
+          {
+            text: '模板 01–10',
+            collapsed: false,
+            items: [
+              { text: '01 接手指南与资产清单', link: '/playbooks/takeover-engineering/templates/01-asset-inventory' },
+              { text: '02 复用度评估表', link: '/playbooks/takeover-engineering/templates/02-reuse-assessment' },
+              { text: '03 缺口与风险台账', link: '/playbooks/takeover-engineering/templates/03-gap-risk-ledger' },
+              { text: '04 软硬件职责边界矩阵', link: '/playbooks/takeover-engineering/templates/04-responsibility-matrix' },
+              { text: '05 止损与收尾清单', link: '/playbooks/takeover-engineering/templates/05-exit-checklist' },
+              { text: '06 增量报价模型', link: '/playbooks/takeover-engineering/templates/06-pricing-model' },
+              { text: '07 契约优先重建方案', link: '/playbooks/takeover-engineering/templates/07-contract-first-rebuild' },
+              { text: '08 验收追溯矩阵', link: '/playbooks/takeover-engineering/templates/08-acceptance-traceability' },
+              { text: '09 质量审查台账', link: '/playbooks/takeover-engineering/templates/09-quality-review-ledger' },
+              { text: '10 文档体系模板', link: '/playbooks/takeover-engineering/templates/10-documentation-system' },
+            ],
+          },
+          { text: '钩子：21 个问题', link: '/playbooks/takeover-engineering/hooks/21-questions' },
+          { text: '附录：虚构案例串跑', link: '/playbooks/takeover-engineering/case-walkthrough' },
         ],
       },
       {
