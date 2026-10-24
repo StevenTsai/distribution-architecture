@@ -41,6 +41,8 @@ export default withMermaid({
               { text: 'PII Encryption & Masking', link: '/en/architecture/pii-encryption' },
               { text: 'Admin RBAC', link: '/en/architecture/admin-rbac' },
               { text: 'Cross-Language Contract Testing', link: '/en/architecture/cross-language-contract-testing' },
+              { text: 'Cell-Based Architecture', link: '/en/architecture/cell-based-architecture' },
+              { text: 'Three Forms of Service Governance', link: '/en/architecture/service-governance-forms' },
             ],
           },
           {
@@ -82,6 +84,12 @@ export default withMermaid({
               { text: 'Extend a New Module', link: '/en/guides/extend-new-module' },
               { text: 'Customize Permissions', link: '/en/guides/customize-permission' },
               { text: 'Spring Boot 3 Migration', link: '/en/guides/spring-boot-3-migration' },
+            ],
+          },
+          {
+            text: 'Methodology Playbooks',
+            items: [
+              { text: 'Playbooks Index (Chinese)', link: '/en/playbooks' },
             ],
           },
         ],
