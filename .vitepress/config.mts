@@ -153,6 +153,7 @@ export default withMermaid({
     'case-studies/spring-events-decoupling/README.md': 'case-studies/spring-events-decoupling/index.md',
     'case-studies/production-guardrails/README.md': 'case-studies/production-guardrails/index.md',
     'playbooks/takeover-engineering/README.md': 'playbooks/takeover-engineering/index.md',
+    'playbooks/system-portfolio-governance/README.md': 'playbooks/system-portfolio-governance/index.md',
     'en/README.md': 'en/index.md',
     'en/case-studies/mto-workflow-engine/README.md': 'en/case-studies/mto-workflow-engine/index.md',
     'en/case-studies/piecework-wage-engine/README.md': 'en/case-studies/piecework-wage-engine/index.md',
@@ -261,6 +262,19 @@ export default withMermaid({
           },
           { text: '钩子：21 个问题', link: '/playbooks/takeover-engineering/hooks/21-questions' },
           { text: '附录：虚构案例串跑', link: '/playbooks/takeover-engineering/case-walkthrough' },
+          {
+            text: '架构组合治理',
+            collapsed: false,
+            items: [
+              { text: '导言', link: '/playbooks/system-portfolio-governance/' },
+              { text: '方法论总纲', link: '/playbooks/system-portfolio-governance/00-methodology' },
+              { text: '模板 01 系统组合清单', link: '/playbooks/system-portfolio-governance/templates/01-portfolio-inventory' },
+              { text: '模板 02 单系统诊断卡', link: '/playbooks/system-portfolio-governance/templates/02-system-diagnosis' },
+              { text: '模板 03 治理决策记录', link: '/playbooks/system-portfolio-governance/templates/03-governance-decision' },
+              { text: '模板 04 路线图与防回潮', link: '/playbooks/system-portfolio-governance/templates/04-governance-roadmap' },
+            ],
+          },
+          { text: '工程一致性规范', link: '/playbooks/engineering-consistency-standards' },
         ],
       },
       {

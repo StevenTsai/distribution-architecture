@@ -66,7 +66,7 @@ Case Study 的代码从一个**真实生产系统**（珠宝加工 ERP）中提�
 |------|------------|
 | **后端架构师** | 数据权限、工单状态机、事件驱动解耦等通用模式的落地方案 |
 | **中级 Java 开发者** | "不只是 CRUD"的业务系统怎么写，以及如何设计 Starter 库 |
-| **技术负责人** | 技术选型的 trade-off 分析（ADR） |
+| **技术负责人** | 技术选型的 trade-off 分析（ADR），以及系统群的治理与关停并转决策（[架构组合治理](playbooks/system-portfolio-governance/)） |
 | **售前 / 商务 / 决策者** | [接手工程工具箱](playbooks/takeover-engineering/)：接手前怎么评估、怎么报价、什么时候止损 |
 | **需要数据权限的开发者** | 直接使用 [spring-data-permission-starter](https://github.com/StevenTsai/spring-data-permission-starter) |
 
@@ -128,6 +128,12 @@ Case Study 的代码从一个**真实生产系统**（珠宝加工 ERP）中提�
 │       ├── templates/               可直接填写的模板 01–10
 │       └── hooks/21-questions.md    接手前必须问清的 21 个问题（免费钩子）
 │
+├── playbooks/system-portfolio-governance/  架构组合治理（姊妹篇：系统群怎么管）
+│   ├── 00-methodology.md            四阶段：清点 → 诊断 → 决策 → 执行与防回潮
+│   └── templates/                   组合清单 / 诊断卡 / 决策记录 / 路线图与闸门
+│
+├── playbooks/engineering-consistency-standards.md  工程一致性规范（团队可直接套用）
+│
 ├── CONTRIBUTING.md                  贡献指南
 │
 └── tutorial/                        从零构建系列（推荐阅读顺序）
@@ -159,6 +165,8 @@ Case Study 的代码从一个**真实生产系统**（珠宝加工 ERP）中提�
 **如果你要做技术选型**：读 `decisions/` 下的 6 篇 ADR，看 trade-off 分析。
 
 **如果你要接手别人的系统**：读 `playbooks/takeover-engineering/`，从 [21 个问题](playbooks/takeover-engineering/hooks/21-questions.md)开始，再按需取用 10 份模板。
+
+**如果你要治理自己的系统群**：读 `playbooks/system-portfolio-governance/`，从[方法论总纲](playbooks/system-portfolio-governance/00-methodology.md)开始——清点、诊断、关停并转决策、防回潮闸门。团队工程基线见[工程一致性规范](playbooks/engineering-consistency-standards.md)。
 
 **如果你要基于此做二次开发**：读 `guides/` 下的实操指南。
 

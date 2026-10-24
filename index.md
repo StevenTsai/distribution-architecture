@@ -39,6 +39,11 @@ features:
     details: 从领域模型到合规检查的完整叙事线，手把手带你构建企业级系统
     link: /tutorial/01-domain-model
 
+  - icon: 🧭
+    title: 交付方法论
+    details: 接手工程评估与止损、架构组合治理与关停并转、工程一致性规范——从接系统到管系统群
+    link: /playbooks/takeover-engineering/
+
   - icon: 🌍
     title: 生产系统验证
     details: 所有模式来自真实生产系统（152 API、44 表、909 测试），非教科书理论
