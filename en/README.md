@@ -5,18 +5,20 @@
 
 [中文](https://github.com/StevenTsai/distribution-architecture/blob/main/README.md) | English
 
-📖 **[Read Online](https://steventsai.github.io/distribution-architecture/)** | B2B enterprise architecture design pattern library — reusable architecture solutions refined from production systems.
+📖 **[Read Online](https://steventsai.github.io/distribution-architecture/)** | B2B enterprise architecture design pattern library — reusable architecture solutions and full-lifecycle methodology refined from production systems.
 
 ## What Is This
 
-This is a collection of **design documents** + a **reusable Starter library** + **production-validated case studies**, documenting the complete process of building an enterprise system from scratch.
+This is a collection of **architecture design documents** + a **reusable Starter library** + **production-validated case studies** + a **full-lifecycle methodology**, covering an enterprise system from build, selection, and verification through takeover, portfolio governance, and production operations.
+
+Beyond code, it distills four directly applicable methods: **takeover engineering** (should you accept it, how much to invest, when to stop), **system portfolio governance** (what to shut down or remediate), **production operations** (observability, change management, incident response), and **engineering consistency standards** (naming, interfaces, release, and glossary baselines). The playbooks are written in Chinese; see the [playbooks index](playbooks.md).
 
 > I encountered generic problems in a production system: data permissions, workflow engines, event-driven decoupling, piecework wages.
 > I first implemented these patterns with Spring Boot + MyBatis in a real project,
 > then summarized them as design documents and ADRs,
 > and finally abstracted them into reusable components and open-sourced them.
 
-### Design Patterns (7)
+### Design Patterns and Architecture Methods (9)
 - Data permissions at the SQL layer
 - Event-driven state machine (commission pipeline)
 - Audit logging with JSON snapshots
@@ -24,6 +26,8 @@ This is a collection of **design documents** + a **reusable Starter library** + 
 - PII encryption & masking (AES-GCM + HMAC lookup keys)
 - Admin RBAC (module-level permissions + sensitive operation control)
 - Cross-language contract testing (outside-the-arbiter + fixture comparison)
+- [Cell-based architecture](architecture/cell-based-architecture.md) — blast radius, unit keys, data sharding, failure drills
+- [Three forms of service governance](architecture/service-governance-forms.md) — SDK / Agent / Sidecar decision matrix
 
 ### Reusable Library
 - [spring-data-permission-starter](https://github.com/StevenTsai/spring-data-permission-starter) — Spring Boot Starter for data permissions, ready to import
@@ -84,7 +88,9 @@ The fourth case study, [production-guardrails](case-studies/production-guardrail
 │   ├── mybatis-patterns.md          MyBatis engineering: 3-segment SQL fragments + dual queries
 │   ├── pii-encryption.md            PII encryption: AES-GCM + HMAC lookup keys + unified masking
 │   ├── admin-rbac.md                Admin RBAC: module-level permissions + sensitive operation control
-│   └── cross-language-contract-testing.md  Cross-language contract testing: outside-the-arbiter + fixture comparison
+│   ├── cross-language-contract-testing.md  Cross-language contract testing: outside-the-arbiter + fixture comparison
+│   ├── cell-based-architecture.md   Cell-based architecture: blast radius, unit keys, sharding, failure drills
+│   └── service-governance-forms.md  Service governance forms: SDK / Agent / Sidecar decision matrix
 │
 ├── decisions/                       Architecture Decision Records (ADR)
 │   ├── why-session-not-jwt.md       Why Session Token over JWT
@@ -138,12 +144,13 @@ The fourth case study, [production-guardrails](case-studies/production-guardrail
 
 ## English Documentation
 
-This directory mirrors the Chinese book: the preface, all 7 architecture patterns, all 6 ADRs, all 4 practical guides, the 7-step tutorial, and the case-study READMEs plus their evolution notes.
+This directory mirrors the Chinese book: the preface, all 9 architecture patterns, all 6 ADRs, all 4 practical guides, the 7-step tutorial, and the case-study READMEs plus their evolution notes. The four methodology playbooks are Chinese-only; see the [playbooks index](playbooks.md) for what they cover and how to navigate them.
 
 | Section | Documents |
 |---------|-----------|
 | Overview | [Preface](preface.md) |
-| Architecture | [Data Permission Model](architecture/data-permission-model.md) · [Commission Pipeline](architecture/commission-pipeline.md) · [Audit Snapshot](architecture/audit-and-compliance.md) · [MyBatis Engineering](architecture/mybatis-patterns.md) · [PII Encryption](architecture/pii-encryption.md) · [Admin RBAC](architecture/admin-rbac.md) · [Cross-Language Contract Testing](architecture/cross-language-contract-testing.md) |
+| Architecture | [Data Permission Model](architecture/data-permission-model.md) · [Commission Pipeline](architecture/commission-pipeline.md) · [Audit Snapshot](architecture/audit-and-compliance.md) · [MyBatis Engineering](architecture/mybatis-patterns.md) · [PII Encryption](architecture/pii-encryption.md) · [Admin RBAC](architecture/admin-rbac.md) · [Cross-Language Contract Testing](architecture/cross-language-contract-testing.md) · [Cell-Based Architecture](architecture/cell-based-architecture.md) · [Service Governance Forms](architecture/service-governance-forms.md) |
+| Playbooks | [Methodology Playbooks Index (Chinese)](playbooks.md) |
 | Decisions | [Session vs JWT](decisions/why-session-not-jwt.md) · [MyBatis vs JPA](decisions/why-mybatis-not-jpa.md) · [Logical Delete](decisions/why-logical-delete.md) · [Spring Boot over NestJS](decisions/why-spring-boot-not-nestjs.md) · [Redis Optional](decisions/why-redis-optional.md) · [JavaScript over TypeScript](decisions/why-javascript-not-typescript.md) |
 | Guides | [Quick Start](guides/quick-start.md) · [Extend a New Module](guides/extend-new-module.md) · [Customize Permissions](guides/customize-permission.md) · [Spring Boot 3 Migration](guides/spring-boot-3-migration.md) |
 | Tutorial | [01 Domain Model](tutorial/01-domain-model.md) · [02 Data Permissions](tutorial/02-data-permission.md) · [03 CRUD Scaffolding](tutorial/03-crud-scaffolding.md) · [04 Audit Logging](tutorial/04-audit-logging.md) · [05 Commission Flow](tutorial/05-commission-flow.md) · [06 Settlement](tutorial/06-settlement.md) · [07 Compliance](tutorial/07-compliance.md) |
@@ -157,13 +164,15 @@ Project-level documents are also available in English: [Contributing](CONTRIBUTI
 
 **If you want to try it out**: Go to `distribution-starter/` and follow the README to get running in 5 minutes.
 
-**If you want a quick overview**: Start with the 4 design pattern documents in `architecture/`.
+**If you want a quick overview**: Start with the design pattern documents in `architecture/` (9 in total; the first four cover data permissions, event-driven flows, audit, and MyBatis).
 
 **If you want to see production-validated case studies**: Go to `case-studies/` — each case study has a README and an evolution document.
 
 **If you want to understand from the beginning**: Read `tutorial/` in order (01→07) — this is the complete build-from-scratch narrative.
 
-**If you're making technology decisions**: Read the 6 ADRs in `decisions/` for trade-off analysis.
+**If you're making technology decisions**: Read the 6 ADRs in `decisions/` for trade-off analysis. For platform-level choices, see [Three Forms of Service Governance](architecture/service-governance-forms.md); for capacity ceilings or shrinking a failure domain, see [Cell-Based Architecture](architecture/cell-based-architecture.md).
+
+**If you run systems in production**: The [methodology playbooks](playbooks.md) cover takeovers, portfolio governance, and production operations. They are written in Chinese.
 
 **If you're building on top of this**: Read the practical guides in `guides/`.
 

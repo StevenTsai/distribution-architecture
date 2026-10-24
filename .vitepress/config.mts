@@ -41,6 +41,8 @@ export default withMermaid({
               { text: 'PII Encryption & Masking', link: '/en/architecture/pii-encryption' },
               { text: 'Admin RBAC', link: '/en/architecture/admin-rbac' },
               { text: 'Cross-Language Contract Testing', link: '/en/architecture/cross-language-contract-testing' },
+              { text: 'Cell-Based Architecture', link: '/en/architecture/cell-based-architecture' },
+              { text: 'Three Forms of Service Governance', link: '/en/architecture/service-governance-forms' },
             ],
           },
           {
@@ -82,6 +84,12 @@ export default withMermaid({
               { text: 'Extend a New Module', link: '/en/guides/extend-new-module' },
               { text: 'Customize Permissions', link: '/en/guides/customize-permission' },
               { text: 'Spring Boot 3 Migration', link: '/en/guides/spring-boot-3-migration' },
+            ],
+          },
+          {
+            text: 'Methodology Playbooks',
+            items: [
+              { text: 'Playbooks Index (Chinese)', link: '/en/playbooks' },
             ],
           },
         ],
@@ -154,6 +162,7 @@ export default withMermaid({
     'case-studies/production-guardrails/README.md': 'case-studies/production-guardrails/index.md',
     'playbooks/takeover-engineering/README.md': 'playbooks/takeover-engineering/index.md',
     'playbooks/system-portfolio-governance/README.md': 'playbooks/system-portfolio-governance/index.md',
+    'playbooks/production-operations/README.md': 'playbooks/production-operations/index.md',
     'en/README.md': 'en/index.md',
     'en/case-studies/mto-workflow-engine/README.md': 'en/case-studies/mto-workflow-engine/index.md',
     'en/case-studies/piecework-wage-engine/README.md': 'en/case-studies/piecework-wage-engine/index.md',
@@ -204,6 +213,8 @@ export default withMermaid({
           { text: 'PII 加密与脱敏', link: '/architecture/pii-encryption' },
           { text: '管理端 RBAC', link: '/architecture/admin-rbac' },
           { text: '跨语言契约测试', link: '/architecture/cross-language-contract-testing' },
+          { text: '单元化架构', link: '/architecture/cell-based-architecture' },
+          { text: '服务治理的三种形态', link: '/architecture/service-governance-forms' },
         ],
       },
       {
@@ -273,7 +284,20 @@ export default withMermaid({
           { text: '模板 02 单系统诊断卡', link: '/playbooks/system-portfolio-governance/templates/02-system-diagnosis' },
           { text: '模板 03 治理决策记录', link: '/playbooks/system-portfolio-governance/templates/03-governance-decision' },
           { text: '模板 04 路线图与防回潮', link: '/playbooks/system-portfolio-governance/templates/04-governance-roadmap' },
+          { text: '模板 05 架构评审机制', link: '/playbooks/system-portfolio-governance/05-architecture-review' },
           { text: '工程一致性规范', link: '/playbooks/engineering-consistency-standards' },
+        ],
+      },
+      {
+        text: '第八部分：生产运维',
+        items: [
+          { text: '生产运维', link: '/playbooks/production-operations/' },
+          { text: '运维方法论总纲', link: '/playbooks/production-operations/00-methodology' },
+          { text: '模板 01 可观测性与告警', link: '/playbooks/production-operations/templates/01-observability-alerting' },
+          { text: '模板 02 变更与灰度发布', link: '/playbooks/production-operations/templates/02-change-and-canary' },
+          { text: '模板 03 故障响应与复盘', link: '/playbooks/production-operations/templates/03-incident-postmortem' },
+          { text: '模板 04 容量与演练', link: '/playbooks/production-operations/templates/04-capacity-and-drills' },
+          { text: '深水区：全链路灰度', link: '/playbooks/production-operations/deep-dives/full-link-canary' },
         ],
       },
       {

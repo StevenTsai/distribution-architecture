@@ -5,18 +5,20 @@
 
 中文 | [English](en/README.md)
 
-📖 **[在线阅读《架构炼金术：从真实系统提炼可复用的架构模式》](https://steventsai.github.io/distribution-architecture/)** | B2B 企业级架构设计模式库，从生产系统中提炼的可复用架构方案（Java 实战 + 跨语言交付方法论）。
+📖 **[在线阅读《架构炼金术：从真实系统提炼可复用的架构模式》](https://steventsai.github.io/distribution-architecture/)** | B2B 企业级架构设计模式库，从生产系统中提炼的可复用架构方案与全生命周期方法论（Java 实战 + 跨语言交付 + 架构治理）。
 
 ## 这是什么
 
-这是一套**设计文档** + **可复用 Starter 库** + **生产验证案例** + **交付方法论**，记录了一个企业级系统从零构建的完整过程，并沉淀了「怎么接手别人的系统」的评估与止损方法。
+这是一套**架构设计文档** + **可复用 Starter 库** + **生产验证案例** + **全生命周期方法论**，覆盖一个企业级系统从构建、选型、验证，到接手、治理、运维的完整过程。
+
+代码之外，这里还沉淀了四套可以直接套用的方法：**接手工程**（进入时该不该接、投多少、何时停）、**组合治理**（持有期哪些该关、哪些该治）、**生产运维**（运行期怎么观测、怎么变更、怎么救火）、**工程一致性规范**（团队共用的命名、接口、发布与术语基线）。
 
 > 我在生产系统中遇到了数据权限、工作流引擎、事件驱动解耦、计件工资等通用问题。
 > 我先在真实项目中用 Spring Boot + MyBatis 实现了这些模式，
 > 然后总结为设计文档和 ADR，
 > 最后抽象为可复用的组件并开源。
 
-### 设计模式（7 个）
+### 设计模式与架构方法（9 篇）
 - 数据权限下沉到 SQL 层
 - 事件驱动状态机（佣金流转）
 - 审计日志 JSON 快照
@@ -24,6 +26,8 @@
 - PII 加密与脱敏（AES-GCM + HMAC 检索键）
 - 管理端 RBAC（模块级权限 + 敏感操作独立授权）
 - 跨语言契约测试（仓外裁判 + fixture 对拍）
+- [单元化架构](architecture/cell-based-architecture.md) — 爆炸半径、单元键、数据分片与「拔电验证」
+- [服务治理的三种形态](architecture/service-governance-forms.md) — SDK / Agent / Sidecar 的取舍矩阵
 
 ### 可复用库
 - [spring-data-permission-starter](https://github.com/StevenTsai/spring-data-permission-starter) — 数据权限的 Spring Boot Starter 实现，可直接导入使用
@@ -85,7 +89,9 @@ Case Study 的代码从一个**真实生产系统**（珠宝加工 ERP）中提�
 │   ├── mybatis-patterns.md          MyBatis 工程化：三段式 SQL 片段 + 对偶查询
 │   ├── pii-encryption.md            PII 加密：AES-GCM + HMAC 检索键 + 统一脱敏
 │   ├── admin-rbac.md                管理端 RBAC：模块级权限 + 敏感操作独立授权
-│   └── cross-language-contract-testing.md  跨语言契约测试：仓外裁判 + fixture 对拍
+│   ├── cross-language-contract-testing.md  跨语言契约测试：仓外裁判 + fixture 对拍
+│   ├── cell-based-architecture.md   单元化架构：爆炸半径、单元键、数据分片与故障演练
+│   └── service-governance-forms.md  服务治理三形态：SDK / Agent / Sidecar 的取舍矩阵
 │
 ├── decisions/                       架构决策记录（ADR）
 │   ├── why-session-not-jwt.md       为什么选 Session Token
@@ -119,7 +125,7 @@ Case Study 的代码从一个**真实生产系统**（珠宝加工 ERP）中提�
 │       ├── StateStore               六原语契约 + 三实现（mysql/redis/memory）
 │       └── 契约测试套件              40 用例零外部服务（H2 MODE=MySQL）
 │
-├── playbooks/                       交付方法论
+├── playbooks/                       方法论 playbook（架构师全周期实践）
 │   └── takeover-engineering/        接手工程工具箱
 │       ├── README.md                导言：与主仓库的关系 + 三层用法
 │       ├── 00-methodology.md        方法论总纲：四原则 + 六阶段 + 止损闸门
@@ -130,9 +136,15 @@ Case Study 的代码从一个**真实生产系统**（珠宝加工 ERP）中提�
 │
 ├── playbooks/system-portfolio-governance/  架构组合治理（姊妹篇：系统群怎么管）
 │   ├── 00-methodology.md            四阶段：清点 → 诊断 → 决策 → 执行与防回潮
+│   ├── 05-architecture-review.md    架构评审机制：三级评审 + 一页纸 + 例外台账
 │   └── templates/                   组合清单 / 诊断卡 / 决策记录 / 路线图与闸门
 │
 ├── playbooks/engineering-consistency-standards.md  工程一致性规范（团队可直接套用）
+│
+├── playbooks/production-operations/  生产运维（第三姊妹篇：系统运行期怎么稳住）
+│   ├── 00-methodology.md            五原则 + 四能力域（观测/变更/响应/演练）
+│   ├── deep-dives/                  全链路灰度：标记透传、消息灰度、数据兼容
+│   └── templates/                   告警规范 / 变更与灰度 / 故障复盘 / 容量与演练
 │
 ├── CONTRIBUTING.md                  贡献指南
 │
@@ -162,11 +174,13 @@ Case Study 的代码从一个**真实生产系统**（珠宝加工 ERP）中提�
 
 **如果你想从头理解**：按 `tutorial/` 的 01→07 顺序阅读，这是从零构建的完整叙事线。
 
-**如果你要做技术选型**：读 `decisions/` 下的 6 篇 ADR，看 trade-off 分析。
+**如果你要做技术选型**：读 `decisions/` 下的 6 篇 ADR，看 trade-off 分析。平台层选型看[服务治理的三种形态](architecture/service-governance-forms.md)；容量到顶或要缩小故障域时读[单元化架构](architecture/cell-based-architecture.md)。
 
 **如果你要接手别人的系统**：读 `playbooks/takeover-engineering/`，从 [21 个问题](playbooks/takeover-engineering/hooks/21-questions.md)开始，再按需取用 10 份模板。
 
 **如果你要治理自己的系统群**：读 `playbooks/system-portfolio-governance/`，从[方法论总纲](playbooks/system-portfolio-governance/00-methodology.md)开始——清点、诊断、关停并转决策、防回潮闸门。团队工程基线见[工程一致性规范](playbooks/engineering-consistency-standards.md)。
+
+**如果你要管生产环境的稳定运行**：读 `playbooks/production-operations/`，从[运维方法论总纲](playbooks/production-operations/00-methodology.md)开始——可观测、变更与灰度、故障响应与复盘、容量与演练。人少的话直接看「最小可行运维」一节。
 
 **如果你要基于此做二次开发**：读 `guides/` 下的实操指南。
 
@@ -233,6 +247,9 @@ English translations of the core documents are available in the [`en/`](en/) dir
 | [en/architecture/pii-encryption.md](en/architecture/pii-encryption.md) | PII Encryption: AES-GCM, HMAC Lookup Keys, Masking |
 | [en/architecture/admin-rbac.md](en/architecture/admin-rbac.md) | Admin RBAC: Module-Level Permissions |
 | [en/architecture/cross-language-contract-testing.md](en/architecture/cross-language-contract-testing.md) | Cross-Language Contract Testing |
+| [en/architecture/cell-based-architecture.md](en/architecture/cell-based-architecture.md) | Cell-Based Architecture: Confining the Blast Radius |
+| [en/architecture/service-governance-forms.md](en/architecture/service-governance-forms.md) | Three Forms of Service Governance: SDK, Agent, Sidecar |
+| [en/playbooks.md](en/playbooks.md) | Methodology playbooks index (the playbooks themselves are Chinese-only) |
 | [en/decisions/why-javascript-not-typescript.md](en/decisions/why-javascript-not-typescript.md) | ADR: Zero Build Chain — JavaScript over TypeScript |
 | [en/decisions/why-logical-delete.md](en/decisions/why-logical-delete.md) | ADR: Why Logical Delete |
 | [en/decisions/why-mybatis-not-jpa.md](en/decisions/why-mybatis-not-jpa.md) | ADR: Why MyBatis over JPA |
@@ -249,6 +266,6 @@ English translations of the core documents are available in the [`en/`](en/) dir
 | [en/SECURITY.md](en/SECURITY.md) | Security policy |
 | [en/distribution-starter/README.md](en/distribution-starter/README.md) | Starter quick start and project structure |
 
-The English directory covers every book page except the VitePress homepage (`index.md`); the internal `doc/open-source-strategy.md` remains Chinese-only.
+The English directory covers every book page except the VitePress homepage (`index.md`). The four methodology playbooks (`playbooks/`, 30 documents) are Chinese-only by design; [en/playbooks.md](en/playbooks.md) indexes what they cover and links to each one. The internal `doc/open-source-strategy.md` also remains Chinese-only.
 
 For Spring Boot 2.7 users, see the [migration guide](guides/spring-boot-3-migration.md) (also available in [English](en/guides/spring-boot-3-migration.md)).
