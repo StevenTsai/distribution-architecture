@@ -90,6 +90,7 @@ public class DistributorMemberServiceImpl implements DistributionDistributorMemb
         validateCreateScope(request.getDistributorId());
         validateRoleCode(request.getRoleCode());
         validateDataScope(request.getDataScope());
+        validateGrantableDataScope(request.getDataScope());
         validateMemberPhone(request.getDistributorId(), request.getPhone(), null);
         validateUserBinding(request.getUserId(), null);
         validateManager(request.getDistributorId(), request.getManagerMemberId(), null);
@@ -110,7 +111,7 @@ public class DistributorMemberServiceImpl implements DistributionDistributorMemb
         entity.setUpdatedBy(operatorUserId);
         entity.setDeleted(0);
         distributionDistributorMemberMapper.insertSelective(entity);
-        distributionAuditLogService.record(DistributionAuditBizType.MEMBER.getCode(), entity.getId(), "create", null, entity, "创建渠道成员");
+        distributionAuditLogService.record(DistributionAuditBizType.MEMBER.getCode(), entity.getId(), entity.getDistributorId(), "create", null, entity, "创建渠道成员");
         return entity.getId();
     }
 
@@ -119,6 +120,7 @@ public class DistributorMemberServiceImpl implements DistributionDistributorMemb
     public void updateMember(Long id, UpdateDistributorMemberRequestDTO request) {
         DistributionDistributorMemberEntity existing = getMemberEntity(id);
         validateMemberAccess(existing.getDistributorId(), existing.getId());
+        validateUpdatePrivileges(existing, request);
         validateDistributor(request.getDistributorId());
         validateRoleCode(request.getRoleCode());
         validateDataScope(request.getDataScope());
@@ -139,7 +141,7 @@ public class DistributorMemberServiceImpl implements DistributionDistributorMemb
         update.setRemark(trim(request.getRemark()));
         update.setUpdatedBy(distributionOperatorService.getCurrentOperatorUserId());
         distributionDistributorMemberMapper.updateByPrimaryKeySelective(update);
-        distributionAuditLogService.record(DistributionAuditBizType.MEMBER.getCode(), id, "update", existing, getMemberEntity(id), "更新渠道成员");
+        distributionAuditLogService.record(DistributionAuditBizType.MEMBER.getCode(), id, existing.getDistributorId(), "update", existing, getMemberEntity(id), "更新渠道成员");
     }
 
     @Override
@@ -153,7 +155,7 @@ public class DistributorMemberServiceImpl implements DistributionDistributorMemb
         update.setStatus(trim(request.getStatus()));
         update.setUpdatedBy(distributionOperatorService.getCurrentOperatorUserId());
         distributionDistributorMemberMapper.updateByPrimaryKeySelective(update);
-        distributionAuditLogService.record(DistributionAuditBizType.MEMBER.getCode(), id, "update_status", existing, getMemberEntity(id), defaultValue(trim(request.getRemark()), "更新成员状态"));
+        distributionAuditLogService.record(DistributionAuditBizType.MEMBER.getCode(), id, existing.getDistributorId(), "update_status", existing, getMemberEntity(id), defaultValue(trim(request.getRemark()), "更新成员状态"));
     }
 
     private DistributionDistributorMemberEntity getMemberEntity(Long id) {
@@ -272,6 +274,56 @@ public class DistributorMemberServiceImpl implements DistributionDistributorMemb
 
     private void validateDataScope(String dataScope) {
         if (!DistributionDataScope.isValid(trim(dataScope))) throw new BizException("成员数据范围不合法", ResultCode.DISTRIBUTOR_MEMBER_DATA_SCOPE_INVALID.getCode());
+    }
+
+    /**
+     * 校验操作者是否有权授予目标数据范围，防止自助提权。
+     *
+     * <p>数据范围偏序：{@code SELF < OWN_DISTRIBUTOR < OWN_AND_CHILDREN < ALL}。
+     * ALL 范围操作者可授予任意范围；OWN 系列只能授予不超过自身范围的值；
+     * SELF 范围操作者仅能查看/维护自己的记录，不允许创建成员或调整数据范围。</p>
+     */
+    private void validateGrantableDataScope(String targetDataScope) {
+        DistributionDataPermissionService.DistributionDataAccessScope accessScope = distributionDataPermissionService.resolveCurrentAccessScope();
+        if (accessScope.isAllScope()) {
+            return;
+        }
+        if (accessScope.isSelfScope()) {
+            throw new BizException("无权创建成员或调整数据范围", ResultCode.DISTRIBUTION_DATA_ACCESS_DENIED.getCode());
+        }
+        if (dataScopeRank(trim(targetDataScope)) > dataScopeRank(accessScope.getDataScope())) {
+            throw new BizException("不能授予超出自身的数据范围", ResultCode.DISTRIBUTION_DATA_ACCESS_DENIED.getCode());
+        }
+    }
+
+    /**
+     * update 为全量 PUT 语义：保持原值的字段放行，任何向上的权限变更都要求 ALL 范围。
+     */
+    private void validateUpdatePrivileges(DistributionDistributorMemberEntity existing, UpdateDistributorMemberRequestDTO request) {
+        DistributionDataPermissionService.DistributionDataAccessScope accessScope = distributionDataPermissionService.resolveCurrentAccessScope();
+        if (accessScope.isAllScope()) {
+            return;
+        }
+        if (!StringUtils.equals(existing.getRoleCode(), trim(request.getRoleCode()))) {
+            throw new BizException("无权变更成员角色", ResultCode.DISTRIBUTION_DATA_ACCESS_DENIED.getCode());
+        }
+        if (!StringUtils.equals(existing.getDataScope(), trim(request.getDataScope()))) {
+            validateGrantableDataScope(trim(request.getDataScope()));
+        }
+        if (!java.util.Objects.equals(existing.getDistributorId(), request.getDistributorId())) {
+            List<Long> authorizedDistributorIds = accessScope.getAuthorizedDistributorIds();
+            if (authorizedDistributorIds == null || !authorizedDistributorIds.contains(request.getDistributorId())) {
+                throw new BizException("无权将成员转移到该渠道", ResultCode.DISTRIBUTION_DATA_ACCESS_DENIED.getCode());
+            }
+        }
+    }
+
+    /** 数据范围偏序等级：SELF(0) &lt; OWN_DISTRIBUTOR(1) &lt; OWN_AND_CHILDREN(2) &lt; ALL(3)。 */
+    private int dataScopeRank(String dataScope) {
+        if (DistributionDataScope.ALL.getCode().equals(dataScope)) return 3;
+        if (DistributionDataScope.OWN_AND_CHILDREN.getCode().equals(dataScope)) return 2;
+        if (DistributionDataScope.OWN_DISTRIBUTOR.getCode().equals(dataScope)) return 1;
+        return 0; // SELF（非法值已在 validateDataScope 拦截，按最小权限处理）
     }
 
     private void validateMemberStatus(String status) {

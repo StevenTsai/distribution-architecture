@@ -29,7 +29,6 @@ public class AuthHeaderInterceptor implements HandlerInterceptor {
 
     private static final String LOGIN_SOURCE_MANAGE = "MANAGE";
     private static final String BIZ_HEADER_VALUE = "distribution-starter";
-    private static final String WX_LOGIN_PATH = "/wxlogin";
     private static final String MANAGER_PATH_PATTERN = "/manage";
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -53,9 +52,6 @@ public class AuthHeaderInterceptor implements HandlerInterceptor {
         CURRENT_USER_ID.remove();
 
         String requestURI = request.getRequestURI();
-        if (requestURI.endsWith(WX_LOGIN_PATH)) {
-            return true;
-        }
 
         if (handler instanceof org.springframework.web.method.HandlerMethod) {
             org.springframework.web.method.HandlerMethod handlerMethod = (org.springframework.web.method.HandlerMethod) handler;
@@ -76,7 +72,7 @@ public class AuthHeaderInterceptor implements HandlerInterceptor {
                 try {
                     return handleManagerAuth(response, biz, token);
                 } catch (Exception e) {
-                    log.error("认证用户身份时发生异常，biz={}, token={}", biz, token, e);
+                    log.error("认证用户身份时发生异常，biz={}, token={}", biz, maskToken(token), e);
                     writeResponse(response, 401, Result.loginFail());
                     return false;
                 }
@@ -103,10 +99,24 @@ public class AuthHeaderInterceptor implements HandlerInterceptor {
         try {
             return handleBackendAuth(response, biz, token, LOGIN_SOURCE_MANAGE);
         } catch (Exception e) {
-            log.error("获取管理后台 session 失败，biz={}, token={}", biz, token, e);
+            log.error("获取管理后台 session 失败，biz={}, token={}", biz, maskToken(token), e);
             writeResponse(response, 401, Result.loginFail());
             return false;
         }
+    }
+
+    /**
+     * 日志脱敏：token 仅保留前 8 位，其余以 *** 替代，避免完整凭证进入日志。
+     */
+    private String maskToken(String token) {
+        if (StringUtils.isBlank(token)) {
+            return "***";
+        }
+        String trimmed = token.trim();
+        if (trimmed.length() <= 8) {
+            return "***"; // 过短的值可能等同于完整凭证，不输出任何内容
+        }
+        return trimmed.substring(0, 8) + "***";
     }
 
     private boolean handleBackendAuth(HttpServletResponse response, String biz, String token, String expectedLoginSource) {

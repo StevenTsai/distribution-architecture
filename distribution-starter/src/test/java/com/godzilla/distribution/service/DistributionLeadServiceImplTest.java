@@ -1,5 +1,6 @@
 package com.godzilla.distribution.service;
 
+import com.godzilla.distribution.common.ResultCode;
 import com.godzilla.distribution.common.pii.PiiCipher;
 import com.godzilla.distribution.dto.PageResponseDTO;
 import com.godzilla.distribution.dto.distribution.request.CreateDistributionLeadRequestDTO;
@@ -209,6 +210,40 @@ class DistributionLeadServiceImplTest {
         assertEquals("13900139000", piiCipher.decrypt(update.getContactPhone()));
     }
 
+    @Test
+    void updateLead_SourceDistributorChangeOutsideScope_Throws() {
+        when(memberMapper.selectByUserId(OPERATOR_USER_ID)).thenReturn(member(2L, DISTRIBUTOR_ID,
+                DistributionRoleCode.DIST_SALES.getCode(), DistributionDataScope.OWN_DISTRIBUTOR.getCode(), null));
+        when(leadMapper.selectByPrimaryKey(1L)).thenReturn(encryptedLead());
+        when(distributorMapper.selectByPrimaryKey(99L)).thenReturn(distributorWithId(99L));
+
+        // 全量 PUT：变更后的来源渠道 99 不在授权范围 [1] 内，必须拒绝
+        UpdateDistributionLeadRequestDTO request = new UpdateDistributionLeadRequestDTO();
+        request.setContactName("张三");
+        request.setContactPhone(PHONE);
+        request.setSourceDistributorId(99L);
+        request.setIntentProductLine("gene");
+
+        BizException ex = assertThrows(BizException.class, () -> leadService.updateLead(1L, request));
+
+        assertEquals(ResultCode.DISTRIBUTION_DATA_ACCESS_DENIED.getCode(), ex.getCode());
+        verify(leadMapper, never()).updateByPrimaryKeySelective(any());
+    }
+
+    @Test
+    void listLeads_LikeWildcardsInKeywordAreEscaped() {
+        when(leadMapper.countByConditionWithScope(any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(0L);
+        when(leadMapper.selectByConditionWithScope(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), anyInt(), anyInt()))
+                .thenReturn(Collections.emptyList());
+
+        leadService.listLeads(null, "张%", null, null, null, null, 1, 10);
+
+        // % 必须以字面量匹配，不能变成通配符
+        verify(leadMapper).countByConditionWithScope(isNull(), eq("张\\%"), isNull(),
+                isNull(), isNull(), isNull(), isNull(), isNull(), isNull(), isNull());
+    }
+
     private void mockDistributorExists() {
         when(distributorMapper.selectByPrimaryKey(DISTRIBUTOR_ID)).thenReturn(distributor());
     }
@@ -227,8 +262,12 @@ class DistributionLeadServiceImplTest {
     }
 
     private DistributionDistributorEntity distributor() {
+        return distributorWithId(DISTRIBUTOR_ID);
+    }
+
+    private DistributionDistributorEntity distributorWithId(Long id) {
         DistributionDistributorEntity distributor = new DistributionDistributorEntity();
-        distributor.setId(DISTRIBUTOR_ID);
+        distributor.setId(id);
         distributor.setName("华东总代理");
         distributor.setDeleted(0);
         return distributor;

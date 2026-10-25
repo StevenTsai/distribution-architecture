@@ -82,12 +82,13 @@ public class DistributionAuditLogServiceImpl implements DistributionAuditLogServ
     }
 
     @Override
-    public void record(String bizType, Long bizId, String action, Object beforeSnapshot, Object afterSnapshot, String remark) {
+    public void record(String bizType, Long bizId, Long distributorId, String action, Object beforeSnapshot, Object afterSnapshot, String remark) {
         UserProfileEntity operator = distributionOperatorService.getCurrentOperatorUser();
 
         DistributionAuditLogEntity entity = new DistributionAuditLogEntity();
         entity.setBizType(bizType);
         entity.setBizId(bizId);
+        entity.setDistributorId(distributorId);
         entity.setAction(action);
         entity.setBeforeSnapshot(writeSnapshot(beforeSnapshot));
         entity.setAfterSnapshot(writeSnapshot(afterSnapshot));
@@ -113,7 +114,10 @@ public class DistributionAuditLogServiceImpl implements DistributionAuditLogServ
         DistributionDataPermissionService.DistributionDataAccessScope accessScope = distributionDataPermissionService.resolveCurrentAccessScope();
         if (accessScope.isAllScope()) return;
         List<Long> authorizedDistributorIds = accessScope.getAuthorizedDistributorIds();
-        Long resolvedDistributorId = resolveDistributorId(entity.getBizType(), entity.getBizId());
+        // 优先用冗余的 distributor_id 判断归属；存量行（distributor_id 为空）回退到业务表解析
+        Long resolvedDistributorId = entity.getDistributorId() != null
+                ? entity.getDistributorId()
+                : resolveDistributorId(entity.getBizType(), entity.getBizId());
         if (resolvedDistributorId != null && authorizedDistributorIds != null
                 && authorizedDistributorIds.contains(resolvedDistributorId)) {
             return; // authorized

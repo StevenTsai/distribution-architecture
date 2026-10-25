@@ -152,6 +152,7 @@ CREATE TABLE IF NOT EXISTS distribution_audit_log (
   id BIGINT AUTO_INCREMENT PRIMARY KEY,
   biz_type VARCHAR(32) NOT NULL,
   biz_id BIGINT NOT NULL,
+  distributor_id BIGINT,
   action VARCHAR(64) NOT NULL,
   before_snapshot CLOB,
   after_snapshot CLOB,
@@ -162,6 +163,7 @@ CREATE TABLE IF NOT EXISTS distribution_audit_log (
 );
 
 CREATE INDEX IF NOT EXISTS idx_audit_log_biz ON distribution_audit_log(biz_type, biz_id);
+CREATE INDEX IF NOT EXISTS idx_audit_log_distributor_id ON distribution_audit_log(distributor_id);
 CREATE INDEX IF NOT EXISTS idx_audit_log_action ON distribution_audit_log(action);
 
 -- 合规记录表
@@ -169,6 +171,7 @@ CREATE TABLE IF NOT EXISTS distribution_compliance_record (
   id BIGINT AUTO_INCREMENT PRIMARY KEY,
   biz_type VARCHAR(32) NOT NULL,
   biz_id BIGINT NOT NULL,
+  distributor_id BIGINT,
   product_line_code VARCHAR(32),
   record_type VARCHAR(32) NOT NULL,
   status VARCHAR(32) NOT NULL DEFAULT 'pending',
@@ -185,4 +188,5 @@ CREATE TABLE IF NOT EXISTS distribution_compliance_record (
 );
 
 CREATE INDEX IF NOT EXISTS idx_compliance_record_biz ON distribution_compliance_record(biz_type, biz_id);
+CREATE INDEX IF NOT EXISTS idx_compliance_record_distributor_id ON distribution_compliance_record(distributor_id);
 CREATE INDEX IF NOT EXISTS idx_compliance_record_status ON distribution_compliance_record(status);

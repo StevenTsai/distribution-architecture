@@ -75,9 +75,10 @@ public class DistributionLeadServiceImpl implements DistributionLeadService {
         String keyword = trim(contactKeyword);
         // 手机号加密落库后不能 LIKE 查询，只有完整手机号才转成检索键做精确匹配
         String contactPhoneLookup = isPhoneNumber(keyword) ? piiCipher.lookupKey(keyword) : null;
-        long total = distributionLeadMapper.countByConditionWithScope(trim(leadNo), keyword, contactPhoneLookup, sourceDistributorId,
+        String escapedKeyword = escapeLike(keyword);
+        long total = distributionLeadMapper.countByConditionWithScope(trim(leadNo), escapedKeyword, contactPhoneLookup, sourceDistributorId,
                 trim(intentProductLine), ownerUserId, trim(stage), authorizedDistributorIds, authorizedMemberId, authorizedOwnerUserId);
-        List<DistributionLeadEntity> entities = distributionLeadMapper.selectByConditionWithScope(trim(leadNo), keyword, contactPhoneLookup,
+        List<DistributionLeadEntity> entities = distributionLeadMapper.selectByConditionWithScope(trim(leadNo), escapedKeyword, contactPhoneLookup,
                 sourceDistributorId, trim(intentProductLine), ownerUserId, trim(stage), authorizedDistributorIds,
                 authorizedMemberId, authorizedOwnerUserId, (safePage - 1) * safePageSize, safePageSize);
         return new PageResponseDTO<DistributionLeadDTO>(leadDtoAssembler.toList(entities), total, safePage, safePageSize);
@@ -94,7 +95,7 @@ public class DistributionLeadServiceImpl implements DistributionLeadService {
     @Transactional(rollbackFor = Exception.class)
     public Long createLead(CreateDistributionLeadRequestDTO request) {
         validateDistributor(request.getSourceDistributorId());
-        validateCreateScope(request.getSourceDistributorId());
+        validateDistributorScope(request.getSourceDistributorId());
         validateMember(request.getSourceMemberId());
         validateProductLine(request.getIntentProductLine());
         validateDuplicateLead(request.getContactPhone(), request.getIntentProductLine(), null);
@@ -115,7 +116,7 @@ public class DistributionLeadServiceImpl implements DistributionLeadService {
         entity.setUpdatedBy(operatorUserId);
         entity.setDeleted(0);
         insertLeadWithRetry(entity);
-        distributionAuditLogService.record(DistributionAuditBizType.LEAD.getCode(), entity.getId(), "create", null, entity, "创建线索");
+        distributionAuditLogService.record(DistributionAuditBizType.LEAD.getCode(), entity.getId(), entity.getSourceDistributorId(), "create", null, entity, "创建线索");
         return entity.getId();
     }
 
@@ -125,6 +126,8 @@ public class DistributionLeadServiceImpl implements DistributionLeadService {
         DistributionLeadEntity existing = getLeadEntity(id);
         distributionDataPermissionService.checkAccessPermission(existing.getSourceDistributorId(), existing.getSourceMemberId(), existing.getOwnerUserId());
         validateDistributor(request.getSourceDistributorId());
+        // update 也是全量 PUT：变更后的来源渠道同样要落在操作者授权范围内
+        validateDistributorScope(request.getSourceDistributorId());
         validateMember(request.getSourceMemberId());
         validateProductLine(request.getIntentProductLine());
         validateDuplicateLead(trim(request.getContactPhone()), trim(request.getIntentProductLine()), id);
@@ -141,7 +144,7 @@ public class DistributionLeadServiceImpl implements DistributionLeadService {
         update.setRemark(trim(request.getRemark()));
         update.setUpdatedBy(distributionOperatorService.getCurrentOperatorUserId());
         distributionLeadMapper.updateByPrimaryKeySelective(update);
-        distributionAuditLogService.record(DistributionAuditBizType.LEAD.getCode(), id, "update", existing, getLeadEntity(id), "更新线索");
+        distributionAuditLogService.record(DistributionAuditBizType.LEAD.getCode(), id, existing.getSourceDistributorId(), "update", existing, getLeadEntity(id), "更新线索");
     }
 
     @Override
@@ -154,7 +157,7 @@ public class DistributionLeadServiceImpl implements DistributionLeadService {
         update.setOwnerUserId(request.getOwnerUserId());
         update.setUpdatedBy(distributionOperatorService.getCurrentOperatorUserId());
         distributionLeadMapper.updateByPrimaryKeySelective(update);
-        distributionAuditLogService.record(DistributionAuditBizType.LEAD.getCode(), id, "assign", existing, getLeadEntity(id), "分配线索负责人");
+        distributionAuditLogService.record(DistributionAuditBizType.LEAD.getCode(), id, existing.getSourceDistributorId(), "assign", existing, getLeadEntity(id), "分配线索负责人");
     }
 
     @Override
@@ -167,7 +170,7 @@ public class DistributionLeadServiceImpl implements DistributionLeadService {
         update.setStage(trim(request.getStage()));
         update.setUpdatedBy(distributionOperatorService.getCurrentOperatorUserId());
         distributionLeadMapper.updateByPrimaryKeySelective(update);
-        distributionAuditLogService.record(DistributionAuditBizType.LEAD.getCode(), id, "update_stage", existing, getLeadEntity(id), "推进线索阶段");
+        distributionAuditLogService.record(DistributionAuditBizType.LEAD.getCode(), id, existing.getSourceDistributorId(), "update_stage", existing, getLeadEntity(id), "推进线索阶段");
     }
 
     @Override
@@ -221,12 +224,12 @@ public class DistributionLeadServiceImpl implements DistributionLeadService {
         return entity;
     }
 
-    private void validateCreateScope(Long distributorId) {
+    private void validateDistributorScope(Long distributorId) {
         DistributionDataPermissionService.DistributionDataAccessScope accessScope = distributionDataPermissionService.resolveCurrentAccessScope();
         if (accessScope.isAllScope()) return;
         List<Long> authorizedDistributorIds = accessScope.getAuthorizedDistributorIds();
         if (authorizedDistributorIds == null || !authorizedDistributorIds.contains(distributorId)) {
-            throw new BizException("无权在该渠道下创建数据", ResultCode.DISTRIBUTION_DATA_ACCESS_DENIED.getCode());
+            throw new BizException("无权操作该渠道下的数据", ResultCode.DISTRIBUTION_DATA_ACCESS_DENIED.getCode());
         }
     }
 
@@ -309,5 +312,13 @@ public class DistributionLeadServiceImpl implements DistributionLeadService {
 
     private String trim(String value) {
         return StringUtils.trimToNull(value);
+    }
+
+    /** 转义 LIKE 通配符（%、_、\），防止关键字注入改变匹配语义。 */
+    private String escapeLike(String keyword) {
+        if (keyword == null) {
+            return null;
+        }
+        return keyword.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
     }
 }
