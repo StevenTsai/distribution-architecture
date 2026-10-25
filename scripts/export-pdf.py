@@ -13,8 +13,10 @@
     架构炼金术-05-治理与运维.pdf   第七部分 + 第八部分
     架构炼金术-06-实操指南.pdf     实操指南
 
-打印结果缓存于 dist-pdf/.pages/：分册方案变化时无需重新打印；
---skip-print 强制使用缓存（缓存缺失会报错）。
+打印结果缓存于 dist-pdf/.pages/：分册方案与站点内容均未变时无需重新打印；
+--skip-print 强制使用缓存（缓存缺失或已过期会报错）。
+
+依赖 pypdf：pip install -r scripts/requirements.txt
 """
 from __future__ import annotations
 
@@ -49,8 +51,9 @@ EDGE_CANDIDATES = [
 SHELL_MARKERS = ("Skip to content", "Main Navigation")
 
 # (文件名, 封面主标题, 封面副标题, 分组标题列表；None = 全部)
+# 副标题中 {n} 在运行时替换为正文页数
 OUTPUTS: list[tuple[str, str, str, list[str] | None]] = [
-    ("架构炼金术-合集", "架构炼金术", "全书合集 · 65 篇", None),
+    ("架构炼金术-合集", "架构炼金术", "全书合集 · {n} 篇", None),
     ("架构炼金术-01-架构模式", "架构模式", "基础模式 + 进阶模式",
      ["第一部分：基础模式", "第二部分：进阶模式"]),
     ("架构炼金术-02-决策与案例", "决策与案例", "技术决策 ADR + 生产验证案例",
@@ -70,6 +73,10 @@ def find_edge() -> str:
     for p in EDGE_CANDIDATES:
         if Path(p).exists():
             return p
+    for name in ("msedge", "msedge.exe"):
+        found = shutil.which(name)
+        if found:
+            return found
     raise FileNotFoundError("未找到 Microsoft Edge，无法打印 PDF")
 
 
@@ -78,23 +85,40 @@ def parse_sidebar() -> list[tuple[str, list[str]]]:
 
     只认「独立成行且下一行是 items: 的 text:」作为分组标题，
     排除英文侧边栏（链接均含 /en/）、导航首页与 editLink。
+    解析完校验：非 /en/ 的 link 总数必须等于解析出的 link 总数（首页除外），
+    否则说明有链接未进入任何分组（正则漏配等），直接报错并列出缺失行号。
     """
     lines = CONFIG.read_text(encoding="utf-8").splitlines()
     groups: list[tuple[str, list[str]]] = []
+    seen_lines: list[int] = []      # 所有非 /en/ 的 link 行（1-based）
+    parsed_lines: list[int] = []    # 实际进入分组的 link 行
+    home_lines: list[int] = []      # 首页导航（允许不入书）
     for i, line in enumerate(lines):
         if "/en/" in line or "http" in line:
             continue
-        m_group = re.search(r"text:\s*'([^']+)',\s*$", line)
+        m_group = re.search(r"""text:\s*['"]([^'"]+)['"]\s*,\s*$""", line)
         if m_group:
             nxt = lines[i + 1] if i + 1 < len(lines) else ""
             if "items" in nxt:
                 groups.append((m_group.group(1), []))
             continue
-        m_link = re.search(r"link:\s*'(/[^']*)'", line)
-        if m_link and groups:
+        m_link = re.search(r"""link:\s*['"](/[^'"]*)['"]""", line)
+        if m_link:
+            seen_lines.append(i + 1)
             link = m_link.group(1)
-            if link != "/":  # 首页导航不进书，封面替代
+            if link == "/":  # 首页导航不进书，封面替代
+                home_lines.append(i + 1)
+            elif groups:
                 groups[-1][1].append(link)
+                parsed_lines.append(i + 1)
+    missing = sorted(set(seen_lines) - set(parsed_lines) - set(home_lines))
+    if missing:
+        detail = "\n".join(f"  L{n}: {lines[n - 1].strip()}" for n in missing)
+        raise SystemExit(
+            f"config.mts 解析出 {len(parsed_lines)} 条正文链接，"
+            f"但共有 {len(seen_lines) - len(home_lines)} 条非 /en/ link，"
+            f"以下行未进入任何分组：\n{detail}"
+        )
     return [(t, links) for t, links in groups if links]
 
 
@@ -144,6 +168,7 @@ def print_to_pdf(edge: str, url: str, out_pdf: Path, profile_root: Path, tag: st
     """打印单页；每次用独立 profile 防止 Edge 进程复用导致的样式竞态，
     出现导航壳页则换 profile 重试。"""
     last_err: Exception | None = None
+    last_stderr = ""
     for attempt in range(3):
         profile = profile_root / f"{tag}-{attempt}"
         profile.mkdir(parents=True, exist_ok=True)
@@ -161,14 +186,22 @@ def print_to_pdf(edge: str, url: str, out_pdf: Path, profile_root: Path, tag: st
             url,
         ]
         try:
-            subprocess.run(cmd, check=True, capture_output=True, timeout=90)
+            r = subprocess.run(cmd, check=True, capture_output=True, timeout=90)
+            last_stderr = (r.stderr or b"").decode("utf-8", errors="replace")[-2000:]
+        except subprocess.CalledProcessError as e:
+            last_err = e
+            last_stderr = (e.stderr or b"").decode("utf-8", errors="replace")[-2000:]
+            continue
         except Exception as e:  # noqa: BLE001
             last_err = e
             continue
         if not _pdf_is_shell(out_pdf):
             return
         out_pdf.unlink(missing_ok=True)
-    raise RuntimeError(f"打印失败（样式未应用）: {url} ({last_err})")
+    raise RuntimeError(
+        f"打印失败（样式未应用）: {url} ({last_err})"
+        f"；最后一次 stderr: {last_stderr or '（空）'}"
+    )
 
 
 def wait_port(port: int, timeout: float = 60.0) -> None:
@@ -181,22 +214,94 @@ def wait_port(port: int, timeout: float = 60.0) -> None:
     raise TimeoutError(f"预览服务端口 {port} 未就绪")
 
 
+def check_preview(index_url: str) -> None:
+    """端口通了还要确认跑的是本站预览，而非被其他服务占用。"""
+    import urllib.request
+
+    try:
+        with urllib.request.urlopen(index_url, timeout=10) as resp:
+            body = resp.read(65536).decode("utf-8", errors="replace")
+    except Exception as e:  # noqa: BLE001
+        raise RuntimeError(f"预览首页请求失败: {index_url} ({e})") from e
+    if "VitePress" not in body and BASE.rstrip("/") not in body:
+        raise RuntimeError(f"{PORT} 端口被其他服务占用（响应中未发现 VitePress 特征）")
+
+
+def _kill_process_tree(proc: subprocess.Popen) -> None:
+    """结束预览服务。Windows 上 terminate 只杀 cmd.exe 外壳，
+    必须 taskkill /T 清掉整棵进程树，否则留下 npm/node 僵尸进程。"""
+    if proc.poll() is not None:
+        return
+    if sys.platform == "win32":
+        subprocess.run(
+            ["taskkill", "/T", "/F", "/PID", str(proc.pid)],
+            capture_output=True,
+            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+        )
+    else:
+        proc.terminate()
+    try:
+        proc.wait(timeout=10)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+
+
 def page_filename(i: int, link: str) -> str:
     name = link.strip("/").replace("/", "_") or "index"
     return f"{i:03d}-{name}.pdf"
 
 
+def compute_fingerprint(pages: list[str]) -> str:
+    """pages 对应 dist HTML 的 (相对路径, size, mtime) 指纹。
+
+    只算本书页面（约 65 个文件），不扫整个 dist——
+    任何正文改版都会改变 size/mtime，使打印缓存失效。
+    """
+    import hashlib
+
+    entries: list[tuple[str, int, int]] = []
+    for link in pages:
+        rel = link.strip("/")
+        html = DIST / rel / "index.html" if link.endswith("/") else DIST / f"{rel}.html"
+        if not html.exists():
+            raise SystemExit(
+                f"!! 构建产物缺失: {html.relative_to(ROOT)}（请重新 npm run docs:build）"
+            )
+        st = html.stat()
+        entries.append((html.relative_to(DIST).as_posix(), st.st_size, st.st_mtime_ns))
+    payload = "\n".join(f"{p}\t{s}\t{m}" for p, s, m in sorted(entries))
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
 def ensure_pages(pages: list[str], edge: str, skip_print: bool) -> list[Path]:
-    """打印（或复用缓存）全部正文页，返回与 pages 对齐的 PDF 路径。"""
+    """打印（或复用缓存）全部正文页，返回与 pages 对齐的 PDF 路径。
+
+    缓存 manifest 存 {links, fingerprint}：链接方案与站点内容都未变才复用，
+    任一不匹配即视为过期（旧格式 manifest 直接视为不匹配）。
+    """
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
-    want = json.dumps(pages, ensure_ascii=False, indent=0)
-    cached = MANIFEST.exists() and MANIFEST.read_text(encoding="utf-8") == want
+    fingerprint = compute_fingerprint(pages)
+    manifest = {"links": pages, "fingerprint": fingerprint}
+    cached = False
+    if MANIFEST.exists():
+        try:
+            old = json.loads(MANIFEST.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            old = None
+        cached = (
+            isinstance(old, dict)
+            and old.get("links") == pages
+            and old.get("fingerprint") == fingerprint
+        )
     paths = [CACHE_DIR / page_filename(i + 1, p) for i, p in enumerate(pages)]
     if cached and all(p.exists() for p in paths):
         print(f"== 复用打印缓存（{len(paths)} 页）==")
         return paths
     if skip_print:
-        raise SystemExit("--skip-print：打印缓存缺失或已过期，请先不带该参数运行一次")
+        raise SystemExit(
+            "--skip-print：打印缓存已过期（分页方案或站点内容有变更），"
+            "请去掉 --skip-print 重新完整导出"
+        )
 
     print(f"== 打印 {len(pages)} 页（预计 5–8 分钟）==")
     profile_root = Path(tempfile.mkdtemp(prefix="edge-profiles-"))
@@ -207,19 +312,18 @@ def ensure_pages(pages: list[str], edge: str, skip_print: bool) -> list[Path]:
     )
     try:
         wait_port(PORT)
+        check_preview(PREVIEW_URL)
         for i, (link, out) in enumerate(zip(pages, paths), 1):
             print(f"[{i:02d}/{len(pages):02d}] {link} ... ", end="", flush=True)
             print_to_pdf(edge, url_for(link), out, profile_root, f"{i:03d}")
             print("ok")
     finally:
-        preview.terminate()
-        try:
-            preview.wait(timeout=10)
-        except subprocess.TimeoutExpired:
-            preview.kill()
+        _kill_process_tree(preview)
         shutil.rmtree(profile_root, ignore_errors=True)
 
-    MANIFEST.write_text(want, encoding="utf-8")
+    MANIFEST.write_text(
+        json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
     return paths
 
 
@@ -252,36 +356,37 @@ def merge_book(body_pdf_paths: list[Path], groups: list[tuple[str, list[str]]],
     """合并正文 → 生成封面（带页数）→ 拼装最终 PDF（含书签）。"""
     from pypdf import PdfWriter
 
-    # 1) 正文合并（暂存，用于得知正文页数）
+    # 1) 正文合并，仅用于得知正文页数（不落盘，第 3 步重新逐个 append 原始分页）
     body = PdfWriter()
     for p in body_pdf_paths:
         body.append(str(p))
     body_pages = len(body.pages)
-    body_tmp = out_pdf.with_suffix(".body.tmp.pdf")
-    with body_tmp.open("wb") as f:
-        body.write(f)
+    del body
 
     # 2) 封面（本地 HTML，打印快且无壳页风险）
-    cover_html = Path(tempfile.mkdtemp(prefix="cover-")) / f"{tag}.html"
-    cover_html.write_text(make_cover_html(title, subtitle, body_pages), encoding="utf-8")
-    cover_pdf = cover_html.with_suffix(".pdf")
-    print_to_pdf(edge, cover_html.as_uri(), cover_pdf,
-                 cover_html.parent / "profiles", tag)
+    cover_dir = Path(tempfile.mkdtemp(prefix="cover-"))
+    try:
+        cover_html = cover_dir / f"{tag}.html"
+        cover_html.write_text(make_cover_html(title, subtitle, body_pages), encoding="utf-8")
+        cover_pdf = cover_html.with_suffix(".pdf")
+        print_to_pdf(edge, cover_html.as_uri(), cover_pdf,
+                     cover_dir / "profiles", tag)
 
-    # 3) 最终拼装 + 书签
-    writer = PdfWriter()
-    writer.append(str(cover_pdf))
-    writer.add_outline_item("封面", 0)
-    idx = 0
-    for (gtitle, links), count in zip(groups, group_counts):
-        start = len(writer.pages)
-        for _ in range(count):
-            writer.append(str(body_pdf_paths[idx]))
-            idx += 1
-        writer.add_outline_item(gtitle, start)
-    with out_pdf.open("wb") as f:
-        writer.write(f)
-    body_tmp.unlink(missing_ok=True)
+        # 3) 最终拼装 + 书签
+        writer = PdfWriter()
+        writer.append(str(cover_pdf))
+        writer.add_outline_item("封面", 0)
+        idx = 0
+        for (gtitle, links), count in zip(groups, group_counts):
+            start = len(writer.pages)
+            for _ in range(count):
+                writer.append(str(body_pdf_paths[idx]))
+                idx += 1
+            writer.add_outline_item(gtitle, start)
+        with out_pdf.open("wb") as f:
+            writer.write(f)
+    finally:
+        shutil.rmtree(cover_dir, ignore_errors=True)
 
 
 def main() -> int:
@@ -327,7 +432,8 @@ def main() -> int:
         out_pdf = OUT_DIR / f"{filename}.pdf"
         print(f"== 合并 {filename}（{sum(counts)} 页正文）== ", end="", flush=True)
         merge_book(slice_paths, sel_groups, counts, out_pdf, edge,
-                   re.sub(r"\W+", "", filename), title, subtitle)
+                   re.sub(r"\W+", "", filename), title,
+                   subtitle.replace("{n}", str(len(pages))))
         size_mb = out_pdf.stat().st_size / 1024 / 1024
         from pypdf import PdfReader
         n = len(PdfReader(str(out_pdf)).pages)

@@ -188,7 +188,9 @@ export default withMermaid({
     `,
   },
 
-  // 忽略死链接（README 中的相对链接在 VitePress 中不适用）
+  // 忽略死链接：试跑 ignoreDeadLinks: false 时共 5 处死链，均为误报——
+  // localhost 本地服务地址（starter README 中英文各 1 处）与
+  // 指向仓库根 LICENSE 的相对链接（3 个 playbook README，LICENSE 非站点页面）
   ignoreDeadLinks: true,
 
   themeConfig: {

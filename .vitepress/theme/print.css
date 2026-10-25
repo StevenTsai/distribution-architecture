@@ -1,9 +1,15 @@
 /* 打印与 PDF 导出：隐藏站点外壳，只留正文 */
 @media print {
+  @page {
+    size: A4;
+  }
+
   .VPSidebar,
   .VPNavbar,
   .VPDocAside,
   .VPDocFooter,
+  .VPFooter,
+  .VPPageFooter,
   .VPFeature,
   .VPHomePreview,
   .VPDocNotFound,
@@ -35,6 +41,16 @@
   pre, table, figure, blockquote {
     break-inside: avoid;
     page-break-inside: avoid;
+  }
+
+  /* 防止超宽内容横向溢出页面边界 */
+  pre {
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+  }
+
+  table {
+    word-break: break-all;
   }
 
   a {
