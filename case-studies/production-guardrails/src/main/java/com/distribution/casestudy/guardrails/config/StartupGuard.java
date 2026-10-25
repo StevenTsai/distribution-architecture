@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 /**
@@ -16,7 +17,9 @@ import java.util.Set;
  *
  * <p>设计要点：
  * <ul>
- *   <li>占位密钥在 dev/test 只警告——本地联调的便利优先；生产档一律拒绝；</li>
+ *   <li>占位密钥在 dev/test 只警告——本地联调的便利优先；生产档一律拒绝；
+ *       混合 profile（如 {@code prod,test}）按<b>严格</b>档处理——生产档在场时
+ *       dev/test 豁免不生效，防止把 prod 与 test 一起激活来绕过红线；</li>
  *   <li>每条拒绝信息都写明<b>后果</b>（"否则会发生什么"），让运维日志自解释；</li>
  *   <li>检查项全部集中在 @PostConstruct 一次执行——启动失败 = 上下文装配失败，
  *       这个语义是护栏能成立的全部理由（见 ADR: Spring Boot 单轨）。</li>
@@ -40,7 +43,10 @@ public class StartupGuard {
     @PostConstruct
     public void check() {
         List<String> profiles = Arrays.asList(env.getActiveProfiles());
-        boolean localProfile = profiles.contains("dev") || profiles.contains("test");
+        /* 生产档判定：含 prod/production 即严格——dev/test 豁免仅在完全不含生产档时生效。
+           混合 profile（prod,test）曾会被判为本地档、红线整体静默跳过，此处钉死 */
+        boolean strictProfile = profiles.contains("prod") || profiles.contains("production");
+        boolean localProfile = !strictProfile && (profiles.contains("dev") || profiles.contains("test"));
 
         /* 1. 档位枚举：拼写错误不会静默落到某个实现（条件注解无匹配 = 无 bean），
               启动期就把问题钉死，好过运行期在第一次读状态时 NPE */
@@ -50,9 +56,10 @@ public class StartupGuard {
                     + "\"（拼写错误不会装配任何 StateStore 实现）");
         }
 
-        /* 2. 占位密钥：dev/test 警告放行，其余环境拒绝 */
+        /* 2. 占位密钥：dev/test 警告放行，其余环境拒绝（前缀比较忽略大小写，
+              Change-Me 之类变体不得绕过） */
         String secret = props.getJwt().getSecret();
-        if (isBlank(secret) || secret.startsWith(PLACEHOLDER_SECRET_PREFIX)) {
+        if (isBlank(secret) || secret.toLowerCase(Locale.ROOT).startsWith(PLACEHOLDER_SECRET_PREFIX)) {
             if (!localProfile) {
                 throw new IllegalStateException("拒绝启动：app.jwt.secret 仍为占位值，非 dev/test 环境必须配置真实密钥"
                         + "（否则任何人可伪造令牌；当前 profiles=" + profiles + "）");
@@ -60,7 +67,7 @@ public class StartupGuard {
             log.warn("app.jwt.secret 为占位值：仅限本机联调，上线必须替换");
         }
 
-        /* 3. 以下检查仅生产档 */
+        /* 3. 以下检查仅生产档（dev/test 且不含 prod/production） */
         if (localProfile) {
             return;
         }

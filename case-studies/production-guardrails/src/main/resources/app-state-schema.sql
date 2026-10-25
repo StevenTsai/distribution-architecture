@@ -5,6 +5,7 @@
 -- 需要字符串类型承载；契约测试在 H2(MODE=MySQL) 与 MySQL 双方言下同一 DDL 可跑。
 -- 生产中若有更大 JSON 值，可换 TEXT 并把计数键收敛到独立表。
 -- 过期语义：读路径按「应用时钟参数」过滤（单一时钟域），
+--          expire_time/update_time 为毫秒时间戳（与 InMemory/Redis 的毫秒 TTL 对齐）；
 --          物理清理交给后台任务（本案例未包含，见 README「Not Included」）。
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS app_state (

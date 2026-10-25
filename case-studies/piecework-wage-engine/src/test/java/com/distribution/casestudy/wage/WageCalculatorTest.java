@@ -73,7 +73,8 @@ class WageCalculatorTest {
 
             assertEquals(new BigDecimal("500.00"), settlement.getBaseWage());        // 5 × 100
             assertEquals(new BigDecimal("1.2"), settlement.getDifficultyCoefficient());
-            assertEquals(new BigDecimal("600.00"), settlement.getAdjustedWage());    // 500 × 1.2
+            // 中途不舍入：500.00 × 1.2 = 600.000（全精度保留）
+            assertEquals(0, new BigDecimal("600.00").compareTo(settlement.getAdjustedWage()));
         }
 
         @Test
@@ -85,8 +86,10 @@ class WageCalculatorTest {
             WageSettlement settlement = calculator.calculate(record, stoneSettingConfig);
 
             assertEquals(0, new BigDecimal("0.8").compareTo(settlement.getQualityCoefficient()));
-            // baseWage=500, adjustedWage=500×1.2×0.8=480
-            assertEquals(new BigDecimal("480.00"), settlement.getAdjustedWage());
+            // baseWage=500, adjustedWage=500×1.2×0.8=480（中途不舍入，compareTo 断言）
+            assertEquals(0, new BigDecimal("480.00").compareTo(settlement.getAdjustedWage()));
+            // 统一在最终金额处舍入
+            assertEquals(new BigDecimal("480.00"), settlement.getFinalAmount());
         }
 
         @Test
@@ -167,6 +170,24 @@ class WageCalculatorTest {
 
             assertThrows(IllegalStateException.class,
                     () -> settlement.adjust(new BigDecimal("100"), "late"));
+        }
+
+        @Test
+        @DisplayName("多笔调整累加：AdjustStage 自动 +50 后人工 +30，合计 80 而非覆盖为 30")
+        void multipleAdjustmentsAccumulate() {
+            WageSettlement settlement = calculator.calculate(
+                    new PieceworkRecord(101L, "Alice", "Assembly", 50, 50), assemblyConfig);
+
+            // 场景还原：流水线 AdjustStage 先自动追加一笔 50 元奖励
+            new AdjustStage(s -> new AdjustStage.AdjustmentResult(
+                    new BigDecimal("50.00"), "Perfect quality bonus")).process(settlement);
+
+            // 事后人工再追加 30 元（若 adjust 是覆盖语义，这笔 50 会被静默吞掉）
+            settlement.adjust(new BigDecimal("30.00"), "Manual correction");
+
+            assertEquals(new BigDecimal("80.00"), settlement.getAdjustmentAmount());
+            assertEquals("Perfect quality bonus; Manual correction", settlement.getAdjustmentReason());
+            assertEquals(new BigDecimal("830.00"), settlement.getFinalAmount()); // 750 + 80
         }
     }
 
@@ -310,7 +331,7 @@ class WageCalculatorTest {
         }
 
         @Test
-        @DisplayName("Rounding with fractional result")
+        @DisplayName("中途不舍入，finalAmount 统一 HALF_UP 到 2 位")
         void fractionalRounding() {
             WageConfig config = new WageConfig(1L, "Test", new BigDecimal("3.33"));
             config.setDifficultyCoefficient(new BigDecimal("1.11"));
@@ -318,8 +339,149 @@ class WageCalculatorTest {
 
             WageSettlement settlement = calculator.calculate(record, config);
 
-            // 3.33 × 7 = 23.31, × 1.11 = 25.8741 → 25.87
-            assertEquals(new BigDecimal("25.87"), settlement.getAdjustedWage());
+            // 3.33 × 7 = 23.31, × 1.11 = 25.8741 —— 中间不舍入，保留全精度
+            assertEquals(0, new BigDecimal("25.8741").compareTo(settlement.getAdjustedWage()));
+            // 统一在最终金额处 HALF_UP 舍入 → 25.87
+            assertEquals(new BigDecimal("25.87"), settlement.getFinalAmount());
+        }
+    }
+
+    // ========== Settlement Period ==========
+
+    @Nested
+    @DisplayName("结算期归属")
+    class SettlementPeriodTests {
+
+        @Test
+        @DisplayName("6 月报工、7 月（任意时间）计算 → 归属 2026-06 期")
+        void juneReportBelongsToJune() {
+            PieceworkRecord record = new PieceworkRecord(101L, "Alice", "Assembly", 10, 10);
+            record.setReportedAt(java.time.LocalDateTime.of(2026, 6, 30, 23, 50));
+
+            WageSettlement settlement = calculator.calculate(record, assemblyConfig);
+
+            assertEquals("2026-06", settlement.getSettlementPeriod());
+        }
+
+        @Test
+        @DisplayName("reportedAt 缺失时退化为按当天归属")
+        void fallbackToToday() {
+            PieceworkRecord record = new PieceworkRecord(101L, "Alice", "Assembly", 10, 10);
+
+            WageSettlement settlement = calculator.calculate(record, assemblyConfig);
+
+            assertEquals(
+                    java.time.LocalDate.now().format(
+                            java.time.format.DateTimeFormatter.ofPattern("yyyy-MM")),
+                    settlement.getSettlementPeriod());
+        }
+    }
+
+    // ========== Input Validation ==========
+
+    @Nested
+    @DisplayName("输入校验")
+    class ValidationTests {
+
+        @Test
+        @DisplayName("完工数为负 → IllegalArgumentException")
+        void negativeCompletedRejected() {
+            assertThrows(IllegalArgumentException.class,
+                    () -> new PieceworkRecord(1L, "Alice", "Assembly", -1, 0));
+        }
+
+        @Test
+        @DisplayName("合格数为负 → IllegalArgumentException")
+        void negativeQualifiedRejected() {
+            assertThrows(IllegalArgumentException.class,
+                    () -> new PieceworkRecord(1L, "Alice", "Assembly", 10, -1));
+        }
+
+        @Test
+        @DisplayName("合格数大于完工数 → IllegalArgumentException")
+        void qualifiedExceedingCompletedRejected() {
+            assertThrows(IllegalArgumentException.class,
+                    () -> new PieceworkRecord(1L, "Alice", "Assembly", 10, 11));
+        }
+
+        @Test
+        @DisplayName("边界值 0/0 与 10/10 合法")
+        void boundaryValuesAccepted() {
+            assertDoesNotThrow(() -> new PieceworkRecord(1L, "Alice", "Assembly", 0, 0));
+            assertDoesNotThrow(() -> new PieceworkRecord(1L, "Alice", "Assembly", 10, 10));
+        }
+
+        @Test
+        @DisplayName("结算单经 setter 注入负完工数 → calculateBaseWage 拒绝")
+        void settlementRejectsNegativeCompleted() {
+            WageSettlement settlement = calculator.calculate(
+                    new PieceworkRecord(1L, "Alice", "Assembly", 10, 10), assemblyConfig);
+            settlement.setCompletedQuantity(-5);
+
+            IllegalArgumentException e = assertThrows(
+                    IllegalArgumentException.class, settlement::calculateBaseWage);
+            assertTrue(e.getMessage().contains("completedQuantity"));
+        }
+
+        @Test
+        @DisplayName("结算单合格数大于完工数 → calculateBaseWage 拒绝")
+        void settlementRejectsQualifiedExceedingCompleted() {
+            WageSettlement settlement = calculator.calculate(
+                    new PieceworkRecord(1L, "Alice", "Assembly", 10, 10), assemblyConfig);
+            settlement.setQualifiedQuantity(11);
+
+            assertThrows(IllegalArgumentException.class, settlement::calculateBaseWage);
+        }
+    }
+
+    // ========== Pipeline Failure Visibility ==========
+
+    @Nested
+    @DisplayName("流水线失败可见性")
+    class PipelineFailureTests {
+
+        @Test
+        @DisplayName("一条坏记录不阻断其他记录，且失败清单可见")
+        void badRecordVisibleAndNotBlocking() {
+            WageSettlementPipeline pipeline = new WageSettlementPipeline()
+                    .addStage(new CalculateStage());
+
+            WageSettlement good = calculator.calculate(
+                    new PieceworkRecord(101L, "Alice", "Assembly", 10, 10), assemblyConfig);
+            WageSettlement bad = calculator.calculate(
+                    new PieceworkRecord(102L, "Bob", "Assembly", 10, 10), assemblyConfig);
+            bad.setCompletedQuantity(-1); // 绕过构造校验注入坏数据
+
+            List<WageSettlement> results = pipeline.processAll(List.of(good, bad));
+
+            // 好记录照常处理
+            assertEquals(1, results.size());
+            assertEquals(new BigDecimal("150.00"), results.get(0).getFinalAmount());
+
+            // 失败记录可见，而不是被静默吞掉
+            assertEquals(1, pipeline.getFailures().size());
+            WageSettlementPipeline.SettlementFailure failure = pipeline.getFailures().get(0);
+            assertSame(bad, failure.settlement());
+            assertTrue(failure.message().contains("completedQuantity must not be negative"));
+        }
+
+        @Test
+        @DisplayName("getFailures 只反映最近一次 processAll")
+        void failuresResetPerRun() {
+            WageSettlementPipeline pipeline = new WageSettlementPipeline()
+                    .addStage(new CalculateStage());
+
+            WageSettlement bad = calculator.calculate(
+                    new PieceworkRecord(102L, "Bob", "Assembly", 10, 10), assemblyConfig);
+            bad.setCompletedQuantity(-1);
+            pipeline.processAll(List.of(bad));
+            assertEquals(1, pipeline.getFailures().size());
+
+            List<WageSettlement> results = pipeline.processAll(List.of(calculator.calculate(
+                    new PieceworkRecord(101L, "Alice", "Assembly", 10, 10), assemblyConfig)));
+
+            assertEquals(1, results.size());
+            assertTrue(pipeline.getFailures().isEmpty());
         }
     }
 }

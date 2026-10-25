@@ -3,6 +3,8 @@ package com.distribution.casestudy.events.event;
 import org.springframework.context.ApplicationEvent;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.Objects;
 
 /**
  * Delivery completion event — triggers downstream financial processing.
@@ -28,15 +30,19 @@ public class DeliveryCompleteEvent extends ApplicationEvent {
     private final String orderNo;
     private final Long customerId;
     private final BigDecimal orderAmount;
+    private final LocalDate deliveryDate;
 
     public DeliveryCompleteEvent(Object source, Long deliveryId, Long orderId,
-                                 String orderNo, Long customerId, BigDecimal orderAmount) {
+                                 String orderNo, Long customerId, BigDecimal orderAmount,
+                                 LocalDate deliveryDate) {
         super(source);
         this.deliveryId = deliveryId;
         this.orderId = orderId;
         this.orderNo = orderNo;
         this.customerId = customerId;
         this.orderAmount = orderAmount;
+        /* 发布时刻定格业务日期：监听器异步执行时不得再取 now()，否则账期随处理延迟漂移 */
+        this.deliveryDate = Objects.requireNonNull(deliveryDate, "deliveryDate 必须非空（应收账期由它推算）");
     }
 
     public Long getDeliveryId() { return deliveryId; }
@@ -44,4 +50,5 @@ public class DeliveryCompleteEvent extends ApplicationEvent {
     public String getOrderNo() { return orderNo; }
     public Long getCustomerId() { return customerId; }
     public BigDecimal getOrderAmount() { return orderAmount; }
+    public LocalDate getDeliveryDate() { return deliveryDate; }
 }

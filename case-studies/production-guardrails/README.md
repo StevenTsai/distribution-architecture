@@ -31,6 +31,8 @@
 1. **每条拒绝消息都点名后果**（"否则会发生……"），因此凌晨三点看启动日志就能自解释——无需翻 wiki。
 2. **护栏之所以有效，是因为框架保证了语义**：`@PostConstruct` 失败 = bean 创建失败 = 应用永远不会启动。这正是做出 Spring Boot 单轨决策的机制层原因（见 ADR）。
 
+**生产档判定：含 `prod`/`production` 即严格模式**——dev/test 豁免仅在完全不含生产档时生效。混合 profile（如 `prod,test`）按严格档处理，防止「把 prod 和 test 一起激活」整体旁路红线；占位密钥的 `change-me` 前缀比较忽略大小写（`Change-Me` 变体同样拒绝）。两条规则均由 `StartupGuardTest` 的混合 profile 用例锁定。
+
 ## 护栏 2：StateStore —— 中间件从 2 到 1，附带零代码回滚
 
 ```mermaid
@@ -63,13 +65,20 @@ MySQL 实现让原子性**在 SQL 中可见**——没有需要审计的 ORM flu
 -- setIfAbsent：主键冲突 = key 仍然存活，天然原子
 INSERT IGNORE INTO app_state (state_key, state_value, expire_time, update_time) VALUES (?, ?, ?, ?);
 
--- increment：单语句行锁自增，与 Redis INCR 语义对齐
+-- increment：单语句行锁自增，并用 LAST_INSERT_ID(expr) 把新值登记到会话——
+-- 随后同连接 SELECT LAST_INSERT_ID() 读回的必然是本次自增值，
+-- 即使并发事务在两条语句之间继续自增，读回值也不重不漏（与 Redis INCR 语义对齐）
 INSERT INTO app_state (state_key, state_value, expire_time, update_time)
-VALUES (?, '1', ?, ?)
+VALUES (?, LAST_INSERT_ID('1'), ?, ?)
 ON DUPLICATE KEY UPDATE
-  state_value = CASE WHEN expire_time <= ? THEN '1' ELSE CAST(state_value AS BIGINT) + 1 END,
+  state_value = CASE WHEN expire_time <= ? THEN LAST_INSERT_ID('1')
+                     ELSE LAST_INSERT_ID(CAST(state_value AS BIGINT) + 1) END,
   expire_time = CASE WHEN expire_time <= ? THEN ? ELSE expire_time END;
 ```
+
+Redis 回切档的 `increment` 同样是一段 Lua 脚本原子完成「INCR + 首建时写 TTL + 整数校验」——两步分开时并发下存在「自增成功但键永不过期」的泄漏窗口。
+
+三实现对齐的两条契约细节：**TTL 一律毫秒语义**（亚秒 TTL 有效，MySQL 档 expire_time 存毫秒时间戳）；**计数键当前值非整数时拒绝**（抛 `IllegalStateException`，而非静默归零）。
 
 **时钟归属**（相对生产原版的一次演进）：每次读/写路径的过期判断都使用**应用传入的 `now` 参数**——单一时钟域，不在 SQL 中混用 `UNIX_TIMESTAMP()`，并且可以针对 H2 做契约测试。生产变体及其推理差异记录在 [docs/from-production-to-generic.md](docs/from-production-to-generic.md)。
 
@@ -79,13 +88,13 @@ ON DUPLICATE KEY UPDATE
 
 | 套件 | 锁定什么 | 数量 |
 |---|---|---|
-| `StateStoreContractTest`（抽象） | 六原语语义：JSON 往返、宽容读取、过期、setIfAbsent、并发原子自增（最终值精确） | 13 个断言用例 × 2 个实现 |
-| `InMemoryStateStoreContractTest` | 参考实现——语义争议的第一裁判 | 13 |
-| `MysqlStateStoreContractTest` | 针对 H2 `MODE=MySQL` 的真实 SQL（`INSERT IGNORE`、`ON DUPLICATE KEY UPDATE`） | 13 |
+| `StateStoreContractTest`（抽象） | 六原语语义：JSON 往返、宽容读取、过期（含亚秒 TTL）、setIfAbsent、并发原子自增（各调用方所得值互不重复、最终值精确）、非整数计数键拒绝 | 15 个断言用例 × 2 个实现 |
+| `InMemoryStateStoreContractTest` | 参考实现——语义争议的第一裁判 | 15 |
+| `MysqlStateStoreContractTest` | 针对 H2 `MODE=MySQL` 的真实 SQL（`INSERT IGNORE`、`ON DUPLICATE KEY UPDATE`、`LAST_INSERT_ID`）；多连接池（HikariCP）承载，并发用例每线程独立连接——跨连接行锁/会话语义才真正被测到 | 15 |
 | `StateStoreWiringTest` | 条件 → 实现的映射；非法值**什么都不装配**（无静默回退） | 5 |
-| `StartupGuardTest` | 完整的拒绝矩阵，每条生产红线对应一个可执行断言 | 9 |
+| `StartupGuardTest` | 完整的拒绝矩阵，每条生产红线对应一个可执行断言；含混合 profile（`prod,test` 不旁路红线）与占位密钥大小写变体 | 16 |
 
-**40 个测试，零外部服务。** Redis 语义由接口契约和一致的 JSON 处理固定；针对真实 Redis 的契约测试列在"未包含内容"下。
+**51 个测试，零外部服务。** Redis 语义由接口契约、Lua 脚本和一致的 JSON 处理固定；针对真实 Redis 的契约测试列在"未包含内容"下。
 
 ## 项目结构
 

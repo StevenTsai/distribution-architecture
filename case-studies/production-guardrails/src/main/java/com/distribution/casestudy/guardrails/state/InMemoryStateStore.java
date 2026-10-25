@@ -75,8 +75,9 @@ public class InMemoryStateStore implements StateStore {
             try {
                 next = Long.parseLong(cur.json()) + 1;
             } catch (NumberFormatException e) {
-                /* 契约：计数键不得被 set 写入非整数；此处宽容重置 */
-                next = 1L;
+                /* 契约：计数键不得被 set 写入非整数——非法即拒绝（而非静默重置），
+                   抛出后 compute 不应用新值，原值保持不变 */
+                throw new IllegalStateException("拒绝自增：计数键当前值不是整数，key=" + k, e);
             }
             result[0] = next;
             return new Entry(String.valueOf(next), cur.expireAt());

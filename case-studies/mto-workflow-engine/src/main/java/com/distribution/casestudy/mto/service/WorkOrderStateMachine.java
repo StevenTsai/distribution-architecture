@@ -6,7 +6,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -27,13 +26,16 @@ import java.util.List;
  *
  * <p>State transitions:</p>
  * <pre>
- * create()         → PENDING
- * schedule()       → SCHEDULED  (from PENDING or MATERIAL_READY)
- * startWork()      → PRODUCING  (from SCHEDULED)
- * finishProcess()  → PARTIAL_FINISHED or ALL_FINISHED (from PRODUCING or PARTIAL_FINISHED)
- * finishWork()     → ALL_FINISHED (from PRODUCING or PARTIAL_FINISHED)
- * closeWork()      → CLOSED (from ALL_FINISHED or WAREHOUSED)
- * voidWork()       → VOID (from any except CLOSED or VOID)
+ * create()          → PENDING
+ * schedule()        → SCHEDULED  (from PENDING or MATERIAL_READY)
+ * startWork()       → PRODUCING  (from SCHEDULED)
+ * finishProcess()   → PARTIAL_FINISHED or ALL_FINISHED (from PRODUCING or PARTIAL_FINISHED)
+ * reworkProcess()   → PARTIAL_FINISHED (from PRODUCING, PARTIAL_FINISHED or ALL_FINISHED)
+ * resumeFromRework()→ (工序 REWORK → IN_PROGRESS，工单状态不变)
+ * finishWork()      → ALL_FINISHED (from PRODUCING or PARTIAL_FINISHED)
+ * markWarehoused()  → WAREHOUSED (from ALL_FINISHED)
+ * closeWork()       → CLOSED (from ALL_FINISHED or WAREHOUSED)
+ * voidWork()        → VOID (from any except CLOSED or VOID)
  * </pre>
  */
 public class WorkOrderStateMachine {
@@ -141,8 +143,7 @@ public class WorkOrderStateMachine {
             throw new IllegalArgumentException("Process not found: " + processId);
         }
 
-        process.complete();
-        process.setFinishedAt(LocalDateTime.now());
+        process.complete(); // complete() 内部已设置 finishedAt
 
         // Auto-detect: check if ALL processes are now completed
         long incompleteCount = workOrder.countIncompleteProcesses();
@@ -160,6 +161,60 @@ public class WorkOrderStateMachine {
     }
 
     /**
+     * 将一道已完成的工序打回返工：工序 COMPLETED → REWORK。
+     *
+     * <p>工单若已处于 ALL_FINISHED（所有工序曾一度全部完成），需要回退到
+     * PARTIAL_FINISHED，否则返工工序恢复后无法再走 finishProcess/finishWork，
+     * 工单会卡死在终态前的死胡同里。</p>
+     *
+     * @param workOrder the work order
+     * @param processId the process ID to send back for rework
+     * @throws IllegalStateException   if work order is not PRODUCING / PARTIAL_FINISHED / ALL_FINISHED
+     * @throws IllegalArgumentException if process not found
+     */
+    public void reworkProcess(WorkOrder workOrder, Long processId) {
+        assertStatus(workOrder, WorkOrderStatus.PRODUCING,
+                WorkOrderStatus.PARTIAL_FINISHED, WorkOrderStatus.ALL_FINISHED);
+
+        WorkOrderProcess process = findProcess(workOrder, processId);
+        if (process == null) {
+            throw new IllegalArgumentException("Process not found: " + processId);
+        }
+
+        process.rework(); // 内部守卫：仅 COMPLETED 可打回
+
+        if (workOrder.getStatus() == WorkOrderStatus.ALL_FINISHED) {
+            workOrder.setStatus(WorkOrderStatus.PARTIAL_FINISHED);
+            workOrder.setActualEndDate(null);
+            log.info("Work order {} regressed to PARTIAL_FINISHED: process {} sent to rework",
+                    workOrder.getWorkOrderNo(), processId);
+        } else {
+            log.info("Process {} sent to rework for work order {}", processId, workOrder.getWorkOrderNo());
+        }
+    }
+
+    /**
+     * 返工完成后恢复工序：工序 REWORK → IN_PROGRESS，使该工序可以再次 complete()。
+     *
+     * @param workOrder the work order
+     * @param processId the process ID to resume
+     * @throws IllegalStateException   if work order is not PRODUCING / PARTIAL_FINISHED
+     * @throws IllegalArgumentException if process not found
+     */
+    public void resumeFromRework(WorkOrder workOrder, Long processId) {
+        assertStatus(workOrder, WorkOrderStatus.PRODUCING, WorkOrderStatus.PARTIAL_FINISHED);
+
+        WorkOrderProcess process = findProcess(workOrder, processId);
+        if (process == null) {
+            throw new IllegalArgumentException("Process not found: " + processId);
+        }
+
+        process.resume(); // 内部守卫：仅 REWORK 可恢复
+
+        log.info("Process {} resumed from rework for work order {}", processId, workOrder.getWorkOrderNo());
+    }
+
+    /**
      * Manually finish all remaining work — transition to ALL_FINISHED.
      *
      * <p>In the original, this also triggers finished goods inventory creation
@@ -174,8 +229,7 @@ public class WorkOrderStateMachine {
         // Mark all incomplete processes as completed
         for (WorkOrderProcess p : workOrder.getProcesses()) {
             if (!p.isCompleted()) {
-                p.complete();
-                p.setFinishedAt(LocalDateTime.now());
+                p.complete(); // complete() 内部已设置 finishedAt
             }
         }
 
@@ -183,6 +237,22 @@ public class WorkOrderStateMachine {
         workOrder.setActualEndDate(LocalDate.now());
 
         log.info("Work order {} manually finished", workOrder.getWorkOrderNo());
+    }
+
+    /**
+     * 成品入库：ALL_FINISHED → WAREHOUSED。
+     *
+     * <p>WAREHOUSED 表示完工成品已办理入库，是 closeWork 之前的可选归档节点。
+     * 没有这个方法，WAREHOUSED 状态在状态图中可达、代码中却永远进不去。</p>
+     *
+     * @param workOrder the work order
+     * @throws IllegalStateException if work order is not ALL_FINISHED
+     */
+    public void markWarehoused(WorkOrder workOrder) {
+        assertStatus(workOrder, WorkOrderStatus.ALL_FINISHED);
+
+        workOrder.setStatus(WorkOrderStatus.WAREHOUSED);
+        log.info("Work order {} warehoused", workOrder.getWorkOrderNo());
     }
 
     /**
@@ -221,15 +291,26 @@ public class WorkOrderStateMachine {
     /**
      * Reorder processes within a work order.
      *
+     * <p>守卫：终态（CLOSED / VOID）工单拒绝重排序；列表中出现不属于该工单的
+     * processId 时抛 {@link IllegalStateException}（而不是静默忽略，否则调用方
+     * 会以为排序已生效）。</p>
+     *
      * @param workOrder      the work order
      * @param sortedProcessIds process IDs in desired order
+     * @throws IllegalStateException if work order is CLOSED / VOID, or a process ID is unknown
      */
     public void reorderProcesses(WorkOrder workOrder, List<Long> sortedProcessIds) {
+        if (workOrder.getStatus() == WorkOrderStatus.CLOSED || workOrder.getStatus() == WorkOrderStatus.VOID) {
+            throw new IllegalStateException(
+                    "Cannot reorder processes: work order is in terminal status " + workOrder.getStatus());
+        }
         for (int i = 0; i < sortedProcessIds.size(); i++) {
             WorkOrderProcess process = findProcess(workOrder, sortedProcessIds.get(i));
-            if (process != null) {
-                process.setSortOrder(i + 1);
+            if (process == null) {
+                throw new IllegalStateException(
+                        "Cannot reorder processes: unknown process ID " + sortedProcessIds.get(i));
             }
+            process.setSortOrder(i + 1);
         }
         // Sort the in-memory list
         workOrder.getProcesses().sort((a, b) -> Integer.compare(a.getSortOrder(), b.getSortOrder()));

@@ -99,6 +99,16 @@ class StartupGuardTest {
             props.getJwt().setSecret("");
             assertThrows(IllegalStateException.class, StartupGuardTest.this::runCheck);
         }
+
+        @Test
+        @DisplayName("prod + 大小写变体占位密钥（Change-Me）：同样拒绝")
+        void prodMixedCasePlaceholderRejected() {
+            asProd();
+            props.getJwt().setSecret("Change-Me-Development-Only");
+            IllegalStateException e = assertThrows(IllegalStateException.class,
+                    StartupGuardTest.this::runCheck);
+            assertTrue(e.getMessage().contains("app.jwt.secret"), "大小写变体不得绕过占位密钥红线");
+        }
     }
 
     @Nested
@@ -146,6 +156,66 @@ class StartupGuardTest {
         void prodAllConfiguredAllowed() {
             asProd();
             props.getJwt().setSecret("a-real-production-secret-value");
+            assertDoesNotThrow(StartupGuardTest.this::runCheck);
+        }
+    }
+
+    @Nested
+    @DisplayName("混合 profile（生产档不可被 dev/test 旁路）")
+    class MixedProfiles {
+
+        @Test
+        @DisplayName("prod,test + 占位密钥：仍拒绝（严格模式，不豁免）")
+        void prodTestWithPlaceholderRejected() {
+            env.setActiveProfiles("prod", "test");
+            IllegalStateException e = assertThrows(IllegalStateException.class,
+                    StartupGuardTest.this::runCheck);
+            assertTrue(e.getMessage().contains("app.jwt.secret"));
+        }
+
+        @Test
+        @DisplayName("prod,test + debug=true：仍拒绝")
+        void prodTestWithSmsDebugRejected() {
+            env.setActiveProfiles("prod", "test");
+            props.getJwt().setSecret("a-real-production-secret-value");
+            props.getSms().setDebug(true);
+            IllegalStateException e = assertThrows(IllegalStateException.class,
+                    StartupGuardTest.this::runCheck);
+            assertTrue(e.getMessage().contains("app.sms.debug"));
+        }
+
+        @Test
+        @DisplayName("prod,test + 存储基址缺失：仍拒绝")
+        void prodTestWithMissingBaseUrlRejected() {
+            env.setActiveProfiles("prod", "test");
+            props.getJwt().setSecret("a-real-production-secret-value");
+            props.getStorage().setBaseUrl("");
+            IllegalStateException e = assertThrows(IllegalStateException.class,
+                    StartupGuardTest.this::runCheck);
+            assertTrue(e.getMessage().contains("app.storage.base-url"));
+        }
+
+        @Test
+        @DisplayName("prod,test + 全部就绪：放行（严格模式检查通过，而非跳过）")
+        void prodTestAllConfiguredAllowed() {
+            env.setActiveProfiles("prod", "test");
+            props.getJwt().setSecret("a-real-production-secret-value");
+            assertDoesNotThrow(StartupGuardTest.this::runCheck);
+        }
+
+        @Test
+        @DisplayName("production 别名：同样触发严格模式")
+        void productionAliasEnforced() {
+            env.setActiveProfiles("production");
+            IllegalStateException e = assertThrows(IllegalStateException.class,
+                    StartupGuardTest.this::runCheck);
+            assertTrue(e.getMessage().contains("app.jwt.secret"));
+        }
+
+        @Test
+        @DisplayName("dev,test（无生产档）：维持豁免")
+        void devTestExempted() {
+            env.setActiveProfiles("dev", "test");
             assertDoesNotThrow(StartupGuardTest.this::runCheck);
         }
     }

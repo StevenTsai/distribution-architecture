@@ -35,9 +35,8 @@ public class AdjustStage implements SettlementStage {
         if (adjustmentProvider != null) {
             AdjustmentResult result = adjustmentProvider.getAdjustment(settlement);
             if (result != null && result.amount() != null) {
-                settlement.setAdjustmentAmount(result.amount());
-                settlement.setAdjustmentReason(result.reason());
-                settlement.calculateFinalAmount();
+                // 复用 adjust() 的累加语义：本阶段的自动奖励不会覆盖人工已追加的调整
+                settlement.adjust(result.amount(), result.reason());
             }
         }
         return settlement;

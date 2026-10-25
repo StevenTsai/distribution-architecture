@@ -67,15 +67,15 @@ BigDecimal wageAmount = process.getPiecePrice().multiply(BigDecimal.valueOf(tota
 
 **原始：** 未指定精度（scale）或舍入模式的 `BigDecimal` 运算
 
-**通用：** 对所有金额值使用 `setScale(2, RoundingMode.HALF_UP)`
+**通用：** 仅在最终金额 `finalAmount` 处统一 `setScale(2, RoundingMode.HALF_UP)`；中间金额（baseWage、adjustedWage）保留全精度
 
-**原因：** 原始实现依赖数据库列精度（`DECIMAL(10,2)`）来处理舍入。在代码中显式舍入更可预测、更易测试。
+**原因：** 原始实现依赖数据库列精度（`DECIMAL(10,2)`）来处理舍入。在代码中显式舍入更可预测、更易测试；而只在最后舍入一次，避免了「先截断再乘系数」的双重舍入误差。
 
 ## 保留内容
 
 1. **WageStatus 生命周期** —— PENDING → CONFIRMED → PAID（与原始实现相同）
-2. **调整项机制** —— `finalAmount = wageAmount + adjustmentAmount`
-3. **按月结算周期** —— `yyyy-MM` 格式
+2. **调整项机制** —— `finalAmount = wageAmount + Σ adjustmentAmount`（`adjust()` 为累加语义，每次追加一笔）
+3. **按月结算周期** —— `yyyy-MM` 格式，按报工日期 `reportedAt` 归属（跨月补录不错记到计算当月）
 4. **工人汇总聚合** —— 按工人分组，对最终金额求和
 5. **所有金额值均使用 BigDecimal** —— 不使用浮点数
 
