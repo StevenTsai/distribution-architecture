@@ -1,0 +1,45 @@
+/* 打印与 PDF 导出：隐藏站点外壳，只留正文 */
+@media print {
+  .VPSidebar,
+  .VPNavbar,
+  .VPDocAside,
+  .VPDocFooter,
+  .VPFeature,
+  .VPHomePreview,
+  .VPDocNotFound,
+  .local-nav,
+  .VPDocPrevNext,
+  .outline {
+    display: none !important;
+  }
+
+  .VPDoc {
+    padding: 0 !important;
+    max-width: none !important;
+  }
+
+  .VPDoc .container,
+  .VPDoc .content-container,
+  .VPDoc .content {
+    max-width: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* 正文分页控制：标题不断页、代码块/表格尽量不断页 */
+  h1, h2, h3 {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  pre, table, figure, blockquote {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  a {
+    text-decoration: none;
+    color: inherit;
+    /* PDF 中不追加 URL 后缀：长链接会把孤立的 "(" 挤成单独一页 */
+  }
+}

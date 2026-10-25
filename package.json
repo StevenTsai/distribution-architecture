@@ -6,7 +6,9 @@
   "scripts": {
     "docs:dev": "vitepress dev",
     "docs:build": "vitepress build",
-    "docs:preview": "vitepress preview"
+    "docs:preview": "vitepress preview",
+    "docs:pdf": "python scripts/export-pdf.py --build",
+    "docs:pdf:merge": "python scripts/export-pdf.py --skip-print"
   },
   "keywords": [
     "java",
