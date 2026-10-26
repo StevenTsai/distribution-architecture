@@ -4,16 +4,22 @@
     size: A4;
   }
 
+  /* VitePress 类名区分大小写：顶栏是 .VPNavBar（大写 B），
+     本地导航条是 .VPLocalNav —— 写错大小写选择器不生效，
+     曾导致 PDF 每篇首页残留搜索/汉堡菜单/Menu 条。 */
   .VPSidebar,
-  .VPNavbar,
+  .VPNavBar,
+  .VPNavScreen,
+  .VPLocalNav,
+  .local-nav,
   .VPDocAside,
+  .VPDocAsideOutline,
   .VPDocFooter,
   .VPFooter,
   .VPPageFooter,
   .VPFeature,
   .VPHomePreview,
   .VPDocNotFound,
-  .local-nav,
   .VPDocPrevNext,
   .outline {
     display: none !important;
@@ -38,7 +44,9 @@
     page-break-after: avoid;
   }
 
-  pre, table, figure, blockquote {
+  /* 表格/引用尽量不断页；代码块与图表（Mermaid 常超过一页高）
+     允许跨页 —— avoid 会把整块推到下一页，留下大片空白页 */
+  table, blockquote {
     break-inside: avoid;
     page-break-inside: avoid;
   }

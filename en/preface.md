@@ -12,7 +12,7 @@ Unlike architecture books on the market, this book has the following characteris
 |----------------|-------------|
 | **Production-validated** | Every pattern comes from a real project (jewelry ERP + IoT backend), not from a textbook example |
 | **Honest record** | Technical decisions discuss not only benefits but also honestly record the costs that materialized |
-| **Runnable code** | 4 case studies include complete tests (all 82 tests pass) |
+| **Runnable code** | 4 case studies include complete tests (all 124 tests pass) |
 | **Evolution perspective** | Shows the abstraction process from industry-specific to general-purpose patterns |
 
 ## Who This Is For

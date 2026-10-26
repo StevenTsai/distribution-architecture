@@ -18,8 +18,8 @@
 ## Step 1: Clone the Project
 
 ```bash
-git clone <repo-url>
-cd distribution-starter
+git clone https://github.com/StevenTsai/distribution-architecture.git
+cd distribution-architecture/distribution-starter
 ```
 
 ## Step 2: Create the Database
