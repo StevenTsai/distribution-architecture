@@ -16,7 +16,11 @@
 打印结果缓存于 dist-pdf/.pages/：分册方案与站点内容均未变时无需重新打印；
 --skip-print 强制使用缓存（缓存缺失或已过期会报错）。
 
+每册含：封面（作者/版本/日期）→ 目录（带页码）→ 正文；
+逐页底部盖页码（除封面），书签两级（分组 → 逐篇），并写入 PDF 元数据。
+
 依赖 pypdf：pip install -r scripts/requirements.txt
+页码盖章另需 pymupdf（缺失时跳过页码，其余功能不受影响）。
 """
 from __future__ import annotations
 
@@ -346,47 +350,198 @@ def make_cover_html(title: str, subtitle: str, body_pages: int) -> str:
 <h3>{subtitle}</h3>
 <p>正文 {body_pages} 页</p>
 <div class="rule"></div>
-<p>开源仓库 github.com/StevenTsai/distribution-architecture<br>Apache License 2.0</p>
+<p>作者：Steven Tsai · v1.0 · {time.strftime("%Y-%m-%d")}<br>
+开源仓库 github.com/StevenTsai/distribution-architecture<br>
+Apache License 2.0</p>
 </body></html>"""
+
+
+def doc_title(link: str) -> str:
+    """书签/目录标题：取 dist HTML 的第一个 h1 纯文本，失败退回链接末段。"""
+    from html import unescape
+
+    rel = link.strip("/")
+    html_path = (DIST / rel / "index.html") if link.endswith("/") else DIST / f"{rel}.html"
+    if html_path.exists():
+        src = html_path.read_text(encoding="utf-8", errors="replace")
+        m = re.search(r"<h1[^>]*>(.*?)</h1>", src, re.S)
+        if m:
+            inner = re.sub(r"<a[^>]*header-anchor[^>]*>.*?</a>", "", m.group(1), flags=re.S)
+            text = unescape(re.sub(r"<[^>]+>", "", inner))
+            text = re.sub(r"\s+", " ", text).strip().rstrip("#").strip()
+            if text:
+                return text
+    return rel.split("/")[-1] or "首页"
+
+
+def make_toc_html(offsets: list[tuple[str, int, list[tuple[str, int]]]],
+                  toc_pages: int) -> str:
+    """目录页 HTML。offsets 为 (组题, 组正文偏移, [(篇题, 篇正文偏移)])。
+
+    页码为最终文档的 1 起绝对页码：封面 1 页 + 目录 toc_pages 页 + 正文偏移。
+    行高固定，把预估 toc_pages 代入生成后打印实测页数，迭代到收敛。
+    """
+    from html import escape
+
+    def disp(off: int) -> int:
+        return toc_pages + off + 2
+
+    rows: list[str] = []
+    for gtitle, goff, docs in offsets:
+        rows.append(
+            f'<div class="grp"><span class="t">{escape(gtitle)}</span>'
+            f'<span class="d"></span><span class="n">{disp(goff)}</span></div>'
+        )
+        for dtitle, doff in docs:
+            rows.append(
+                f'<div class="doc"><span class="t">{escape(dtitle)}</span>'
+                f'<span class="d"></span><span class="n">{disp(doff)}</span></div>'
+            )
+    return f"""<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
+<style>
+  @page {{ size: A4; margin: 16mm 18mm; }}
+  body {{ font-family: "Source Han Serif SC","Noto Serif CJK SC",serif;
+         margin: 0; color: #1a1a1a; font-size: 10.5pt; }}
+  h1 {{ font-size: 19pt; letter-spacing: 8pt; text-align: center; font-weight: 700;
+       margin: 0 0 7mm; padding-bottom: 4mm; border-bottom: 2px solid #b8860b; }}
+  .grp, .doc {{ display: flex; align-items: baseline; }}
+  .grp {{ font-weight: 700; font-size: 11.5pt; margin-top: 5mm; }}
+  .doc {{ font-weight: 400; font-size: 10pt; margin-top: 2mm; padding-left: 6mm; }}
+  .grp .t, .doc .t {{ flex: 0 1 auto; white-space: nowrap; overflow: hidden;
+                     text-overflow: ellipsis; max-width: 80%; }}
+  .d {{ flex: 1 1 auto; min-width: 8mm; margin: 0 2mm;
+       border-bottom: 1.5px dotted #999; transform: translateY(-3px); }}
+  .n {{ flex: 0 0 auto; font-variant-numeric: tabular-nums; color: #333; }}
+</style></head><body>
+<h1>目 录</h1>
+{''.join(rows)}
+</body></html>"""
+
+
+def stamp_page_numbers(src: Path, dst: Path) -> bool:
+    """除封面外每页底部居中盖页码（Helvetica，base-14 无需嵌入字体）。
+
+    用 pymupdf 就地插入文本；库缺失或盖章失败返回 False，调用方原样透传。
+    """
+    try:
+        import fitz  # pymupdf 的兼容入口
+    except ImportError:
+        try:
+            import pymupdf as fitz  # 新版包直导名
+        except ImportError:
+            return False
+    try:
+        doc = fitz.open(src.as_posix())
+        for i in range(1, doc.page_count):
+            page = doc[i]
+            label = str(i + 1)
+            tw = fitz.get_text_length(label, fontsize=9)
+            page.insert_text(
+                ((page.rect.width - tw) / 2, page.rect.height - 18),
+                label, fontsize=9, color=(0.45, 0.45, 0.45),
+            )
+        doc.save(dst.as_posix())  # 不用 garbage/deflate，避免动原有内容流
+        doc.close()
+        return True
+    except Exception as e:  # noqa: BLE001
+        print(f"\n!! 页码盖章失败（{e}），本次输出无页码", file=sys.stderr)
+        return False
 
 
 def merge_book(body_pdf_paths: list[Path], groups: list[tuple[str, list[str]]],
                group_counts: list[int], out_pdf: Path, edge: str, tag: str,
-               title: str, subtitle: str) -> None:
-    """合并正文 → 生成封面（带页数）→ 拼装最终 PDF（含书签）。"""
-    from pypdf import PdfWriter
+               title: str, subtitle: str, doc_titles: dict[str, str]) -> None:
+    """合并正文 → 封面 + 目录（迭代页码收敛）→ 盖页码 → 书签/元数据。
 
-    # 1) 正文合并，仅用于得知正文页数（不落盘，第 3 步重新逐个 append 原始分页）
+    书签与元数据放在最后一步由 pypdf 写入：页码盖章要经 pymupdf 重存，
+    关键信息最后写可保证不被中间环节丢失。
+    """
+    from pypdf import PdfReader, PdfWriter
+
+    # 1) 正文合并，得知正文页数与 组/篇 的正文内偏移
     body = PdfWriter()
     for p in body_pdf_paths:
         body.append(str(p))
     body_pages = len(body.pages)
     del body
 
-    # 2) 封面（本地 HTML，打印快且无壳页风险）
-    cover_dir = Path(tempfile.mkdtemp(prefix="cover-"))
+    offsets: list[tuple[str, int, list[tuple[str, int]]]] = []
+    cur = 0
+    for gtitle, links in groups:
+        goff = cur
+        docs = [(doc_titles[l], cur + i) for i, l in enumerate(links)]
+        cur += len(links)
+        offsets.append((gtitle, goff, docs))
+
+    front_dir = Path(tempfile.mkdtemp(prefix="front-"))
     try:
-        cover_html = cover_dir / f"{tag}.html"
+        profiles = front_dir / "profiles"
+
+        # 2) 封面（本地 HTML，打印快且无壳页风险）
+        cover_html = front_dir / f"{tag}.html"
         cover_html.write_text(make_cover_html(title, subtitle, body_pages), encoding="utf-8")
         cover_pdf = cover_html.with_suffix(".pdf")
-        print_to_pdf(edge, cover_html.as_uri(), cover_pdf,
-                     cover_dir / "profiles", tag)
+        print_to_pdf(edge, cover_html.as_uri(), cover_pdf, profiles, tag)
 
-        # 3) 最终拼装 + 书签
+        # 3) 目录：预估页数生成 → 打印实测 → 不符则按实测重生成，直到收敛
+        toc_pdf = front_dir / f"{tag}-toc.pdf"
+        toc_html = front_dir / f"{tag}-toc.html"
+        guess, actual = 1, 1
+        for _ in range(3):
+            toc_html.write_text(make_toc_html(offsets, guess), encoding="utf-8")
+            toc_pdf.unlink(missing_ok=True)
+            print_to_pdf(edge, toc_html.as_uri(), toc_pdf, profiles, f"{tag}-toc")
+            actual = len(PdfReader(str(toc_pdf)).pages)
+            if actual == guess:
+                break
+            guess = actual
+        else:
+            print(f"\n!! {tag}: 目录页数未收敛（实测 {actual} vs 预估 {guess}），"
+                  f"目录页码可能整体偏移", file=sys.stderr)
+        toc_pages = actual
+        if toc_pages > 1:
+            print(f"[目录 {toc_pages} 页] ", end="", flush=True)
+
+        # 4) 拼装 封面+目录+正文（暂不加书签/元数据）
+        basic = PdfWriter()
+        basic.append(str(cover_pdf))
+        basic.append(str(toc_pdf))
+        for p in body_pdf_paths:
+            basic.append(str(p))
+        basic_pdf = front_dir / "basic.pdf"
+        with basic_pdf.open("wb") as f:
+            basic.write(f)
+        del basic
+
+        # 5) 逐页盖页码（跳过封面）
+        stamped_pdf = front_dir / "stamped.pdf"
+        if not stamp_page_numbers(basic_pdf, stamped_pdf):
+            shutil.copy(basic_pdf, stamped_pdf)
+
+        # 6) 最终输出：两级书签（分组 → 逐篇）+ PDF 元数据
         writer = PdfWriter()
-        writer.append(str(cover_pdf))
+        writer.append(str(stamped_pdf))
+        book_title = ("架构炼金术" if title == "架构炼金术"
+                      else f"架构炼金术 · {title}")
+        writer.add_metadata({
+            "/Title": book_title,
+            "/Author": "Steven Tsai",
+            "/Subject": subtitle,
+            "/Keywords": "架构炼金术, 分布式架构, Spring Boot, 数据权限, "
+                         "事件驱动, ADR, 架构治理",
+            "/Creator": "scripts/export-pdf.py",
+        })
         writer.add_outline_item("封面", 0)
-        idx = 0
-        for (gtitle, links), count in zip(groups, group_counts):
-            start = len(writer.pages)
-            for _ in range(count):
-                writer.append(str(body_pdf_paths[idx]))
-                idx += 1
-            writer.add_outline_item(gtitle, start)
+        writer.add_outline_item("目录", 1)
+        for (gtitle, goff, docs), count in zip(offsets, group_counts):
+            assert len(docs) == count, "分组偏移与分组页数不一致"
+            gitem = writer.add_outline_item(gtitle, 1 + toc_pages + goff)
+            for dtitle, doff in docs:
+                writer.add_outline_item(dtitle, 1 + toc_pages + doff, parent=gitem)
         with out_pdf.open("wb") as f:
             writer.write(f)
     finally:
-        shutil.rmtree(cover_dir, ignore_errors=True)
+        shutil.rmtree(front_dir, ignore_errors=True)
 
 
 def main() -> int:
@@ -404,6 +559,7 @@ def main() -> int:
 
     groups = book_groups()
     pages = [link for _, links in groups for link in links]
+    doc_titles = {l: doc_title(l) for l in pages}
     print(f"== 全书 {len(groups)} 组 / {len(pages)} 页 ==")
 
     edge = find_edge()
@@ -433,7 +589,7 @@ def main() -> int:
         print(f"== 合并 {filename}（{sum(counts)} 页正文）== ", end="", flush=True)
         merge_book(slice_paths, sel_groups, counts, out_pdf, edge,
                    re.sub(r"\W+", "", filename), title,
-                   subtitle.replace("{n}", str(len(pages))))
+                   subtitle.replace("{n}", str(len(pages))), doc_titles)
         size_mb = out_pdf.stat().st_size / 1024 / 1024
         from pypdf import PdfReader
         n = len(PdfReader(str(out_pdf)).pages)

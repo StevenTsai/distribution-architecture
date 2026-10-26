@@ -1,1 +1,2 @@
 pypdf>=4
+pymupdf>=1.24
