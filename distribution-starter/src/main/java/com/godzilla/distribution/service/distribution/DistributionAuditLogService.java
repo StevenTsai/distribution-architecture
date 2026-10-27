@@ -13,5 +13,10 @@ public interface DistributionAuditLogService {
 
     DistributionAuditLogDetailDTO getLog(Long id);
 
-    void record(String bizType, Long bizId, String action, Object beforeSnapshot, Object afterSnapshot, String remark);
+    /**
+     * 记录审计日志。
+     *
+     * @param distributorId 归属渠道ID（冗余列，用于数据权限行过滤；biz_id 与渠道ID独立自增，不可互相替代）
+     */
+    void record(String bizType, Long bizId, Long distributorId, String action, Object beforeSnapshot, Object afterSnapshot, String remark);
 }

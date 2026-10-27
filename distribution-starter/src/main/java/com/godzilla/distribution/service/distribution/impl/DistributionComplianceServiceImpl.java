@@ -11,6 +11,7 @@ import com.godzilla.distribution.entity.distribution.DistributionComplianceRecor
 import com.godzilla.distribution.entity.distribution.DistributionDistributorMemberEntity;
 import com.godzilla.distribution.entity.distribution.DistributionLeadEntity;
 import com.godzilla.distribution.enums.distribution.DistributionAuditBizType;
+import com.godzilla.distribution.enums.distribution.DistributionComplianceBizType;
 import com.godzilla.distribution.enums.distribution.DistributionComplianceRecordType;
 import com.godzilla.distribution.enums.distribution.DistributionComplianceStatus;
 import com.godzilla.distribution.enums.distribution.DistributionDataScope;
@@ -71,12 +72,16 @@ public class DistributionComplianceServiceImpl implements DistributionCompliance
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long createRecord(CreateDistributionComplianceRecordRequestDTO request) {
+        validateBizType(request.getBizType());
         validateRecordType(request.getRecordType());
-        validateCreateScope(request.getBizId());
+        // biz_id 是业务对象ID，必须先解析出归属渠道再做数据权限校验与冗余落库
+        Long distributorId = resolveDistributorId(trim(request.getBizType()), request.getBizId());
+        validateCreateScope(distributorId);
         Long operatorUserId = distributionOperatorService.getCurrentOperatorUserId();
         DistributionComplianceRecordEntity entity = new DistributionComplianceRecordEntity();
         entity.setBizType(trim(request.getBizType()));
         entity.setBizId(request.getBizId());
+        entity.setDistributorId(distributorId);
         entity.setProductLineCode(trim(request.getProductLineCode()));
         entity.setRecordType(trim(request.getRecordType()));
         entity.setStatus(DistributionComplianceStatus.PENDING.getCode());
@@ -87,7 +92,7 @@ public class DistributionComplianceServiceImpl implements DistributionCompliance
         entity.setUpdatedBy(operatorUserId);
         entity.setDeleted(0);
         distributionComplianceRecordMapper.insertSelective(entity);
-        distributionAuditLogService.record(DistributionAuditBizType.COMPLIANCE.getCode(), entity.getId(), "create", null, entity, "创建合规记录");
+        distributionAuditLogService.record(DistributionAuditBizType.COMPLIANCE.getCode(), entity.getId(), entity.getDistributorId(), "create", null, entity, "创建合规记录");
         return entity.getId();
     }
 
@@ -95,6 +100,7 @@ public class DistributionComplianceServiceImpl implements DistributionCompliance
     @Transactional(rollbackFor = Exception.class)
     public void approveRecord(Long id, ApproveDistributionComplianceRecordRequestDTO request) {
         DistributionComplianceRecordEntity existing = getRecordEntity(id);
+        validateReviewPermission();
         validateComplianceAccess(existing);
         validateStatusTransition(existing.getStatus());
         Long operatorUserId = distributionOperatorService.getCurrentOperatorUserId();
@@ -105,13 +111,14 @@ public class DistributionComplianceServiceImpl implements DistributionCompliance
         update.setReviewedAt(new Date());
         update.setUpdatedBy(operatorUserId);
         distributionComplianceRecordMapper.updateByPrimaryKeySelective(update);
-        distributionAuditLogService.record(DistributionAuditBizType.COMPLIANCE.getCode(), id, "approve", existing, getRecordEntity(id), "审核通过合规记录");
+        distributionAuditLogService.record(DistributionAuditBizType.COMPLIANCE.getCode(), id, existing.getDistributorId(), "approve", existing, getRecordEntity(id), "审核通过合规记录");
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void rejectRecord(Long id, RejectDistributionComplianceRecordRequestDTO request) {
         DistributionComplianceRecordEntity existing = getRecordEntity(id);
+        validateReviewPermission();
         validateComplianceAccess(existing);
         validateStatusTransition(existing.getStatus());
         Long operatorUserId = distributionOperatorService.getCurrentOperatorUserId();
@@ -123,7 +130,7 @@ public class DistributionComplianceServiceImpl implements DistributionCompliance
         update.setRemark(trim(request.getRemark()));
         update.setUpdatedBy(operatorUserId);
         distributionComplianceRecordMapper.updateByPrimaryKeySelective(update);
-        distributionAuditLogService.record(DistributionAuditBizType.COMPLIANCE.getCode(), id, "reject", existing, getRecordEntity(id), "审核拒绝合规记录");
+        distributionAuditLogService.record(DistributionAuditBizType.COMPLIANCE.getCode(), id, existing.getDistributorId(), "reject", existing, getRecordEntity(id), "审核拒绝合规记录");
     }
 
     private DistributionComplianceRecordEntity getRecordEntity(Long id) {
@@ -173,13 +180,21 @@ public class DistributionComplianceServiceImpl implements DistributionCompliance
         return dto;
     }
 
-    private void validateCreateScope(Long bizId) {
-        if (bizId == null) return;
+    private void validateCreateScope(Long distributorId) {
         DistributionDataPermissionService.DistributionDataAccessScope accessScope = distributionDataPermissionService.resolveCurrentAccessScope();
         if (accessScope.isAllScope()) return;
+        // 解析不出归属渠道（如 policy 类型或业务对象不存在）时对非全局操作者一律拒绝，保证 fail-closed
         List<Long> authorizedDistributorIds = accessScope.getAuthorizedDistributorIds();
-        if (authorizedDistributorIds == null || !authorizedDistributorIds.contains(bizId)) {
+        if (distributorId == null || authorizedDistributorIds == null || !authorizedDistributorIds.contains(distributorId)) {
             throw new BizException("无权在该渠道下创建数据", ResultCode.DISTRIBUTION_DATA_ACCESS_DENIED.getCode());
+        }
+    }
+
+    /** 审核（通过/驳回）为平台级操作，仅允许 ALL 数据范围的操作者执行。 */
+    private void validateReviewPermission() {
+        DistributionDataPermissionService.DistributionDataAccessScope accessScope = distributionDataPermissionService.resolveCurrentAccessScope();
+        if (!accessScope.isAllScope()) {
+            throw new BizException("仅全局管理员可审核合规记录", ResultCode.DISTRIBUTION_COMPLIANCE_REVIEW_DENIED.getCode());
         }
     }
 
@@ -188,7 +203,10 @@ public class DistributionComplianceServiceImpl implements DistributionCompliance
         DistributionDataPermissionService.DistributionDataAccessScope accessScope = distributionDataPermissionService.resolveCurrentAccessScope();
         if (accessScope.isAllScope()) return;
         List<Long> authorizedDistributorIds = accessScope.getAuthorizedDistributorIds();
-        Long resolvedDistributorId = resolveDistributorId(entity.getBizType(), entity.getBizId());
+        // 优先用冗余的 distributor_id 判断归属；存量行（distributor_id 为空）回退到业务表解析
+        Long resolvedDistributorId = entity.getDistributorId() != null
+                ? entity.getDistributorId()
+                : resolveDistributorId(entity.getBizType(), entity.getBizId());
         if (resolvedDistributorId != null && authorizedDistributorIds != null
                 && authorizedDistributorIds.contains(resolvedDistributorId)) {
             return; // authorized
@@ -209,6 +227,12 @@ public class DistributionComplianceServiceImpl implements DistributionCompliance
                 return lead != null ? lead.getSourceDistributorId() : null;
             default:
                 return null;
+        }
+    }
+
+    private void validateBizType(String bizType) {
+        if (!DistributionComplianceBizType.isValid(trim(bizType))) {
+            throw new BizException("合规业务类型不合法", ResultCode.DISTRIBUTION_COMPLIANCE_BIZ_TYPE_INVALID.getCode());
         }
     }
 

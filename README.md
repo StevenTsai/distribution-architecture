@@ -123,7 +123,7 @@ Case Study 的代码从一个**真实生产系统**（珠宝加工 ERP）中提�
 │   └── production-guardrails/       生产护栏（fail-fast 启动守卫 + 可插拔状态存储）
 │       ├── StartupGuard             配置红线拒绝启动矩阵
 │       ├── StateStore               六原语契约 + 三实现（mysql/redis/memory）
-│       └── 契约测试套件              40 用例零外部服务（H2 MODE=MySQL）
+│       └── 契约测试套件              51 用例零外部服务（H2 MODE=MySQL）
 │
 ├── playbooks/                       方法论 playbook（架构师全周期实践）
 │   └── takeover-engineering/        接手工程工具箱

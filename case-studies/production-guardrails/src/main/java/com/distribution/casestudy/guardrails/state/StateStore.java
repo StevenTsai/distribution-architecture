@@ -15,11 +15,14 @@ import java.time.Duration;
  * <p>语义契约（三种实现必须一致，由 {@code StateStoreContractTest} 锁定）：
  * <ul>
  *   <li>值按 JSON 序列化存储；get 反序列化失败按「不存在」处理并删除该键（宽容读）；</li>
+ *   <li>TTL 一律<b>毫秒语义</b>（{@code Duration.toMillis()} 下推存储层）——亚秒 TTL 有效；</li>
  *   <li>过期键视同不存在（读不到、setIfAbsent 可覆盖、increment 重置为 1）；</li>
  *   <li>setIfAbsent：仅当键不存在（或已过期）时写入成功，返回 true；</li>
- *   <li>increment：原子自增并返回自增后的值；键首次创建时按传入 TTL 设置过期；值为整数语义。</li>
+ *   <li>increment：原子自增并返回自增后的值（并发下各调用方所得值互不重复）；
+ *       键首次创建时按传入 TTL 设置过期；值为整数语义——键内当前值非整数时
+ *       抛 {@link IllegalStateException} 拒绝（而非静默归零）。</li>
  *   <li>时钟归属：过期判定一律使用<b>应用时钟</b>（各实现自行取 now 并下推到存储层参数），
- *       不存在「写用应用钟、判过期用数据库钟」的混用。</li>
+ *       不存在「写用应用钟、判过期用数据库钟」的混用（Redis 例外：TTL 为原生能力，用 Redis 自身时钟）。</li>
  * </ul>
  */
 public interface StateStore {
@@ -39,6 +42,9 @@ public interface StateStore {
     /** 键是否存在且未过期 */
     boolean exists(String key);
 
-    /** 原子自增（值为整数语义），返回自增后的值；键首次创建时按 ttlOnCreate 设置过期 */
+    /**
+     * 原子自增（值为整数语义），返回自增后的值；键首次创建时按 ttlOnCreate 设置过期。
+     * 并发调用返回值互不重复；键内当前值非整数时抛 IllegalStateException 拒绝
+     */
     long increment(String key, Duration ttlOnCreate);
 }

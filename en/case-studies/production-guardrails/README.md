@@ -81,13 +81,13 @@ The production system shipped the abstraction **without contract tests** (its ja
 
 | Suite | What it locks | Count |
 |---|---|---|
-| `StateStoreContractTest` (abstract) | Six-primitive semantics: JSON round-trip, tolerant read, expiry, setIfAbsent, atomic concurrent increment (final value exact) | 13 assertions-cases × 2 impls |
-| `InMemoryStateStoreContractTest` | Reference implementation—the first arbiter of semantic disputes | 13 |
-| `MysqlStateStoreContractTest` | Real SQL against H2 `MODE=MySQL` (`INSERT IGNORE`, `ON DUPLICATE KEY UPDATE`) | 13 |
+| `StateStoreContractTest` (abstract) | Six-primitive semantics: JSON round-trip, tolerant read, expiry (including sub-second TTL), setIfAbsent, atomic concurrent increment (values from each caller are unique, final value exact), non-integer counter key rejection | 15 assertion-cases × 2 impls |
+| `InMemoryStateStoreContractTest` | Reference implementation—the first arbiter of semantic disputes | 15 |
+| `MysqlStateStoreContractTest` | Real SQL against H2 `MODE=MySQL` (`INSERT IGNORE`, `ON DUPLICATE KEY UPDATE`, `LAST_INSERT_ID`); a multi-connection HikariCP pool gives concurrent cases their own connections, so cross-connection row-lock and session semantics are actually exercised | 15 |
 | `StateStoreWiringTest` | Condition → implementation mapping; illegal value wires **nothing** (no silent fallback) | 5 |
-| `StartupGuardTest` | The full rejection matrix, one executable assertion per production red line | 9 |
+| `StartupGuardTest` | The full rejection matrix, one executable assertion per production red line; includes mixed profiles (`prod,test` does not bypass red lines) and placeholder-key case variants | 16 |
 
-**40 tests, zero external services.** Redis semantics are pinned by the interface contract and identical JSON handling; live-Redis contract tests are listed under Not Included.
+**51 tests, zero external services.** Redis semantics are pinned by the interface contract and identical JSON handling; live-Redis contract tests are listed under Not Included.
 
 ## Project Structure
 

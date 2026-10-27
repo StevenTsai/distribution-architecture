@@ -2,8 +2,10 @@ package com.distribution.casestudy.guardrails.state;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 
 import java.time.Duration;
+import java.util.List;
 
 /**
  * 状态存储 Redis 实现（预留回切档）：{@code app.state.store=redis} 时启用。
@@ -12,6 +14,23 @@ import java.time.Duration;
  * 这正是「回切零代码」在代码侧的形态。时钟归属：Redis 自身时钟（TTL 原生）。</p>
  */
 public class RedisStateStore implements StateStore {
+
+    /**
+     * INCR 与「首建时写入 TTL」必须是一段原子脚本：两步分开时，
+     * 并发下存在「自增成功但键永不过期」的泄漏窗口。脚本内同时做整数校验，
+     * 非整数计数键返回 null，由 Java 侧转为契约规定的 IllegalStateException。
+     */
+    private static final DefaultRedisScript<Long> INCREMENT_SCRIPT = new DefaultRedisScript<>("""
+            local raw = redis.call('GET', KEYS[1])
+            if raw and not string.match(raw, '^-?%d+$') then
+                return nil
+            end
+            local v = redis.call('INCR', KEYS[1])
+            if v == 1 then
+                redis.call('PEXPIRE', KEYS[1], ARGV[1])
+            end
+            return v
+            """, Long.class);
 
     private final StringRedisTemplate redis;
     private final ObjectMapper json;
@@ -66,10 +85,11 @@ public class RedisStateStore implements StateStore {
 
     @Override
     public long increment(String key, Duration ttlOnCreate) {
-        Long v = redis.opsForValue().increment(key);
-        if (v != null && v == 1L) {
-            redis.expire(key, ttlOnCreate);
+        Long v = redis.execute(INCREMENT_SCRIPT, List.of(key), String.valueOf(ttlOnCreate.toMillis()));
+        if (v == null) {
+            /* Lua 返回 null = 计数键当前值非整数（契约：拒绝而非静默归零） */
+            throw new IllegalStateException("拒绝自增：计数键当前值不是整数，key=" + key);
         }
-        return v == null ? 0 : v;
+        return v;
     }
 }

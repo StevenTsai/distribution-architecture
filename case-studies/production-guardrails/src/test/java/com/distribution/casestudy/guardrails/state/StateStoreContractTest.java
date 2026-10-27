@@ -134,6 +134,14 @@ abstract class StateStoreContractTest {
             awaitExpired("e3");
             assertEquals(1L, store.increment("e3", TTL));
         }
+
+        @Test
+        @DisplayName("亚秒 TTL（毫秒语义）同样生效")
+        void subSecondTtlHonored() {
+            store.set("sub", new SessionInfo("x", 1), Duration.ofMillis(300));
+            assertNotNull(store.get("sub", SessionInfo.class), "TTL 未到期前应可读（毫秒精度）");
+            awaitExpired("sub");
+        }
     }
 
     // ========== setIfAbsent ==========
@@ -199,38 +207,50 @@ abstract class StateStoreContractTest {
         }
 
         @Test
-        @DisplayName("并发自增：最终值精确，不丢不重")
+        @DisplayName("并发自增：各调用方所得值互不重复，最终值精确等于总次数")
         void concurrentIncrementIsAtomic() throws Exception {
             int threads = 4;
             int perThread = 25;
+            long total = (long) threads * perThread;
             ExecutorService pool = Executors.newFixedThreadPool(threads);
             CountDownLatch start = new CountDownLatch(1);
-            List<Future<Long>> futures = new ArrayList<>();
+            List<Future<List<Long>>> futures = new ArrayList<>();
             try {
                 for (int t = 0; t < threads; t++) {
                     futures.add(pool.submit(() -> {
                         start.await();
-                        long last = 0;
+                        List<Long> mine = new ArrayList<>(perThread);
                         for (int i = 0; i < perThread; i++) {
-                            last = store.increment("n2", Duration.ofMinutes(1));
+                            mine.add(store.increment("n2", Duration.ofMinutes(1)));
                         }
-                        return last;
+                        return mine;
                     }));
                 }
                 start.countDown();
-                for (Future<Long> f : futures) {
-                    long reported = f.get(10, TimeUnit.SECONDS);
-                    assertTrue(reported >= 1 && reported <= threads * perThread,
-                            "回读值应在 [1, " + threads * perThread + "]，实际 " + reported);
+                List<Long> all = new ArrayList<>();
+                for (Future<List<Long>> f : futures) {
+                    all.addAll(f.get(10, TimeUnit.SECONDS));
                 }
-                /* 原子性的硬断言：最终存储值精确等于总次数 */
-                Long fin = store.get("n2", Long.class);
-                assertNotNull(fin);
-                assertEquals((long) threads * perThread, fin,
-                        "并发 increment 最终值必须精确（回读可偏大，最终值不可）");
+                /* 原子性的硬断言：返回值不重不漏（恰好覆盖 1..N），最终值精确 */
+                assertEquals(total, all.size());
+                assertEquals(total, all.stream().distinct().count(),
+                        "并发 increment 的返回值必须互不重复（重复=读回了别人的值）");
+                assertEquals(total, store.get("n2", Long.class),
+                        "并发 increment 最终值必须精确等于总次数");
             } finally {
                 pool.shutdownNow();
             }
+        }
+
+        @Test
+        @DisplayName("计数键被 set 写入非整数 → 拒绝（IllegalStateException），原值不变")
+        void incrementRejectsNonIntegerValue() {
+            store.set("bad", "not-a-number", TTL);
+            IllegalStateException e = assertThrows(IllegalStateException.class,
+                    () -> store.increment("bad", TTL));
+            assertTrue(e.getMessage().contains("bad"), "拒绝信息须点名业务键");
+            assertEquals("not-a-number", store.get("bad", String.class),
+                    "拒绝后原值应保持不变（不得静默归零/重置）");
         }
     }
 }

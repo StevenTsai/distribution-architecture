@@ -62,17 +62,17 @@ public class DistributorServiceImpl implements DistributionDistributorService {
             authorizedDistributorIds = Collections.singletonList(accessScope.getDistributorId());
         }
         long total = distributionDistributorMapper.countByConditionWithScope(
-                trim(name),
+                escapeLike(trim(name)),
                 trim(status),
                 trim(levelCode),
-                trim(productLine),
+                escapeLike(trim(productLine)),
                 authorizedDistributorIds
         );
         List<DistributionDistributorEntity> entities = distributionDistributorMapper.selectByConditionWithScope(
-                trim(name),
+                escapeLike(trim(name)),
                 trim(status),
                 trim(levelCode),
-                trim(productLine),
+                escapeLike(trim(productLine)),
                 authorizedDistributorIds,
                 (safePage - 1) * safePageSize,
                 safePageSize
@@ -128,6 +128,7 @@ public class DistributorServiceImpl implements DistributionDistributorService {
         distributionAuditLogService.record(
                 DistributionAuditBizType.DISTRIBUTOR.getCode(),
                 entity.getId(),
+                entity.getId(), // 渠道自身的ID即归属渠道ID
                 "create",
                 null,
                 entity,
@@ -142,6 +143,7 @@ public class DistributorServiceImpl implements DistributionDistributorService {
         DistributionDistributorEntity existing = getDistributorEntity(id);
         validateDistributorAccess(id);
         validateParent(request.getParentId(), id);
+        validateParentScope(existing.getParentId(), request.getParentId());
         validateOwnerUser(request.getOwnerUserId());
 
         DistributionDistributorEntity update = new DistributionDistributorEntity();
@@ -163,6 +165,7 @@ public class DistributorServiceImpl implements DistributionDistributorService {
         distributionDistributorMapper.updateByPrimaryKeySelective(update);
         distributionAuditLogService.record(
                 DistributionAuditBizType.DISTRIBUTOR.getCode(),
+                id,
                 id,
                 "update",
                 existing,
@@ -186,6 +189,7 @@ public class DistributorServiceImpl implements DistributionDistributorService {
         distributionAuditLogService.record(
                 DistributionAuditBizType.DISTRIBUTOR.getCode(),
                 id,
+                id,
                 "update_status",
                 existing,
                 getDistributorEntity(id),
@@ -198,6 +202,7 @@ public class DistributorServiceImpl implements DistributionDistributorService {
     public void deleteDistributor(Long id) {
         DistributionDistributorEntity existing = getDistributorEntity(id);
         validateDistributorAccess(id);
+        validateDeletePermission();
 
         DistributionDistributorEntity update = new DistributionDistributorEntity();
         update.setId(id);
@@ -206,6 +211,7 @@ public class DistributorServiceImpl implements DistributionDistributorService {
         distributionDistributorMapper.updateByPrimaryKeySelective(update);
         distributionAuditLogService.record(
                 DistributionAuditBizType.DISTRIBUTOR.getCode(),
+                id,
                 id,
                 "delete",
                 existing,
@@ -267,11 +273,36 @@ public class DistributorServiceImpl implements DistributionDistributorService {
         if (accessScope.isAllScope()) {
             return;
         }
-        if (parentId != null) {
-            List<Long> authorizedDistributorIds = accessScope.getAuthorizedDistributorIds();
-            if (authorizedDistributorIds == null || !authorizedDistributorIds.contains(parentId)) {
-                throw new BizException("无权在该渠道下创建数据", ResultCode.DISTRIBUTION_DATA_ACCESS_DENIED.getCode());
-            }
+        // 非全局操作者必须挂在自己的授权渠道下；parentId 为空（创建根渠道）同样拒绝，保证 fail-closed
+        List<Long> authorizedDistributorIds = accessScope.getAuthorizedDistributorIds();
+        if (parentId == null || authorizedDistributorIds == null || !authorizedDistributorIds.contains(parentId)) {
+            throw new BizException("无权在该渠道下创建数据", ResultCode.DISTRIBUTION_DATA_ACCESS_DENIED.getCode());
+        }
+    }
+
+    /**
+     * 变更上级渠道的 scope 校验：全量 PUT 语义下，parentId 发生变化时
+     * 新的上级必须落在操作者授权范围内（值不变的重放直接放行）。
+     */
+    private void validateParentScope(Long existingParentId, Long newParentId) {
+        if (java.util.Objects.equals(existingParentId, newParentId)) {
+            return; // 未变更，按原值放行
+        }
+        DistributionDataPermissionService.DistributionDataAccessScope accessScope = distributionDataPermissionService.resolveCurrentAccessScope();
+        if (accessScope.isAllScope()) {
+            return;
+        }
+        List<Long> authorizedDistributorIds = accessScope.getAuthorizedDistributorIds();
+        if (newParentId == null || authorizedDistributorIds == null || !authorizedDistributorIds.contains(newParentId)) {
+            throw new BizException("无权将渠道挂到该上级渠道", ResultCode.DISTRIBUTION_DATA_ACCESS_DENIED.getCode());
+        }
+    }
+
+    /** 渠道删除为不可逆的平台级操作，仅允许 ALL 数据范围的操作者执行。 */
+    private void validateDeletePermission() {
+        DistributionDataPermissionService.DistributionDataAccessScope accessScope = distributionDataPermissionService.resolveCurrentAccessScope();
+        if (!accessScope.isAllScope()) {
+            throw new BizException("仅全局管理员可删除渠道", ResultCode.DISTRIBUTOR_DELETE_DENIED.getCode());
         }
     }
 
@@ -340,6 +371,14 @@ public class DistributorServiceImpl implements DistributionDistributorService {
 
     private String trim(String value) {
         return StringUtils.trimToNull(value);
+    }
+
+    /** 转义 LIKE 通配符（%、_、\），防止关键字注入改变匹配语义。 */
+    private String escapeLike(String keyword) {
+        if (keyword == null) {
+            return null;
+        }
+        return keyword.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
     }
 
     private String defaultValue(String value, String defaultValue) {

@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" fill="none" role="img" aria-labelledby="logoTitle logoDesc">
+  <title id="logoTitle">架构炼金术</title>
+  <desc id="logoDesc">An isometric architecture cube crowned by an alchemical gem.</desc>
+
+  <defs>
+    <linearGradient id="tile" x1="84" y1="48" x2="428" y2="464" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FCFDFF"/>
+      <stop offset="1" stop-color="#E8EEFB"/>
+    </linearGradient>
+    <linearGradient id="faceTop" x1="168" y1="86" x2="344" y2="268" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#E7EDFF"/>
+      <stop offset="1" stop-color="#B9C8FA"/>
+    </linearGradient>
+    <linearGradient id="faceLeft" x1="84" y1="190" x2="270" y2="430" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#5B73E8"/>
+      <stop offset="1" stop-color="#3346B3"/>
+    </linearGradient>
+    <linearGradient id="faceRight" x1="428" y1="190" x2="242" y2="430" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#4055C7"/>
+      <stop offset="1" stop-color="#1B256B"/>
+    </linearGradient>
+    <linearGradient id="goldLight" x1="182" y1="120" x2="330" y2="248" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFE9A3"/>
+      <stop offset="1" stop-color="#F2C14E"/>
+    </linearGradient>
+    <linearGradient id="goldMid" x1="256" y1="112" x2="330" y2="248" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F7D470"/>
+      <stop offset="1" stop-color="#D99A24"/>
+    </linearGradient>
+    <linearGradient id="goldDeep" x1="182" y1="180" x2="330" y2="248" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#E0A82E"/>
+      <stop offset="1" stop-color="#A96816"/>
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-20%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#1B256B" flood-opacity="0.18"/>
+    </filter>
+    <filter id="gemGlow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="18"/>
+    </filter>
+  </defs>
+
+  <rect x="28" y="28" width="456" height="456" rx="112" fill="url(#tile)"/>
+  <rect x="28.5" y="28.5" width="455" height="455" rx="111.5" stroke="#D6DFF4"/>
+  <rect x="52" y="52" width="408" height="408" rx="92" stroke="#E6EBF8"/>
+
+  <ellipse cx="256" cy="446" rx="146" ry="20" fill="#1B256B" opacity="0.12" filter="url(#gemGlow)"/>
+
+  <g filter="url(#shadow)" stroke-linejoin="round">
+    <path d="M256 78 428 176 256 276 84 176Z" fill="url(#faceTop)" stroke="#F8FAFF" stroke-width="6"/>
+    <path d="M84 176 256 276V434L84 336Z" fill="url(#faceLeft)" stroke="#F8FAFF" stroke-width="6"/>
+    <path d="M428 176 256 276V434L428 336Z" fill="url(#faceRight)" stroke="#F8FAFF" stroke-width="6"/>
+  </g>
+
+  <g stroke="#C9D4FF" stroke-width="2" opacity="0.34" stroke-linecap="round">
+    <path d="M84 229 256 329"/>
+    <path d="M84 282 256 382"/>
+    <path d="M428 229 256 329"/>
+    <path d="M428 282 256 382"/>
+  </g>
+
+  <circle cx="256" cy="180" r="82" fill="#F2C14E" opacity="0.18" filter="url(#gemGlow)"/>
+
+  <g stroke="#FFF8DF" stroke-width="2.5" stroke-linejoin="round">
+    <path d="M256 112 182 180 256 180Z" fill="url(#goldLight)"/>
+    <path d="M256 112 330 180 256 180Z" fill="url(#goldMid)"/>
+    <path d="M182 180 256 248 256 180Z" fill="url(#goldDeep)"/>
+    <path d="M330 180 256 248 256 180Z" fill="url(#goldMid)"/>
+  </g>
+  <path d="M256 112 182 180 256 180Z" stroke="#FFFDF3" stroke-width="2" opacity="0.85"/>
+  <path d="M206 148 232 170" stroke="#FFFDF3" stroke-width="4" stroke-linecap="round" opacity="0.8"/>
+
+  <path d="M256 78 428 176" stroke="#FFFFFF" stroke-width="3" opacity="0.7"/>
+  <path d="M84 176 256 78" stroke="#FFFFFF" stroke-width="3" opacity="0.7"/>
+</svg>

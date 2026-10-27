@@ -39,8 +39,26 @@ public class PieceworkRecord {
     public PieceworkRecord() {
     }
 
+    /**
+     * 构造一条报工记录，并在构造期校验数量合法性。
+     *
+     * @throws IllegalArgumentException 如果完工数为负、合格数为负、或合格数大于完工数
+     */
     public PieceworkRecord(Long workerId, String workerName, String processName,
                            int completedQuantity, int qualifiedQuantity) {
+        if (completedQuantity < 0) {
+            throw new IllegalArgumentException(
+                    "completedQuantity must not be negative: " + completedQuantity);
+        }
+        if (qualifiedQuantity < 0) {
+            throw new IllegalArgumentException(
+                    "qualifiedQuantity must not be negative: " + qualifiedQuantity);
+        }
+        if (qualifiedQuantity > completedQuantity) {
+            throw new IllegalArgumentException(
+                    "qualifiedQuantity (%d) must not exceed completedQuantity (%d)"
+                            .formatted(qualifiedQuantity, completedQuantity));
+        }
         this.workerId = workerId;
         this.workerName = workerName;
         this.processName = processName;

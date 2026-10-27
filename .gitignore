@@ -10,6 +10,10 @@ node_modules/
 .vitepress/dist/
 .vitepress/cache/
 
+# PDF export outputs & print cache (regenerate via scripts/export-pdf.py)
+dist-pdf/
+scripts/__pycache__/
+
 # Java build artifacts
 target/
 

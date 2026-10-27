@@ -135,6 +135,7 @@ CREATE TABLE IF NOT EXISTS `distribution_audit_log` (
   `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
   `biz_type` VARCHAR(32) NOT NULL COMMENT '业务类型：distributor/member/policy/lead/attribution/business_order/commission/settlement/compliance',
   `biz_id` BIGINT NOT NULL COMMENT '业务ID',
+  `distributor_id` BIGINT DEFAULT NULL COMMENT '归属渠道ID（冗余列，用于数据权限行过滤；biz_id 与渠道ID独立自增，不可互相替代）',
   `action` VARCHAR(64) NOT NULL COMMENT '动作：create/update/assign/freeze/lock/approve/reject/reverse/pay等',
   `before_snapshot` JSON DEFAULT NULL COMMENT '变更前快照',
   `after_snapshot` JSON DEFAULT NULL COMMENT '变更后快照',
@@ -144,6 +145,7 @@ CREATE TABLE IF NOT EXISTS `distribution_audit_log` (
   `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   PRIMARY KEY (`id`),
   KEY `idx_distribution_audit_log_biz` (`biz_type`, `biz_id`),
+  KEY `idx_distribution_audit_log_distributor_id` (`distributor_id`),
   KEY `idx_distribution_audit_log_action` (`action`),
   KEY `idx_distribution_audit_log_operator_user_id` (`operator_user_id`),
   KEY `idx_distribution_audit_log_create_time` (`create_time`)
@@ -157,6 +159,7 @@ CREATE TABLE IF NOT EXISTS `distribution_compliance_record` (
   `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
   `biz_type` VARCHAR(32) NOT NULL COMMENT '业务类型：distributor/member/policy/lead',
   `biz_id` BIGINT NOT NULL COMMENT '业务ID',
+  `distributor_id` BIGINT DEFAULT NULL COMMENT '归属渠道ID（冗余列，用于数据权限行过滤；biz_id 与渠道ID独立自增，不可互相替代）',
   `product_line_code` VARCHAR(32) DEFAULT NULL COMMENT '产品线',
   `record_type` VARCHAR(32) NOT NULL COMMENT '记录类型：qualification/training/authorization/violation/approval',
   `status` VARCHAR(32) NOT NULL DEFAULT 'pending' COMMENT '状态：pending/approved/rejected/expired',
@@ -172,6 +175,7 @@ CREATE TABLE IF NOT EXISTS `distribution_compliance_record` (
   `deleted` TINYINT NOT NULL DEFAULT 0 COMMENT '逻辑删除：0-否，1-是',
   PRIMARY KEY (`id`),
   KEY `idx_distribution_compliance_record_biz` (`biz_type`, `biz_id`),
+  KEY `idx_distribution_compliance_record_distributor_id` (`distributor_id`),
   KEY `idx_distribution_compliance_record_record_type` (`record_type`),
   KEY `idx_distribution_compliance_record_status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='分销合规记录表';

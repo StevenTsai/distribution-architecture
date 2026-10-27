@@ -36,12 +36,12 @@ INSERT INTO distribution_lead_follow_up (id, lead_id, follow_up_type, content, c
 (2, 1, 'wechat', '微信发送产品资料', 3),
 (3, 2, 'visit', '上门拜访，详细介绍产品方案', 3);
 
--- 审计日志
-INSERT INTO distribution_audit_log (id, biz_type, biz_id, action, before_snapshot, after_snapshot, operator_user_id, operator_name) VALUES
-(1, 'lead', 1, 'create', NULL, '{"id":1,"leadNo":"LEAD-20260101-001","stage":"pending_review"}', 3, '李四'),
-(2, 'lead', 1, 'update_stage', '{"stage":"pending_review"}', '{"stage":"contacted"}', 3, '李四');
+-- 审计日志（distributor_id 为归属渠道冗余列，lead 1 来源渠道为 2）
+INSERT INTO distribution_audit_log (id, biz_type, biz_id, distributor_id, action, before_snapshot, after_snapshot, operator_user_id, operator_name) VALUES
+(1, 'lead', 1, 2, 'create', NULL, '{"id":1,"leadNo":"LEAD-20260101-001","stage":"pending_review"}', 3, '李四'),
+(2, 'lead', 1, 2, 'update_stage', '{"stage":"pending_review"}', '{"stage":"contacted"}', 3, '李四');
 
--- 合规记录
-INSERT INTO distribution_compliance_record (id, biz_type, biz_id, record_type, status, content, created_by) VALUES
-(1, 'distributor', 1, 'qualification', 'approved', '资质审核通过', 1),
-(2, 'member', 2, 'training', 'pending', '待完成产品培训', 1);
+-- 合规记录（distributor 1 归属渠道 1；member 2 归属渠道 2）
+INSERT INTO distribution_compliance_record (id, biz_type, biz_id, distributor_id, record_type, status, content, created_by) VALUES
+(1, 'distributor', 1, 1, 'qualification', 'approved', '资质审核通过', 1),
+(2, 'member', 2, 2, 'training', 'pending', '待完成产品培训', 1);

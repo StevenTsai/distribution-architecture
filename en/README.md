@@ -122,7 +122,7 @@ The fourth case study, [production-guardrails](case-studies/production-guardrail
 │   └── production-guardrails/       Production guardrails (fail-fast startup + pluggable state store)
 │       ├── StartupGuard             Config red-line rejection matrix
 │       ├── StateStore               Six-primitive contract, three impls (mysql/redis/memory)
-│       └── Contract test suite      40 tests, zero external services (H2 MODE=MySQL)
+│       └── Contract test suite      51 tests, zero external services (H2 MODE=MySQL)
 │
 ├── CONTRIBUTING.md                  Contribution guidelines
 │

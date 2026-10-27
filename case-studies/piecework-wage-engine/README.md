@@ -25,8 +25,12 @@
 ```
 baseWage     = unitPrice × completedQuantity
 adjustedWage = baseWage × difficultyCoefficient × qualityCoefficient
-finalAmount  = adjustedWage + adjustmentAmount
+finalAmount  = adjustedWage + Σ adjustmentAmount
 ```
+
+**舍入规则**：中间计算（baseWage、adjustedWage）保留全精度不舍入，只有 `finalAmount` 在最后统一 `HALF_UP` 舍入到 2 位小数——避免「先截断再乘系数」的双重舍入误差。
+
+**调整项为累加语义**：`adjust()` 是「追加一笔调整」而不是「设置调整总额」。先 `adjust(+50)` 再 `adjust(+30)`，调整合计为 +80，前一笔不会被静默吞掉。
 
 ### 质量系数逻辑
 
@@ -56,10 +60,12 @@ flowchart LR
 
 | 阶段 | 作用 | 是否可配置？ |
 |-------|---------|--------------|
-| `CalculateStage` | 计算基础工资并应用系数 | 固定逻辑 |
-| `AdjustStage` | 应用手动/自动调整项 | 通过 `AdjustmentProvider` |
+| `CalculateStage` | 计算基础工资并应用系数（复用 `WageSettlement` 的计算方法，公式只有一处实现） | 固定逻辑 |
+| `AdjustStage` | 追加手动/自动调整项（走 `adjust()` 累加语义） | 通过 `AdjustmentProvider` |
 | `ConfirmStage` | 满足条件时自动确认 | 通过 `AutoConfirmCriteria` |
 | `SummaryStage` | 按工人汇总工资 | 副作用收集器 |
+
+`processAll()` 单条失败不阻断其他记录：失败项以 `error` 级别写日志，并收集到 `pipeline.getFailures()` 返回给调用方——结果可见，不会静默缩减。
 
 ### 为什么采用流水线（Pipeline）？
 
@@ -103,8 +109,8 @@ src/main/java/com/distribution/casestudy/wage/
 所有金额计算均使用 `BigDecimal`，并遵循：
 
 - `HALF_UP` 舍入模式（标准财务舍入）
-- 最终金额保留 2 位小数（货币精度）
-- 中间计算保留 4 位小数（合格率）
+- 最终金额 `finalAmount` 统一舍入到 2 位小数（货币精度）；中间金额不舍入
+- 合格率等比率中间计算保留 4 位小数
 
 ### 3. 不可变的计算
 
@@ -165,6 +171,14 @@ List<WageSettlement> results = pipeline.processAll(settlements);
 | `wageMonth` | `settlementPeriod` | 薪资周期 |
 | 简单的 `piecePrice × qty` | `unitPrice × qty × difficulty × quality` | 可配置系数 |
 | 线性方法调用 | 流水线（Pipeline）模式 | 可扩展阶段 |
+
+## 生产落地注意
+
+本案例是**纯内存教学项目**，没有持久层，因此没有实现结算幂等。若在生产环境落地（报工记录重复推送到结算流水线、结算任务重跑等场景），**必须**为结算单加幂等键：
+
+- 唯一约束：`workOrderId + processId + workerId`（一条报工在一个工序上只允许产生一条生效结算单）
+- 落库前先按幂等键查重 / 依赖数据库 `UNIQUE` 约束兜底，重复推送直接跳过或合并，而不是再算一遍
+- 批量结算任务（如按月跑批）应以「幂等键 + 结算期」为单位做断点续跑
 
 ## 相关文档
 

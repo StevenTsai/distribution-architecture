@@ -2,6 +2,8 @@ package com.distribution.casestudy.wage;
 
 import com.distribution.casestudy.wage.model.WageSettlement;
 import com.distribution.casestudy.wage.pipeline.SettlementStage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,7 +34,12 @@ import java.util.List;
  */
 public class WageSettlementPipeline {
 
+    private static final Logger log = LoggerFactory.getLogger(WageSettlementPipeline.class);
+
     private final List<SettlementStage> stages = new ArrayList<>();
+
+    /** 最近一次 {@link #processAll} 中失败的结算单清单。 */
+    private final List<SettlementFailure> failures = new ArrayList<>();
 
     /**
      * Add a stage to the end of the pipeline.
@@ -68,22 +75,33 @@ public class WageSettlementPipeline {
     }
 
     /**
-     * Process multiple settlements through the pipeline.
+     * 批量处理结算单：单条失败不阻断其他记录，失败项被记录到 {@link #getFailures()}
+     * 并以 error 级别写日志——结果可见，而不是静默缩减。
      *
      * @param settlements list of settlements to process
-     * @return list of successfully processed settlements (failed ones are logged and skipped)
+     * @return list of successfully processed settlements（失败清单见 {@link #getFailures()}）
      */
     public List<WageSettlement> processAll(List<WageSettlement> settlements) {
+        failures.clear();
         List<WageSettlement> results = new ArrayList<>();
         for (WageSettlement settlement : settlements) {
             try {
                 results.add(process(settlement));
             } catch (Exception e) {
-                // Log and skip failed settlements
-                System.err.println("Pipeline failed for settlement: " + e.getMessage());
+                failures.add(new SettlementFailure(settlement, e.getMessage()));
+                log.error("Pipeline failed for settlement: workOrderId={}, processId={}, workerId={}",
+                        settlement.getWorkOrderId(), settlement.getProcessId(),
+                        settlement.getWorkerId(), e);
             }
         }
         return results;
+    }
+
+    /**
+     * 最近一次 {@link #processAll} 的失败清单（成功处理的记录不在此列）。
+     */
+    public List<SettlementFailure> getFailures() {
+        return List.copyOf(failures);
     }
 
     /**
@@ -91,5 +109,14 @@ public class WageSettlementPipeline {
      */
     public int getStageCount() {
         return stages.size();
+    }
+
+    /**
+     * 一条失败的结算记录：原始结算单 + 失败原因。
+     *
+     * @param settlement 处理失败的结算单
+     * @param message   失败原因
+     */
+    public record SettlementFailure(WageSettlement settlement, String message) {
     }
 }

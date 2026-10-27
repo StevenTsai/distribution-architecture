@@ -28,7 +28,7 @@ stateDiagram-v2
     PRODUCING --> PARTIAL_FINISHED: finishProcess（部分完成）
     PRODUCING --> ALL_FINISHED: finishProcess（全部完成）/ finishWork
     PARTIAL_FINISHED --> ALL_FINISHED: finishProcess（全部完成）/ finishWork
-    ALL_FINISHED --> WAREHOUSED
+    ALL_FINISHED --> WAREHOUSED: markWarehoused（入库）
     WAREHOUSED --> CLOSED: closeWork（结案）
     ALL_FINISHED --> CLOSED: closeWork（结案）
     PENDING --> VOID: voidWork（作废）
@@ -59,11 +59,14 @@ stateDiagram-v2
 
 | 转换 | 守卫条件 | 副作用 |
 |------|---------|--------|
-| `create()` | — | 生成工单号，构建工艺路线 |
+| `create()` | — | 接收调用方传入的工单号，按路线配置构建工艺路线 |
 | `schedule()` | PENDING 或 MATERIAL_READY | 分配工作中心 + 工人 |
 | `startWork()` | SCHEDULED | 记录实际开工日期 |
 | `finishProcess()` | PRODUCING 或 PARTIAL_FINISHED | 自动检测是否所有工序均已完成 |
+| `reworkProcess()` | PRODUCING、PARTIAL_FINISHED 或 ALL_FINISHED | 工序打回返工；工单若已 ALL_FINISHED 则回退 PARTIAL_FINISHED |
+| `resumeFromRework()` | PRODUCING 或 PARTIAL_FINISHED | 返工工序 REWORK → IN_PROGRESS，可再次完工 |
 | `finishWork()` | PRODUCING 或 PARTIAL_FINISHED | 将所有工序标记为完成 |
+| `markWarehoused()` | ALL_FINISHED | 成品入库，转 WAREHOUSED |
 | `closeWork()` | ALL_FINISHED 或 WAREHOUSED | 归档工单 |
 | `voidWork()` | 非 CLOSED，非 VOID | 记录取消原因 |
 
