@@ -32,7 +32,7 @@ Beyond code, it distills four directly applicable methods: **takeover engineerin
 ### Reusable Library
 - [spring-data-permission-starter](https://github.com/StevenTsai/spring-data-permission-starter) — Spring Boot Starter for data permissions, ready to import
 
-### Production-Validated Case Studies
+### Production-Validated Case Studies (4 cases, 124 tests)
 - [MTO Workflow Engine](case-studies/mto-workflow-engine/) — Generic work order state machine extracted from a jewelry ERP, reusable across furniture/electronics/apparel industries
 - [Spring Events Decoupling](case-studies/spring-events-decoupling/) — Event-driven cross-module decoupling: delivery→receivable / work order→inventory / quality→rework
 - [Piecework Wage Engine](case-studies/piecework-wage-engine/) — Pipeline-based piecework wage calculation with configurable difficulty and quality coefficients
@@ -48,6 +48,12 @@ Beyond code, it distills four directly applicable methods: **takeover engineerin
 - **7-Step Build-from-Scratch Tutorial**: Complete narrative from domain model to compliance checks
 - **4 Practical Guides**: Quick start, extending new modules, customizing permissions, Spring Boot 3 migration
 
+### Methodology Playbooks (4, Chinese)
+- [Takeover Engineering](../playbooks/takeover-engineering/) — should you take it, how much to invest, when to stop
+- [System Portfolio Governance](../playbooks/system-portfolio-governance/) — inventory, diagnosis, shutdown/merge decisions, anti-backslide
+- [Production Operations](../playbooks/production-operations/) — observability, change, incident response, drills
+- [Engineering Consistency Standards](../playbooks/engineering-consistency-standards.md) — naming, interface, release, and glossary baselines
+
 ## Production Source
 
 The case study code is extracted and abstracted from a **real production system** (jewelry processing ERP):
@@ -60,9 +66,9 @@ The case study code is extracted and abstracted from a **real production system*
 | Tech Stack | Java 17 + Spring Boot 3.2 + MyBatis-Plus 3.5 |
 | Business Modules | Production, Sales, Finance, Inventory, Quality, System |
 
-> The source project is a private repository. Only generic architecture patterns are extracted; no business-sensitive configuration or customer data is included.
+> The source project is a private repository. Only generic architecture patterns are extracted; no business-sensitive configuration or customer data is included. The 909 tests are a source-system metric; the four case studies in this repository contain 124 runnable tests.
 
-The fourth case study, [production-guardrails](case-studies/production-guardrails/), is extracted from **a second private production system** (an IoT device-management backend, battery-telemetry domain): ~600k registered-user capacity envelope, 24 REST endpoints, 155 unit tests. Only generic architecture patterns are carried over.
+The fourth case study, [production-guardrails](case-studies/production-guardrails/), is extracted from **a second private production system** (an IoT device-management backend, battery-telemetry domain): ~600k registered-user capacity envelope, 24 REST endpoints, and 155 source-system unit tests; the extracted guardrails case contains 51 tests. Only generic architecture patterns are carried over.
 
 ## Who Is This For
 
@@ -76,7 +82,7 @@ The fourth case study, [production-guardrails](case-studies/production-guardrail
 ## Document Structure
 
 ```
-├── distribution-starter/            Minimal runnable example (clone and run)
+├── distribution-starter/            Minimal runnable example (initialize MySQL, then run)
 │   ├── src/main/java/               Spring Boot + MyBatis complete skeleton
 │   ├── src/main/script/sql/         Database initialization scripts
 │   └── README.md                    Quick start guide
@@ -124,6 +130,12 @@ The fourth case study, [production-guardrails](case-studies/production-guardrail
 │       ├── StateStore               Six-primitive contract, three impls (mysql/redis/memory)
 │       └── Contract test suite      51 tests, zero external services (H2 MODE=MySQL)
 │
+├── playbooks/                       Methodology playbooks (Chinese-only)
+│   ├── takeover-engineering/        Takeover toolkit: 21 questions + 10 templates
+│   ├── system-portfolio-governance/ Portfolio governance: inventory → diagnosis → decisions → anti-backslide
+│   ├── production-operations/       Production operations: observability, change, response, drills
+│   └── engineering-consistency-standards.md  Team naming/interface/release baseline
+│
 ├── CONTRIBUTING.md                  Contribution guidelines
 │
 └── tutorial/                        Build-from-scratch series (recommended reading order)
@@ -162,9 +174,9 @@ Project-level documents are also available in English: [Contributing](CONTRIBUTI
 
 ## Recommended Reading
 
-**If you want to try it out**: Go to `distribution-starter/` and follow the README to get running in 5 minutes.
+**If you want to try it out**: Go to `distribution-starter/`, follow the README to initialize MySQL, and start the application.
 
-**If you want a quick overview**: Start with the design pattern documents in `architecture/` (9 in total; the first four cover data permissions, event-driven flows, audit, and MyBatis).
+**If you want a quick overview**: Start with the four foundational design pattern documents in `architecture/` (data permissions, event-driven flows, audit, and MyBatis), then read the other five.
 
 **If you want to see production-validated case studies**: Go to `case-studies/` — each case study has a README and an evolution document.
 
@@ -215,7 +227,7 @@ Four principles for extracting generic patterns from domain-specific systems:
 - **Language**: Java 17
 - **ORM**: MyBatis 3.0.3
 - **Database**: MySQL 8.0
-- **Cache**: Redis
+- **Cache**: Redis (optional)
 - **API Docs**: SpringDoc 2.3.0 (OpenAPI 3)
 
 ## License

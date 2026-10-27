@@ -4,7 +4,7 @@
 
 ## 这是什么
 
-这是一个**最小可运行示例**，让你能 clone 后直接跑起来体验核心设计模式。包含：
+这是一个**最小可运行示例**，clone 后按快速开始步骤初始化 MySQL 即可跑起来体验核心设计模式。包含：
 
 - **Session Token 认证** — 服务端会话管理，支持主动失效
 - **4 级数据权限** — SQL 层注入的行级过滤（ALL / OWN_DISTRIBUTOR / OWN_AND_CHILDREN / SELF）
@@ -60,7 +60,7 @@ mvn spring-boot:run
 - Swagger UI: http://localhost:9030/swagger-ui.html
 - 测试接口需要在请求头中携带：
   - `x-biz: distribution-starter`
-  - `Authorization: test-token-admin`（开发环境预置的测试 token）
+  - `Authorization: test-token-123`（需先按 [Quick Start 第六步](../guides/quick-start.md#需要准备测试数据) 插入测试会话）
 
 ### 运行测试
 
@@ -68,7 +68,7 @@ mvn spring-boot:run
 mvn test
 ```
 
-测试使用 H2 内存数据库，无需额外配置。
+测试为纯 Mockito 单元测试，不依赖 MySQL；`src/test/resources` 下的 H2 配置目前预留给后续集成测试。
 
 ## 项目结构
 

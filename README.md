@@ -32,7 +32,7 @@
 ### 可复用库
 - [spring-data-permission-starter](https://github.com/StevenTsai/spring-data-permission-starter) — 数据权限的 Spring Boot Starter 实现，可直接导入使用
 
-### 生产验证案例（Case Studies）
+### 生产验证案例（4 个案例，124 个测试）
 - [MTO 工作流引擎](case-studies/mto-workflow-engine/) — 从珠宝 ERP 提取的通用工单状态机，可复用到服装/家具/电子加工等行业
 - [Spring Events 跨模块联动](case-studies/spring-events-decoupling/) — 事件驱动解耦：发货→应收 / 工单→库存 / 质检→返工
 - [计件工资计算引擎](case-studies/piecework-wage-engine/) — Pipeline 模式的计件工资引擎，支持难度系数和质量系数
@@ -48,6 +48,12 @@
 - **7 步从零构建教程**：从领域模型到合规检查的完整叙事线
 - **4 个实操指南**：快速开始、扩展新模块、定制权限、Spring Boot 3 迁移
 
+### 方法论 Playbooks（4 套）
+- [接手工程](playbooks/takeover-engineering/) — 进入时该不该接、投多少、何时停
+- [架构组合治理](playbooks/system-portfolio-governance/) — 系统群清点、诊断、关停并转与防回潮
+- [生产运维](playbooks/production-operations/) — 观测、变更、故障响应与演练
+- [工程一致性规范](playbooks/engineering-consistency-standards.md) — 命名、接口、发布与术语基线
+
 ## 生产验证来源
 
 Case Study 的代码从一个**真实生产系统**（珠宝加工 ERP）中提取并抽象：
@@ -60,9 +66,9 @@ Case Study 的代码从一个**真实生产系统**（珠宝加工 ERP）中提�
 | 技术栈 | Java 17 + Spring Boot 3.2 + MyBatis-Plus 3.5 |
 | 业务模块 | 生产、销售、财务、库存、质检、基础数据 |
 
-> 源项目为私有仓库，仅提取通用架构模式，不包含业务敏感配置和客户数据。
+> 源项目为私有仓库，仅提取通用架构模式，不包含业务敏感配置和客户数据。表中的 909 个测试是源系统口径；本仓库 4 个案例可运行的测试为 124 个。
 
-第四个案例 [production-guardrails](case-studies/production-guardrails/) 提取自**另一个私有生产系统**（IoT 设备管理后端，电池遥测域）：约 60 万注册用户的容量口径、24 个 REST 端点、155 个单测。同样只提取通用架构模式。
+第四个案例 [production-guardrails](case-studies/production-guardrails/) 提取自**另一个私有生产系统**（IoT 设备管理后端，电池遥测域）：约 60 万注册用户的容量口径、24 个 REST 端点、155 个源系统单测；提取到本仓库后的护栏案例为 51 个测试。同样只提取通用架构模式。
 
 ## 适合谁看
 
@@ -77,7 +83,7 @@ Case Study 的代码从一个**真实生产系统**（珠宝加工 ERP）中提�
 ## 文档结构
 
 ```
-├── distribution-starter/            最小可运行示例（clone 后直接跑）
+├── distribution-starter/            最小可运行示例（初始化 MySQL 后启动）
 │   ├── src/main/java/               Spring Boot + MyBatis 完整骨架
 │   ├── src/main/script/sql/         数据库初始化脚本
 │   └── README.md                    快速开始指南
@@ -166,9 +172,9 @@ Case Study 的代码从一个**真实生产系统**（珠宝加工 ERP）中提�
 
 ## 阅读建议
 
-**如果你想跑起来看看**：进入 `distribution-starter/` 目录，按 README.md 的步骤 5 分钟启动。
+**如果你想跑起来看看**：进入 `distribution-starter/` 目录，按 README.md 的步骤初始化 MySQL 并启动。
 
-**如果你想快速了解**：先读 `architecture/` 下的 4 篇设计模式文档。
+**如果你想快速了解**：先读 `architecture/` 下的 4 篇基础模式（数据权限、事件驱动、审计、MyBatis），再看其余 5 篇。
 
 **如果你想看生产验证案例**：进入 `case-studies/` 目录，每个案例都有 README 和演进文档。
 
@@ -223,7 +229,7 @@ Case Study 的代码从一个**真实生产系统**（珠宝加工 ERP）中提�
 - **语言**：Java 17
 - **ORM**：MyBatis 3.0.3
 - **数据库**：MySQL 8.0
-- **缓存**：Redis
+- **缓存**：Redis（可选）
 - **API 文档**：SpringDoc 2.3.0（OpenAPI 3）
 
 ## License

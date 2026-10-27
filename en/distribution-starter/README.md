@@ -6,7 +6,7 @@ A runnable skeleton for a distribution management system, built on the [distribu
 
 ## What Is This
 
-This is a **minimal runnable example**: clone it and run it to experience the core design patterns first-hand. It includes:
+This is a **minimal runnable example**: clone it, initialize MySQL, and run it to experience the core design patterns first-hand. It includes:
 
 - **Session token authentication** — server-side session management with active invalidation
 - **4-level data permissions** — row-level filtering injected at the SQL layer (ALL / OWN_DISTRIBUTOR / OWN_AND_CHILDREN / SELF)
@@ -61,7 +61,7 @@ mvn spring-boot:run
 - Swagger UI: http://localhost:9030/swagger-ui.html
 - Test endpoints require the following request headers:
   - `x-biz: distribution-starter`
-  - `Authorization: test-token-admin` (a test token preconfigured for the development environment)
+  - `Authorization: test-token-123` (insert the test session first; see [Quick Start, Step 7](../guides/quick-start.md#prepare-test-data))
 
 ### Run the Tests
 
@@ -69,7 +69,7 @@ mvn spring-boot:run
 mvn test
 ```
 
-The tests use an in-memory H2 database, so no extra configuration is needed.
+The tests are pure Mockito unit tests and do not require a database. The H2 configuration under `src/test/resources` is reserved for future integration tests.
 
 ## Project Structure
 
