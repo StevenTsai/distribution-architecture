@@ -6,7 +6,7 @@ titleTemplate: false
 hero:
   name: 架构炼金术
   text: 从真实系统提炼可复用的架构模式
-  tagline: Java / Spring Boot 实战 · 9 个模式 · 6 篇 ADR · 可运行代码与测试
+  tagline: Java / Spring Boot 实战 · 9 个模式 · 6 篇 ADR · 可运行案例与测试
   image:
     src: /logo.svg
     alt: Distribution Architecture
@@ -39,18 +39,23 @@ features:
     details: 从领域模型到合规检查的完整叙事线，手把手带你构建企业级系统
     link: /tutorial/01-domain-model
 
-  - icon: 🧭
-    title: 交付方法论
-    details: 接手工程评估与止损、架构组合治理与关停并转、工程一致性规范——从接系统到管系统群
+  - icon: 🤝
+    title: 接手工程
+    details: 进入时该不该接、投多少、何时停——L0–L3 投入封顶与止损闸门
     link: /playbooks/takeover-engineering/
 
-  - icon: 🌍
-    title: 生产系统验证
-    details: 所有模式来自真实生产系统（152 API、44 表、909 测试），非教科书理论
-    link: /preface
+  - icon: 🧭
+    title: 架构组合治理
+    details: 系统群怎么清点、诊断、关停并转——组合清单、决策记录与防回潮闸门
+    link: /playbooks/system-portfolio-governance/
 
-  - icon: 📖
-    title: 中英双语
-    details: 核心文档提供中英双语版本，方便国际读者
-    link: https://github.com/StevenTsai/distribution-architecture
+  - icon: 🛠️
+    title: 生产运维
+    details: 运行期怎么观测、变更、救火——告警分级、全链路灰度、复盘与容量演练
+    link: /playbooks/production-operations/
+
+  - icon: 📐
+    title: 工程一致性
+    details: 团队共用的命名、接口、发布与术语基线——新对接七问与健康度指标
+    link: /playbooks/engineering-consistency-standards
 ---
