@@ -14,7 +14,7 @@ export default withMermaid({
       link: '/en/',
       title: 'Architecture Alchemy',
       description:
-        'Java / Spring Boot / MyBatis architecture patterns extracted from production systems',
+        'Architecture patterns and methodology extracted from production systems — production evidence, ADRs, and AI reliability chapters backed by an open-source reference implementation',
       themeConfig: {
         nav: [
           { text: 'Home', link: '/en/' },

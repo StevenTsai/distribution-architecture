@@ -156,7 +156,7 @@ The fourth case study, [production-guardrails](case-studies/production-guardrail
 
 ## English Documentation
 
-This directory mirrors the Chinese book: the preface, all 9 architecture patterns, all 6 ADRs, all 4 practical guides, the 7-step tutorial, and the case-study READMEs plus their evolution notes. The four methodology playbooks are Chinese-only; see the [playbooks index](playbooks.md) for what they cover and how to navigate them.
+This directory mirrors the Chinese book: the preface, all 9 Java-era architecture patterns, all 6 ADRs, all 4 practical guides, the 7-step tutorial, and the case-study READMEs plus their evolution notes. The five methodology playbooks and the AI-system chapters (two architecture articles plus the open-source compliance playbook, added 2026-10) are Chinese-only for now; see the [playbooks index](playbooks.md) for what the playbooks cover and how to navigate them.
 
 | Section | Documents |
 |---------|-----------|

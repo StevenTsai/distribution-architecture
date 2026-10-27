@@ -11,7 +11,7 @@
 
 这是一套**架构设计文档** + **可复用 Starter 库** + **生产验证案例** + **全生命周期方法论**，覆盖一个企业级系统从构建、选型、验证，到接手、治理、运维的完整过程。
 
-代码之外，这里还沉淀了四套可以直接套用的方法：**接手工程**（进入时该不该接、投多少、何时停）、**组合治理**（持有期哪些该关、哪些该治）、**生产运维**（运行期怎么观测、怎么变更、怎么救火）、**工程一致性规范**（团队共用的命名、接口、发布与术语基线）。
+代码之外，这里还沉淀了五套可以直接套用的方法：**接手工程**（进入时该不该接、投多少、何时停）、**组合治理**（持有期哪些该关、哪些该治）、**生产运维**（运行期怎么观测、怎么变更、怎么救火）、**工程一致性规范**（团队共用的命名、接口、发布与术语基线）、**开源提取卫生**（私有模式怎么安全地进公开仓库）。
 
 > 我在生产系统中遇到了数据权限、工作流引擎、事件驱动解耦、计件工资等通用问题。
 > 我先在真实项目中用 Spring Boot + MyBatis 实现了这些模式，
@@ -58,7 +58,7 @@
 - [架构组合治理](playbooks/system-portfolio-governance/) — 系统群清点、诊断、关停并转与防回潮
 - [生产运维](playbooks/production-operations/) — 观测、变更、故障响应与演练
 - [工程一致性规范](playbooks/engineering-consistency-standards.md) — 命名、接口、发布与术语基线
-- [开源发布止血带](playbooks/open-source-compliance.md) — 私有生产到公开模式库的提取卫生：切分线、扫描器开源/词表闭源、推送前七条清单
+- [开源发布止血带](playbooks/open-source-compliance.md) — 私有生产到公开模式库的提取卫生：切分线、扫描器开源/词表闭源、推送前清单（含 Git 历史与凭据轮换）
 
 ## 生产验证来源
 
@@ -288,6 +288,6 @@ English translations of the core documents are available in the [`en/`](en/) dir
 | [en/SECURITY.md](en/SECURITY.md) | Security policy |
 | [en/distribution-starter/README.md](en/distribution-starter/README.md) | Starter quick start and project structure |
 
-The English directory covers every book page except the VitePress homepage (`index.md`). The four methodology playbooks (`playbooks/`, 30 documents) are Chinese-only by design; [en/playbooks.md](en/playbooks.md) indexes what they cover and links to each one. The internal `doc/open-source-strategy.md` also remains Chinese-only.
+The English directory covers every book page except the VitePress homepage (`index.md`) and the AI-system chapters (added 2026-10, Chinese-only for now). The five methodology playbooks (`playbooks/`, 31 documents) are Chinese-only by design; [en/playbooks.md](en/playbooks.md) indexes what they cover and links to each one. The internal `doc/open-source-strategy.md` also remains Chinese-only.
 
 For Spring Boot 2.7 users, see the [migration guide](guides/spring-boot-3-migration.md) (also available in [English](en/guides/spring-boot-3-migration.md)).

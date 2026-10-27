@@ -1,6 +1,6 @@
 # Methodology Playbooks (Chinese)
 
-> Four practitioner playbooks covering the lifecycle of a system after it ships: taking it over, governing a portfolio, running it in production, and keeping the engineering baseline consistent.
+> Five practitioner playbooks covering the lifecycle of a system after it ships: taking it over, governing a portfolio, running it in production, keeping the engineering baseline consistent, and extracting private work into public repositories safely.
 
 **Language note:** these playbooks are written in Chinese. They were written as first-person practitioner methodology—judgment, trade-offs, and templates—and the author publishes them in the language they were reasoned in. This page is an index so English readers know what exists and can navigate to it. Machine translation is available through your browser; the templates themselves are language-neutral.
 
