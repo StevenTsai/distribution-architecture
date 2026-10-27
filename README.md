@@ -5,7 +5,7 @@
 
 中文 | [English](en/README.md)
 
-📖 **[在线阅读《架构炼金术：从真实系统提炼可复用的架构模式》](https://steventsai.github.io/distribution-architecture/)** | 企业级架构模式与方法论库，从真实生产系统与公开参考实现中提炼（生产实证 + 跨语言交付 + 架构治理 + AI 系统验证）。编程语言只是证据的载体。
+📖 **[在线阅读《架构炼金术：从真实系统提炼可复用的架构模式》](https://steventsai.github.io/distribution-architecture/)** | 企业级架构模式与方法论库，从真实生产系统中提炼（生产实证 + 跨语言交付 + 架构治理 + AI 系统验证）。
 
 ## 这是什么
 
