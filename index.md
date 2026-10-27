@@ -26,7 +26,7 @@ features:
 
   - icon: 🤖
     title: AI 系统：可判定性与失败面
-    details: 声明级校验门、端到端失败复盘、开源提取卫生——证据来自开源参考实现 GroundedRAG
+    details: 声明级校验门、端到端失败复盘、开源提取纪律——证据来自开源参考实现 GroundedRAG
     link: /architecture/verifier-failure-modes
 
   - icon: 📋

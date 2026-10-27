@@ -40,7 +40,7 @@
 
 ### 如果你关心 AI 系统的输出可靠性
 
-先读 [组件正确 ≠ 系统有效](/architecture/verifier-failure-modes)，再读 [声明级校验门](/architecture/claim-level-verifier)；开源前的提取卫生见 [开源发布止血带](/playbooks/open-source-compliance)。
+先读 [组件正确 ≠ 系统有效](/architecture/verifier-failure-modes)，再读 [声明级校验门](/architecture/claim-level-verifier)；开源前的提取纪律见 [开源发布止血带](/playbooks/open-source-compliance)。
 
 ## 内容来源
 
@@ -76,7 +76,7 @@
 | 测试 | 247 个单元测试，覆盖率 95%（`v1.0.0`） |
 | 证据档位 | **提炼参考实现**：仓库内为合成数据，真实评测集本地维护、不分发、可应请求供审阅 |
 
-> 前两个系统为私有仓库，仅提取通用架构模式；GroundedRAG 为公开仓库，可 clone 复现。本书 AI 章节（校验门、失败复盘、开源提取卫生）的全部证据来自它，引用数字均 pin 至 `v1.0.0`。
+> 前两个系统为私有仓库，仅提取通用架构模式；GroundedRAG 为公开仓库，可 clone 复现。本书 AI 章节（校验门、失败复盘、开源提取纪律）的全部证据来自它，引用数字均 pin 至 `v1.0.0`。
 
 ## 开源许可
 

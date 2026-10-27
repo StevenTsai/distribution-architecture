@@ -11,7 +11,7 @@
 
 这是一套**架构设计文档** + **可复用 Starter 库** + **生产验证案例** + **全生命周期方法论**，覆盖一个企业级系统从构建、选型、验证，到接手、治理、运维的完整过程。
 
-代码之外，这里还沉淀了五套可以直接套用的方法：**接手工程**（进入时该不该接、投多少、何时停）、**组合治理**（持有期哪些该关、哪些该治）、**生产运维**（运行期怎么观测、怎么变更、怎么救火）、**工程一致性规范**（团队共用的命名、接口、发布与术语基线）、**开源提取卫生**（私有模式怎么安全地进公开仓库）。
+代码之外，这里还沉淀了五套可以直接套用的方法：**接手工程**（进入时该不该接、投多少、何时停）、**组合治理**（持有期哪些该关、哪些该治）、**生产运维**（运行期怎么观测、怎么变更、怎么救火）、**工程一致性规范**（团队共用的命名、接口、发布与术语基线）、**开源提取纪律**（私有模式怎么安全地进公开仓库）。
 
 > 我在生产系统中遇到了数据权限、工作流引擎、事件驱动解耦、计件工资等通用问题。
 > 我先在真实项目中用 Spring Boot + MyBatis 实现了这些模式，
@@ -58,7 +58,7 @@
 - [架构组合治理](playbooks/system-portfolio-governance/) — 系统群清点、诊断、关停并转与防回潮
 - [生产运维](playbooks/production-operations/) — 观测、变更、故障响应与演练
 - [工程一致性规范](playbooks/engineering-consistency-standards.md) — 命名、接口、发布与术语基线
-- [开源发布止血带](playbooks/open-source-compliance.md) — 私有生产到公开模式库的提取卫生：切分线、扫描器开源/词表闭源、推送前清单（含 Git 历史与凭据轮换）
+- [开源发布止血带](playbooks/open-source-compliance.md) — 私有生产到公开模式库的提取纪律：切分线、扫描器开源/词表闭源、推送前清单（含 Git 历史与凭据轮换）
 
 ## 生产验证来源
 
@@ -157,7 +157,7 @@ AI 系统章节的证据源是一个**公开参考实现** [grounded-rag](https:
 │
 ├── playbooks/engineering-consistency-standards.md  工程一致性规范（团队可直接套用）
 │
-├── playbooks/open-source-compliance.md  开源发布止血带（提取卫生 + 推送前清单）
+├── playbooks/open-source-compliance.md  开源发布止血带（提取纪律 + 推送前清单）
 │
 ├── playbooks/production-operations/  生产运维（第三姊妹篇：系统运行期怎么稳住）
 │   ├── 00-methodology.md            五原则 + 四能力域（观测/变更/响应/演练）
@@ -192,7 +192,7 @@ AI 系统章节的证据源是一个**公开参考实现** [grounded-rag](https:
 
 **如果你想从头理解**：按 `tutorial/` 的 01→07 顺序阅读，这是从零构建的完整叙事线。
 
-**如果你在做 AI 系统或关心输出可靠性**：先读[组件正确 ≠ 系统有效](architecture/verifier-failure-modes.md)，再读[声明级校验门](architecture/claim-level-verifier.md)；开源前的提取卫生见[开源发布止血带](playbooks/open-source-compliance.md)。
+**如果你在做 AI 系统或关心输出可靠性**：先读[组件正确 ≠ 系统有效](architecture/verifier-failure-modes.md)，再读[声明级校验门](architecture/claim-level-verifier.md)；开源前的提取纪律见[开源发布止血带](playbooks/open-source-compliance.md)。
 
 **如果你要做技术选型**：读 `decisions/` 下的 6 篇 ADR，看 trade-off 分析。平台层选型看[服务治理的三种形态](architecture/service-governance-forms.md)；容量到顶或要缩小故障域时读[单元化架构](architecture/cell-based-architecture.md)。
 
@@ -237,7 +237,7 @@ AI 系统章节的证据源是一个**公开参考实现** [grounded-rag](https:
 | **保留模式替换细节** | 保留架构模式，替换业务细节 | 状态机模式保留，具体状态值替换 |
 | **先工作再通用** | 先让它跑起来，验证后再抽象 | 先实现 `piecePrice × qty`，再加系数 |
 
-开源侧的提取卫生（切分线怎么画、泄露扫描、推送前清单）单独沉淀为[开源发布止血带](playbooks/open-source-compliance.md)。
+开源侧的提取纪律（切分线怎么画、泄露扫描、推送前清单）单独沉淀为[开源发布止血带](playbooks/open-source-compliance.md)。
 
 ## 技术栈
 

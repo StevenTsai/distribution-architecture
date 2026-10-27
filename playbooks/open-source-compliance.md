@@ -1,4 +1,4 @@
-# 开源发布止血带：私有生产到公开模式库的提取卫生
+# 开源发布止血带：私有生产到公开模式库的提取纪律
 
 > 全开泄露，全关没人用。切分线不是一句免责声明，是设计出来的。
 
@@ -10,7 +10,7 @@
 
 这句话是承诺，不是工艺。**泄露从来不是在 push 那一刻发生的——它发生在提取环节**：写文档的人脑子里装着客户名、内部代号、未公开的业务数字，笔会先于意识泄露。等到了发布前检查，错误已经在文档历史里了。
 
-本 playbook 把提取卫生固化成四件可执行的事：**画切分线、扫描器开源/词表闭源、推送前清单、数据边界声明**。全部来自一个真实项目的完整实践——[GroundedRAG](https://github.com/StevenTsai/grounded-rag) 的开源过程（其架构背景见[声明级校验门](../architecture/claim-level-verifier.md)与[失败复盘](../architecture/verifier-failure-modes.md)）。
+本 playbook 把提取纪律固化成四件可执行的事：**画切分线、扫描器开源/词表闭源、推送前清单、数据边界声明**。全部来自一个真实项目的完整实践——[GroundedRAG](https://github.com/StevenTsai/grounded-rag) 的开源过程（其架构背景见[声明级校验门](../architecture/claim-level-verifier.md)与[失败复盘](../architecture/verifier-failure-modes.md)）。
 
 ---
 
