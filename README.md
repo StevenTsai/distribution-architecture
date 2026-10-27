@@ -11,7 +11,7 @@
 
 这是一套**架构设计文档** + **可复用 Starter 库** + **生产验证案例** + **全生命周期方法论**，覆盖一个企业级系统从构建、选型、验证，到接手、治理、运维的完整过程。
 
-代码之外，这里还沉淀了五套可以直接套用的方法：**接手工程**（进入时该不该接、投多少、何时停）、**组合治理**（持有期哪些该关、哪些该治）、**生产运维**（运行期怎么观测、怎么变更、怎么救火）、**工程一致性规范**（团队共用的命名、接口、发布与术语基线）、**开源提取纪律**（私有模式怎么安全地进公开仓库）。
+代码之外，这里还沉淀了七套可以直接套用的方法：**接手工程**（进入时该不该接、投多少、何时停）、**组合治理**（持有期哪些该关、哪些该治）、**生产运维**（运行期怎么观测、怎么变更、怎么救火）、**AI 工程实践**（生成链路怎么控制失败）、**企业架构实践**（领域边界怎么进入代码）、**工程一致性规范**（团队共用的命名、接口、发布与术语基线）、**开源提取纪律**（私有模式怎么安全地进公开仓库）。
 
 > 我在生产系统中遇到了数据权限、工作流引擎、事件驱动解耦、计件工资等通用问题。
 > 我先在真实项目中用 Spring Boot + MyBatis 实现了这些模式，
@@ -29,19 +29,32 @@
 - [单元化架构](architecture/cell-based-architecture.md) — 爆炸半径、单元键、数据分片与「拔电验证」
 - [服务治理的三种形态](architecture/service-governance-forms.md) — SDK / Agent / Sidecar 的取舍矩阵
 
-### AI 系统架构（2 篇，证据来自开源参考实现 [GroundedRAG](https://github.com/StevenTsai/grounded-rag)）
+### AI Agent 架构（1 篇）
+- [AI Agent 架构：声明式与状态机](architecture/agent-architecture-patterns.md) — 按风险分层、代码守卫、聚合接口与流式边界
+
+### AI 系统可靠性（2 篇，证据来自开源参考实现 [GroundedRAG](https://github.com/StevenTsai/grounded-rag)）
 - [组件正确 ≠ 系统有效](architecture/verifier-failure-modes.md) — 离线校验 100% vs 端到端 30–46% 的失败复盘与双口径评测制度
 - [声明级校验门](architecture/claim-level-verifier.md) — 把不可信输出降维成可判定断言：四步门、同源不变量、单调权限
 
+### AI 工程实践（3 篇）
+- [结构化输出治理](playbooks/ai-engineering/structured-output-governance.md) — 截断、提取、有限修复、结构校验与业务不变量
+- [多模型路由与故障隔离](playbooks/ai-engineering/model-routing-and-resilience.md) — 模型目录、Provider 隔离、熔断、重试预算与可观测性
+- [长文档多阶段生成](playbooks/ai-engineering/long-document-pipeline.md) — 分段审阅、可审查改写、全文重组与局部重试
+
+### 企业架构实践（2 篇）
+- [DDD 七步落地](playbooks/enterprise-architecture/ddd-seven-step-landing.md) — 从统一语言、限界上下文到聚合、不变量和领域事件
+- [TOGAF 实践](playbooks/enterprise-architecture/togaf-in-practice.md) — BA/DA/AA/TA、端到端主线、事件优先需求与轻量架构评估
+
 ### 可复用库
 - [spring-data-permission-starter](https://github.com/StevenTsai/spring-data-permission-starter) — 数据权限的 Spring Boot Starter 实现，可直接导入使用
-- [grounded-rag](https://github.com/StevenTsai/grounded-rag) — 声明级校验门 RAG 参考实现（Python / MIT），本书 AI 章节的证据源
+- [grounded-rag](https://github.com/StevenTsai/grounded-rag) — 声明级校验门 RAG 参考实现（Python / MIT），本书 AI 系统可靠性章节的证据源
 
-### 生产验证案例（4 个案例，124 个测试）
+### 生产验证案例（4 个代码案例，124 个测试 + 1 篇架构演进复盘）
 - [MTO 工作流引擎](case-studies/mto-workflow-engine/) — 从珠宝 ERP 提取的通用工单状态机，可复用到服装/家具/电子加工等行业
 - [Spring Events 跨模块联动](case-studies/spring-events-decoupling/) — 事件驱动解耦：发货→应收 / 工单→库存 / 质检→返工
 - [计件工资计算引擎](case-studies/piecework-wage-engine/) — Pipeline 模式的计件工资引擎，支持难度系数和质量系数
 - [生产护栏：fail-fast 启动守卫 + 可插拔状态存储](case-studies/production-guardrails/) — 生产中间件 2→1、回切零代码、契约测试补齐（源自 IoT 后端，非珠宝 ERP）
+- [OncoHub 架构演进](case-studies/oncohub-architecture-evolution.md) — 一份设计文档改了 8 次：读代码纠假设、认证解耦、数据流向与灰度四阶段（无配套代码，叙事案例）
 
 ### 架构决策记录（6 个）
 - Session vs JWT、MyBatis vs JPA、逻辑删除 vs 物理删除
@@ -53,10 +66,12 @@
 - **7 步从零构建教程**：从领域模型到合规检查的完整叙事线
 - **4 个实操指南**：快速开始、扩展新模块、定制权限、Spring Boot 3 迁移
 
-### 方法论 Playbooks（5 套）
+### 方法论 Playbooks（7 套）
 - [接手工程](playbooks/takeover-engineering/) — 进入时该不该接、投多少、何时停
 - [架构组合治理](playbooks/system-portfolio-governance/) — 系统群清点、诊断、关停并转与防回潮
 - [生产运维](playbooks/production-operations/) — 观测、变更、故障响应与演练
+- [AI 工程实践](playbooks/ai-engineering/) — 结构化输出、多模型路由与长文档多阶段生成
+- [企业架构实践](playbooks/enterprise-architecture/) — DDD 落地与企业架构方法裁剪
 - [工程一致性规范](playbooks/engineering-consistency-standards.md) — 命名、接口、发布与术语基线
 - [开源发布止血带](playbooks/open-source-compliance.md) — 私有生产到公开模式库的提取纪律：切分线、扫描器开源/词表闭源、推送前清单（含 Git 历史与凭据轮换）
 
@@ -76,7 +91,9 @@ Case Study 的代码从一个**真实生产系统**（珠宝加工 ERP）中提�
 
 第四个案例 [production-guardrails](case-studies/production-guardrails/) 提取自**另一个私有生产系统**（IoT 设备管理后端，电池遥测域）：约 60 万注册用户的容量口径、24 个 REST 端点、155 个源系统单测；提取到本仓库后的护栏案例为 51 个测试。同样只提取通用架构模式。
 
-AI 系统章节的证据源是一个**公开参考实现** [grounded-rag](https://github.com/StevenTsai/grounded-rag)（MIT）：247 个单元测试、覆盖率 95%；确定性评测集三指标 1.0，端到端期望匹配率 30.8%–46.2%——两个口径成对引用（详见[失败复盘](architecture/verifier-failure-modes.md)）。真实评测集本地维护、不分发，仓库内为合成数据。
+AI 系统可靠性章节的证据源是一个**公开参考实现** [grounded-rag](https://github.com/StevenTsai/grounded-rag)（MIT）：247 个单元测试、覆盖率 95%；确定性评测集三指标 1.0，端到端期望匹配率 30.8%–46.2%——两个口径成对引用（详见[失败复盘](architecture/verifier-failure-modes.md)）。真实评测集本地维护、不分发，仓库内为合成数据。
+
+AI Agent 架构与 AI 工程实践提炼自高风险 AI 应用和长文档任务的实际工程结构；相关业务代码、提示词和运营数据未公开，文中的阈值与实现示例均已泛化，不构成行业基准。
 
 ## 适合谁看
 
@@ -106,6 +123,7 @@ AI 系统章节的证据源是一个**公开参考实现** [grounded-rag](https:
 │   ├── cross-language-contract-testing.md  跨语言契约测试：仓外裁判 + fixture 对拍
 │   ├── cell-based-architecture.md   单元化架构：爆炸半径、单元键、数据分片与故障演练
 │   ├── service-governance-forms.md  服务治理三形态：SDK / Agent / Sidecar 的取舍矩阵
+│   ├── agent-architecture-patterns.md  AI Agent 架构：声明式、状态机与代码守卫
 │   ├── verifier-failure-modes.md    组件正确 ≠ 系统有效：校验门端到端失败复盘（AI）
 │   └── claim-level-verifier.md      声明级校验门：可判定断言 + 四步门 + 两条不变量（AI）
 │
@@ -136,10 +154,11 @@ AI 系统章节的证据源是一个**公开参考实现** [grounded-rag](https:
 │   │   ├── WageCalculator           工资计算引擎
 │   │   ├── WageSettlementPipeline   Pipeline 编排器
 │   │   └── 4 个 Pipeline Stage      计算→调整→确认→汇总
-│   └── production-guardrails/       生产护栏（fail-fast 启动守卫 + 可插拔状态存储）
-│       ├── StartupGuard             配置红线拒绝启动矩阵
-│       ├── StateStore               六原语契约 + 三实现（mysql/redis/memory）
-│       └── 契约测试套件              51 用例零外部服务（H2 MODE=MySQL）
+│   ├── production-guardrails/       生产护栏（fail-fast 启动守卫 + 可插拔状态存储）
+│   │   ├── StartupGuard             配置红线拒绝启动矩阵
+│   │   ├── StateStore               六原语契约 + 三实现（mysql/redis/memory）
+│   │   └── 契约测试套件              51 用例零外部服务（H2 MODE=MySQL）
+│   └── oncohub-architecture-evolution.md  架构演进复盘：设计文档改 8 次（叙事案例）
 │
 ├── playbooks/                       方法论 playbook（架构师全周期实践）
 │   └── takeover-engineering/        接手工程工具箱
@@ -147,6 +166,7 @@ AI 系统章节的证据源是一个**公开参考实现** [grounded-rag](https:
 │       ├── 00-methodology.md        方法论总纲：四原则 + 六阶段 + 止损闸门
 │       ├── 01-investment-discipline.md  签约前投入纪律：L0–L3 封顶 + 杠杆对称
 │       ├── case-walkthrough.md      附录：虚构案例串跑（教学示例，走完六阶段）
+│       ├── deep-dives/legacy-security-audit.md  三轮安全审计：46 项发现与限频自噬
 │       ├── templates/               可直接填写的模板 01–10
 │       └── hooks/21-questions.md    接手前必须问清的 21 个问题（免费钩子）
 │
@@ -154,6 +174,17 @@ AI 系统章节的证据源是一个**公开参考实现** [grounded-rag](https:
 │   ├── 00-methodology.md            四阶段：清点 → 诊断 → 决策 → 执行与防回潮
 │   ├── 05-architecture-review.md    架构评审机制：三级评审 + 一页纸 + 例外台账
 │   └── templates/                   组合清单 / 诊断卡 / 决策记录 / 路线图与闸门
+│
+├── playbooks/ai-engineering/        AI 工程实践
+│   ├── README.md                    生成链路可控性总览
+│   ├── structured-output-governance.md  结构化输出五层失败边界
+│   ├── model-routing-and-resilience.md  模型目录、Provider 隔离与故障降级
+│   └── long-document-pipeline.md    分段审阅、可审查改写与全文重组
+│
+├── playbooks/enterprise-architecture/  企业架构实践
+│   ├── README.md                    企业架构方法总览
+│   ├── ddd-seven-step-landing.md    从领域语言到聚合代码
+│   └── togaf-in-practice.md         BA/DA/AA/TA 与方法裁剪
 │
 ├── playbooks/engineering-consistency-standards.md  工程一致性规范（团队可直接套用）
 │
@@ -186,19 +217,21 @@ AI 系统章节的证据源是一个**公开参考实现** [grounded-rag](https:
 
 **如果你想跑起来看看**：进入 `distribution-starter/` 目录，按 README.md 的步骤初始化 MySQL 并启动。
 
-**如果你想快速了解**：先读 `architecture/` 下的 4 篇基础模式（数据权限、事件驱动、审计、MyBatis），再看其余 5 篇。
+**如果你想快速了解**：先读 `architecture/` 下的 4 篇基础模式（数据权限、事件驱动、审计、MyBatis），再看其余 6 篇。
 
 **如果你想看生产验证案例**：进入 `case-studies/` 目录，每个案例都有 README 和演进文档。
 
 **如果你想从头理解**：按 `tutorial/` 的 01→07 顺序阅读，这是从零构建的完整叙事线。
 
-**如果你在做 AI 系统或关心输出可靠性**：先读[组件正确 ≠ 系统有效](architecture/verifier-failure-modes.md)，再读[声明级校验门](architecture/claim-level-verifier.md)；开源前的提取纪律见[开源发布止血带](playbooks/open-source-compliance.md)。
+**如果你在做 AI 系统**：先读[AI Agent 架构](architecture/agent-architecture-patterns.md)，再从[AI 工程实践](playbooks/ai-engineering/)进入结构化输出、多模型路由和长文档生成；输出可靠性继续读[组件正确 ≠ 系统有效](architecture/verifier-failure-modes.md)与[声明级校验门](architecture/claim-level-verifier.md)。
 
 **如果你要做技术选型**：读 `decisions/` 下的 6 篇 ADR，看 trade-off 分析。平台层选型看[服务治理的三种形态](architecture/service-governance-forms.md)；容量到顶或要缩小故障域时读[单元化架构](architecture/cell-based-architecture.md)。
 
 **如果你要接手别人的系统**：读 `playbooks/takeover-engineering/`，从 [21 个问题](playbooks/takeover-engineering/hooks/21-questions.md)开始，再按需取用 10 份模板。
 
 **如果你要治理自己的系统群**：读 `playbooks/system-portfolio-governance/`，从[方法论总纲](playbooks/system-portfolio-governance/00-methodology.md)开始——清点、诊断、关停并转决策、防回潮闸门。团队工程基线见[工程一致性规范](playbooks/engineering-consistency-standards.md)。
+
+**如果你要建立企业架构方法或落地 DDD**：先读[TOGAF 实践](playbooks/enterprise-architecture/togaf-in-practice.md)，再读[DDD 七步落地](playbooks/enterprise-architecture/ddd-seven-step-landing.md)，最后接入组合治理与架构评审。
 
 **如果你要管生产环境的稳定运行**：读 `playbooks/production-operations/`，从[运维方法论总纲](playbooks/production-operations/00-methodology.md)开始——可观测、变更与灰度、故障响应与复盘、容量与演练。人少的话直接看「最小可行运维」一节。
 
@@ -288,6 +321,6 @@ English translations of the core documents are available in the [`en/`](en/) dir
 | [en/SECURITY.md](en/SECURITY.md) | Security policy |
 | [en/distribution-starter/README.md](en/distribution-starter/README.md) | Starter quick start and project structure |
 
-The English directory covers every book page except the VitePress homepage (`index.md`) and the two AI architecture articles (added 2026-10, Chinese-only for now). The five methodology playbooks (`playbooks/`, 31 documents) are Chinese-only by design; [en/playbooks.md](en/playbooks.md) indexes what they cover and links to each one. The internal `doc/open-source-strategy.md` also remains Chinese-only.
+The English directory covers every book page except the VitePress homepage (`index.md`) and the AI architecture and engineering articles (added 2026-10, Chinese-only for now). The seven methodology playbooks are Chinese-only by design; [en/playbooks.md](en/playbooks.md) indexes what they cover and links to each one. The internal `doc/open-source-strategy.md` also remains Chinese-only.
 
 For Spring Boot 2.7 users, see the [migration guide](guides/spring-boot-3-migration.md) (also available in [English](en/guides/spring-boot-3-migration.md)).
