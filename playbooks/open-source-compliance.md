@@ -10,7 +10,7 @@
 
 这句话是承诺，不是工艺。**泄露从来不是在 push 那一刻发生的——它发生在提取环节**：写文档的人脑子里装着客户名、内部代号、未公开的业务数字，笔会先于意识泄露。等到了发布前检查，错误已经在文档历史里了。
 
-本 playbook 把提取卫生固化成四件可执行的事：**画切分线、扫描器开源/词表闭源、推送前七条清单、数据边界声明**。全部来自一个真实项目的完整实践——[GroundedRAG](https://github.com/StevenTsai/grounded-rag) 的开源过程（其架构背景见[声明级校验门](../architecture/claim-level-verifier.md)与[失败复盘](../architecture/verifier-failure-modes.md)）。
+本 playbook 把提取卫生固化成四件可执行的事：**画切分线、扫描器开源/词表闭源、推送前清单、数据边界声明**。全部来自一个真实项目的完整实践——[GroundedRAG](https://github.com/StevenTsai/grounded-rag) 的开源过程（其架构背景见[声明级校验门](../architecture/claim-level-verifier.md)与[失败复盘](../architecture/verifier-failure-modes.md)）。
 
 ---
 
@@ -51,7 +51,7 @@ tools/leak_scan.py          ← 扫描逻辑入库：可审计、可 fork、可�
 三个决策点：
 
 1. **扫描逻辑必须开源。** 闭源扫描器无法被社区审计，你也没法让贡献者信任它。逻辑里不该有任何秘密；
-2. **词表必须闭源。** 私有词表本身就是泄露面——一份"内部代号 + 客户名 + 未公开术语"的列表跟着扫描器一起开源，等于把泄露清单开源。词表走**不入库**的本地文件，仓库里只留 example 模板；
+2. **词表必须闭源。** 私有词表本身就是泄露面——一份"内部代号 + 客户名 + 未公开术语"的列表跟着扫描器一起开源，等于把泄露清单开源。词表走本地文件并加入 `.gitignore`（"不入库"靠 ignore 规则保证，不靠记性），仓库里只留 example 模板；
 3. **"改写"不等于"清库"。** 从内部文档改写段落进开源仓库，语义相似度仍然很高。对疑似参考的内部材料，先跑相似度核对：
 
    ```bash
@@ -70,7 +70,7 @@ tools/leak_scan.py          ← 扫描逻辑入库：可审计、可 fork、可�
 2. [ ] 评测口径复核：自建评测指标为预期值（口径定义见其 [docs/metrics.md](https://github.com/StevenTsai/grounded-rag/blob/v1.0.0/docs/metrics.md)）；
 3. [ ] 泄露扫描退出码 0（`python tools/leak_scan.py`）；
 4. [ ] 疑似参考的内部文档/草稿，已跑 `--refs` 相似度核对；
-5. [ ] 私有词表已写入**不入库**的 markers 文件，并重跑一次扫描；
+5. [ ] 私有词表已写入 `.leak_markers.json`，且该文件已在 `.gitignore` 中，并带 `--markers` 显式指定后重跑一次扫描；
 6. [ ] 数据合规：`examples/` 只允许自研合成数据；由公开指南/文献整理的真实评测数据（含第三方内容）**不得入库**，仅本地维护并标注来源；新增依赖已核对许可证并更新第三方声明清单；
 7. [ ] 涉及行为语义的改动，已同步 README / docs 中的口径说明与示例；
 8. [ ] `.git` 历史与已推送分支已检查，无敏感提交；若有，轮换相关凭据（密钥、token、密码），并评估历史重写（`git filter-repo`，不可逆，需单独决策）。
@@ -110,6 +110,10 @@ tools/leak_scan.py          ← 扫描逻辑入库：可审计、可 fork、可�
   ```bash
   git clone https://github.com/StevenTsai/grounded-rag && cd grounded-rag
   git checkout v1.0.0
-  python tools/leak_scan.py --root <你的仓库路径>   # 复用扫描器扫你的仓库
+  python tools/leak_scan.py \
+    --root <你的仓库路径> \
+    --markers <你的仓库路径>/.leak_markers.json    # 扫你的仓库并读你的私有词表
   python tools/leak_scan.py                        # 不带参数则扫扫描器所在仓库自检
   ```
+
+  注意 `--markers` 默认按**当前工作目录**解析（读 `./.leak_markers.json` 若存在），不跟随 `--root`——扫外部仓库时必须显式传入目标仓库的词表路径。

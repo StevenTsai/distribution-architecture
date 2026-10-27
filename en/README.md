@@ -11,7 +11,7 @@
 
 This is a collection of **architecture design documents** + a **reusable Starter library** + **production-validated case studies** + a **full-lifecycle methodology**, covering an enterprise system from build, selection, and verification through takeover, portfolio governance, and production operations.
 
-Beyond code, it distills four directly applicable methods: **takeover engineering** (should you accept it, how much to invest, when to stop), **system portfolio governance** (what to shut down or remediate), **production operations** (observability, change management, incident response), and **engineering consistency standards** (naming, interfaces, release, and glossary baselines). The playbooks are written in Chinese; see the [playbooks index](playbooks.md).
+Beyond code, it distills five directly applicable methods: **takeover engineering** (should you accept it, how much to invest, when to stop), **system portfolio governance** (what to shut down or remediate), **production operations** (observability, change management, incident response), **engineering consistency standards** (naming, interfaces, release, and glossary baselines), and **open-source compliance** (what stays private, leak scanning, pre-push checks). The playbooks are written in Chinese; see the [playbooks index](playbooks.md).
 
 > I encountered generic problems in a production system: data permissions, workflow engines, event-driven decoupling, piecework wages.
 > I first implemented these patterns with Spring Boot + MyBatis in a real project,
@@ -156,7 +156,7 @@ The fourth case study, [production-guardrails](case-studies/production-guardrail
 
 ## English Documentation
 
-This directory mirrors the Chinese book: the preface, all 9 Java-era architecture patterns, all 6 ADRs, all 4 practical guides, the 7-step tutorial, and the case-study READMEs plus their evolution notes. The five methodology playbooks and the AI-system chapters (two architecture articles plus the open-source compliance playbook, added 2026-10) are Chinese-only for now; see the [playbooks index](playbooks.md) for what the playbooks cover and how to navigate them.
+This directory mirrors the Chinese book: the preface, all 9 Java-era architecture patterns, all 6 ADRs, all 4 practical guides, the 7-step tutorial, and the case-study READMEs plus their evolution notes. The five methodology playbooks and the two AI architecture articles (added 2026-10) are Chinese-only for now; see the [playbooks index](playbooks.md) for what the playbooks cover and how to navigate them.
 
 | Section | Documents |
 |---------|-----------|

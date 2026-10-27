@@ -288,6 +288,6 @@ English translations of the core documents are available in the [`en/`](en/) dir
 | [en/SECURITY.md](en/SECURITY.md) | Security policy |
 | [en/distribution-starter/README.md](en/distribution-starter/README.md) | Starter quick start and project structure |
 
-The English directory covers every book page except the VitePress homepage (`index.md`) and the AI-system chapters (added 2026-10, Chinese-only for now). The five methodology playbooks (`playbooks/`, 31 documents) are Chinese-only by design; [en/playbooks.md](en/playbooks.md) indexes what they cover and links to each one. The internal `doc/open-source-strategy.md` also remains Chinese-only.
+The English directory covers every book page except the VitePress homepage (`index.md`) and the two AI architecture articles (added 2026-10, Chinese-only for now). The five methodology playbooks (`playbooks/`, 31 documents) are Chinese-only by design; [en/playbooks.md](en/playbooks.md) indexes what they cover and links to each one. The internal `doc/open-source-strategy.md` also remains Chinese-only.
 
 For Spring Boot 2.7 users, see the [migration guide](guides/spring-boot-3-migration.md) (also available in [English](en/guides/spring-boot-3-migration.md)).
