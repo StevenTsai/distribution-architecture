@@ -5,13 +5,13 @@
 
 中文 | [English](en/README.md)
 
-📖 **[在线阅读《架构炼金术：从真实系统提炼可复用的架构模式》](https://steventsai.github.io/distribution-architecture/)** | B2B 企业级架构设计模式库，从生产系统中提炼的可复用架构方案与全生命周期方法论（Java 实战 + 跨语言交付 + 架构治理）。
+📖 **[在线阅读《架构炼金术：从真实系统提炼可复用的架构模式》](https://steventsai.github.io/distribution-architecture/)** | 企业级架构模式与方法论库，从真实生产系统中提炼（生产实证 + 跨语言交付 + 架构治理 + AI 系统验证）。
 
 ## 这是什么
 
 这是一套**架构设计文档** + **可复用 Starter 库** + **生产验证案例** + **全生命周期方法论**，覆盖一个企业级系统从构建、选型、验证，到接手、治理、运维的完整过程。
 
-代码之外，这里还沉淀了四套可以直接套用的方法：**接手工程**（进入时该不该接、投多少、何时停）、**组合治理**（持有期哪些该关、哪些该治）、**生产运维**（运行期怎么观测、怎么变更、怎么救火）、**工程一致性规范**（团队共用的命名、接口、发布与术语基线）。
+代码之外，这里还沉淀了五套可以直接套用的方法：**接手工程**（进入时该不该接、投多少、何时停）、**组合治理**（持有期哪些该关、哪些该治）、**生产运维**（运行期怎么观测、怎么变更、怎么救火）、**工程一致性规范**（团队共用的命名、接口、发布与术语基线）、**开源提取纪律**（私有模式怎么安全地进公开仓库）。
 
 > 我在生产系统中遇到了数据权限、工作流引擎、事件驱动解耦、计件工资等通用问题。
 > 我先在真实项目中用 Spring Boot + MyBatis 实现了这些模式，
@@ -29,8 +29,13 @@
 - [单元化架构](architecture/cell-based-architecture.md) — 爆炸半径、单元键、数据分片与「拔电验证」
 - [服务治理的三种形态](architecture/service-governance-forms.md) — SDK / Agent / Sidecar 的取舍矩阵
 
+### AI 系统架构（2 篇，证据来自开源参考实现 [GroundedRAG](https://github.com/StevenTsai/grounded-rag)）
+- [组件正确 ≠ 系统有效](architecture/verifier-failure-modes.md) — 离线校验 100% vs 端到端 30–46% 的失败复盘与双口径评测制度
+- [声明级校验门](architecture/claim-level-verifier.md) — 把不可信输出降维成可判定断言：四步门、同源不变量、单调权限
+
 ### 可复用库
 - [spring-data-permission-starter](https://github.com/StevenTsai/spring-data-permission-starter) — 数据权限的 Spring Boot Starter 实现，可直接导入使用
+- [grounded-rag](https://github.com/StevenTsai/grounded-rag) — 声明级校验门 RAG 参考实现（Python / MIT），本书 AI 章节的证据源
 
 ### 生产验证案例（4 个案例，124 个测试）
 - [MTO 工作流引擎](case-studies/mto-workflow-engine/) — 从珠宝 ERP 提取的通用工单状态机，可复用到服装/家具/电子加工等行业
@@ -48,11 +53,12 @@
 - **7 步从零构建教程**：从领域模型到合规检查的完整叙事线
 - **4 个实操指南**：快速开始、扩展新模块、定制权限、Spring Boot 3 迁移
 
-### 方法论 Playbooks（4 套）
+### 方法论 Playbooks（5 套）
 - [接手工程](playbooks/takeover-engineering/) — 进入时该不该接、投多少、何时停
 - [架构组合治理](playbooks/system-portfolio-governance/) — 系统群清点、诊断、关停并转与防回潮
 - [生产运维](playbooks/production-operations/) — 观测、变更、故障响应与演练
 - [工程一致性规范](playbooks/engineering-consistency-standards.md) — 命名、接口、发布与术语基线
+- [开源发布止血带](playbooks/open-source-compliance.md) — 私有生产到公开模式库的提取纪律：切分线、扫描器开源/词表闭源、推送前清单（含 Git 历史与凭据轮换）
 
 ## 生产验证来源
 
@@ -69,6 +75,8 @@ Case Study 的代码从一个**真实生产系统**（珠宝加工 ERP）中提�
 > 源项目为私有仓库，仅提取通用架构模式，不包含业务敏感配置和客户数据。表中的 909 个测试是源系统口径；本仓库 4 个案例可运行的测试为 124 个。
 
 第四个案例 [production-guardrails](case-studies/production-guardrails/) 提取自**另一个私有生产系统**（IoT 设备管理后端，电池遥测域）：约 60 万注册用户的容量口径、24 个 REST 端点、155 个源系统单测；提取到本仓库后的护栏案例为 51 个测试。同样只提取通用架构模式。
+
+AI 系统章节的证据源是一个**公开参考实现** [grounded-rag](https://github.com/StevenTsai/grounded-rag)（MIT）：247 个单元测试、覆盖率 95%；确定性评测集三指标 1.0，端到端期望匹配率 30.8%–46.2%——两个口径成对引用（详见[失败复盘](architecture/verifier-failure-modes.md)）。真实评测集本地维护、不分发，仓库内为合成数据。
 
 ## 适合谁看
 
@@ -97,7 +105,9 @@ Case Study 的代码从一个**真实生产系统**（珠宝加工 ERP）中提�
 │   ├── admin-rbac.md                管理端 RBAC：模块级权限 + 敏感操作独立授权
 │   ├── cross-language-contract-testing.md  跨语言契约测试：仓外裁判 + fixture 对拍
 │   ├── cell-based-architecture.md   单元化架构：爆炸半径、单元键、数据分片与故障演练
-│   └── service-governance-forms.md  服务治理三形态：SDK / Agent / Sidecar 的取舍矩阵
+│   ├── service-governance-forms.md  服务治理三形态：SDK / Agent / Sidecar 的取舍矩阵
+│   ├── verifier-failure-modes.md    组件正确 ≠ 系统有效：校验门端到端失败复盘（AI）
+│   └── claim-level-verifier.md      声明级校验门：可判定断言 + 四步门 + 两条不变量（AI）
 │
 ├── decisions/                       架构决策记录（ADR）
 │   ├── why-session-not-jwt.md       为什么选 Session Token
@@ -147,6 +157,8 @@ Case Study 的代码从一个**真实生产系统**（珠宝加工 ERP）中提�
 │
 ├── playbooks/engineering-consistency-standards.md  工程一致性规范（团队可直接套用）
 │
+├── playbooks/open-source-compliance.md  开源发布止血带（提取纪律 + 推送前清单）
+│
 ├── playbooks/production-operations/  生产运维（第三姊妹篇：系统运行期怎么稳住）
 │   ├── 00-methodology.md            五原则 + 四能力域（观测/变更/响应/演练）
 │   ├── deep-dives/                  全链路灰度：标记透传、消息灰度、数据兼容
@@ -179,6 +191,8 @@ Case Study 的代码从一个**真实生产系统**（珠宝加工 ERP）中提�
 **如果你想看生产验证案例**：进入 `case-studies/` 目录，每个案例都有 README 和演进文档。
 
 **如果你想从头理解**：按 `tutorial/` 的 01→07 顺序阅读，这是从零构建的完整叙事线。
+
+**如果你在做 AI 系统或关心输出可靠性**：先读[组件正确 ≠ 系统有效](architecture/verifier-failure-modes.md)，再读[声明级校验门](architecture/claim-level-verifier.md)；开源前的提取纪律见[开源发布止血带](playbooks/open-source-compliance.md)。
 
 **如果你要做技术选型**：读 `decisions/` 下的 6 篇 ADR，看 trade-off 分析。平台层选型看[服务治理的三种形态](architecture/service-governance-forms.md)；容量到顶或要缩小故障域时读[单元化架构](architecture/cell-based-architecture.md)。
 
@@ -222,6 +236,8 @@ Case Study 的代码从一个**真实生产系统**（珠宝加工 ERP）中提�
 | **接口隔离变化** | 用接口封装可变部分 | 17 道固定工序 → YAML 配置路由 |
 | **保留模式替换细节** | 保留架构模式，替换业务细节 | 状态机模式保留，具体状态值替换 |
 | **先工作再通用** | 先让它跑起来，验证后再抽象 | 先实现 `piecePrice × qty`，再加系数 |
+
+开源侧的提取纪律（切分线怎么画、泄露扫描、推送前清单）单独沉淀为[开源发布止血带](playbooks/open-source-compliance.md)。
 
 ## 技术栈
 
@@ -272,6 +288,6 @@ English translations of the core documents are available in the [`en/`](en/) dir
 | [en/SECURITY.md](en/SECURITY.md) | Security policy |
 | [en/distribution-starter/README.md](en/distribution-starter/README.md) | Starter quick start and project structure |
 
-The English directory covers every book page except the VitePress homepage (`index.md`). The four methodology playbooks (`playbooks/`, 30 documents) are Chinese-only by design; [en/playbooks.md](en/playbooks.md) indexes what they cover and links to each one. The internal `doc/open-source-strategy.md` also remains Chinese-only.
+The English directory covers every book page except the VitePress homepage (`index.md`) and the two AI architecture articles (added 2026-10, Chinese-only for now). The five methodology playbooks (`playbooks/`, 31 documents) are Chinese-only by design; [en/playbooks.md](en/playbooks.md) indexes what they cover and links to each one. The internal `doc/open-source-strategy.md` also remains Chinese-only.
 
 For Spring Boot 2.7 users, see the [migration guide](guides/spring-boot-3-migration.md) (also available in [English](en/guides/spring-boot-3-migration.md)).

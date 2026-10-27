@@ -1,6 +1,6 @@
 # Methodology Playbooks (Chinese)
 
-> Four practitioner playbooks covering the lifecycle of a system after it ships: taking it over, governing a portfolio, running it in production, and keeping the engineering baseline consistent.
+> Five practitioner playbooks covering the lifecycle of a system after it ships: taking it over, governing a portfolio, running it in production, keeping the engineering baseline consistent, and extracting private work into public repositories safely.
 
 **Language note:** these playbooks are written in Chinese. They were written as first-person practitioner methodology—judgment, trade-offs, and templates—and the author publishes them in the language they were reasoned in. This page is an index so English readers know what exists and can navigate to it. Machine translation is available through your browser; the templates themselves are language-neutral.
 
@@ -26,6 +26,7 @@ If you need a specific playbook in English, open an issue—demand is a reasonab
 | **System Portfolio Governance** | The holding period: which systems to shut down, merge, or remediate; how to stop the portfolio from only growing | "Is the portfolio growing without bound?" | [README](../playbooks/system-portfolio-governance/) |
 | **Production Operations** | The running period: observability, change and canary, incident response, capacity and drills | "When it breaks, can you see it, change it safely, and recover it?" | [README](../playbooks/production-operations/) |
 | **Engineering Consistency Standards** | The team baseline: naming, versioning, structure, interfaces, config, release, health metrics, glossary | "Are we all building the same system?" | [Standards](../playbooks/engineering-consistency-standards.md) |
+| **Open-Source Compliance** | Before private work becomes public: the split line, leak scanning (open scanner, closed wordlist), an eight-item pre-push checklist, data-boundary declarations | "What must never leave the building?" | [Playbook](../playbooks/open-source-compliance.md) |
 
 The first three share one underlying idea: **define the exit before you start**—an investment cap before you take over a system, an auto-review before a system goes dormant, a rollback before any change ships.
 
@@ -69,6 +70,10 @@ Ten fillable templates plus a free hook.
 
 One axiom—*one concept, one word, one authority*—and eight chapters: naming, versioning, project structure, interfaces, configuration and environments, iteration and release, health metrics, and glossary. Each item is marked **mandatory** or **recommended**, with an incremental adoption path so a team does not have to adopt everything on day one.
 
+## Open-Source Compliance
+
+The hygiene layer for this book's own method—turning private production work into a public pattern library. How to draw the split line between private and public, why the scanner is open but the private wordlist is not (`.leak_markers.json` stays out via `.gitignore`), an eight-item pre-push checklist that includes Git history and credential rotation, and data-boundary declarations. [Open the playbook (Chinese)](../playbooks/open-source-compliance.md).
+
 ---
 
 ## Reading Order
@@ -80,4 +85,4 @@ flowchart LR
     C --> D[Keeping the engineering<br/>baseline consistent]
 ```
 
-They can be read independently. If you only read one, read **Production Operations**—it has the shortest path from reading to a concrete change in your team.
+They can be read independently. If you only read one, read **Production Operations**—it has the shortest path from reading to a concrete change in your team. **Open-Source Compliance** sits on a different axis: it applies the moment you publish anything, not at a stage of the running lifecycle.

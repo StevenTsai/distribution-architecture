@@ -3,7 +3,7 @@ import { withMermaid } from 'vitepress-plugin-mermaid'
 export default withMermaid({
   // 导航栏使用短书名，完整书名在首页 hero 和 description 中展示
   title: '架构炼金术',
-  description: '《架构炼金术：从真实系统提炼可复用的架构模式》—— Java / Spring Boot / MyBatis 实战，9 个可复用模式 + 6 篇 ADR + 可运行代码与测试，以及跨语言的交付方法论',
+  description: '《架构炼金术：从真实系统提炼可复用的架构模式》—— 生产系统实证与方法论，11 个可复用模式 + 6 篇 ADR + 可运行代码与测试，跨语言交付方法论，以及 AI 系统的可判定性验证',
   lang: 'zh-CN',
 
   locales: {
@@ -14,7 +14,7 @@ export default withMermaid({
       link: '/en/',
       title: 'Architecture Alchemy',
       description:
-        'Java / Spring Boot / MyBatis architecture patterns extracted from production systems',
+        'Architecture patterns and methodology extracted from production systems — production evidence, ADRs, and AI reliability chapters backed by an open-source reference implementation',
       themeConfig: {
         nav: [
           { text: 'Home', link: '/en/' },
@@ -288,6 +288,7 @@ export default withMermaid({
           { text: '模板 04 路线图与防回潮', link: '/playbooks/system-portfolio-governance/templates/04-governance-roadmap' },
           { text: '模板 05 架构评审机制', link: '/playbooks/system-portfolio-governance/05-architecture-review' },
           { text: '工程一致性规范', link: '/playbooks/engineering-consistency-standards' },
+          { text: '开源发布止血带', link: '/playbooks/open-source-compliance' },
         ],
       },
       {
@@ -300,6 +301,13 @@ export default withMermaid({
           { text: '模板 03 故障响应与复盘', link: '/playbooks/production-operations/templates/03-incident-postmortem' },
           { text: '模板 04 容量与演练', link: '/playbooks/production-operations/templates/04-capacity-and-drills' },
           { text: '深水区：全链路灰度', link: '/playbooks/production-operations/deep-dives/full-link-canary' },
+        ],
+      },
+      {
+        text: '第九部分：AI 系统',
+        items: [
+          { text: '组件正确 ≠ 系统有效：失败复盘', link: '/architecture/verifier-failure-modes' },
+          { text: '声明级校验门', link: '/architecture/claim-level-verifier' },
         ],
       },
       {

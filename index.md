@@ -6,7 +6,7 @@ titleTemplate: false
 hero:
   name: 架构炼金术
   text: 从真实系统提炼可复用的架构模式
-  tagline: Java / Spring Boot 实战 · 9 个模式 · 6 篇 ADR · 可运行案例与测试
+  tagline: 架构模式与方法论 · 生产系统实证 · 11 个模式 · 6 篇 ADR · 可运行案例与测试
   image:
     src: /logo.svg
     alt: Distribution Architecture
@@ -23,6 +23,11 @@ features:
     title: 9 个架构模式
     details: 数据权限、事件驱动状态机、审计日志、PII 加密、RBAC、跨语言契约测试、MyBatis 工程化、单元化、服务治理
     link: /architecture/data-permission-model
+
+  - icon: 🤖
+    title: AI 系统：可判定性与失败面
+    details: 声明级校验门、端到端失败复盘、开源提取纪律——证据来自开源参考实现 GroundedRAG
+    link: /architecture/verifier-failure-modes
 
   - icon: 📋
     title: 6 篇技术决策
