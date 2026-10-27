@@ -29,8 +29,8 @@ sequenceDiagram
     S->>S: shipDelivery()
     S->>S: 更新发货单状态
     S->>S: 更新订单状态
-    S-)F: publishEvent(DeliveryCompleteEvent)
-    F->>F: @EventListener createReceivable()
+    S-)F: publishEvent(DeliveryCompleteEvent) [事务内]
+    F->>F: @TransactionalEventListener(AFTER_COMMIT) createReceivable()
     Note over F: 30 天账期
 ```
 
@@ -44,8 +44,8 @@ sequenceDiagram
     participant I as 库存模块
     P->>P: finishWork()
     P->>P: set ALL_FINISHED
-    P-)I: publishEvent(WorkOrderFinishedEvent)
-    I->>I: @EventListener createFinishedGoods()
+    P-)I: publishEvent(WorkOrderFinishedEvent) [事务内]
+    I->>I: @TransactionalEventListener(AFTER_COMMIT) createFinishedGoods()
     Note over P: 重构前：直接调用 finishedInventoryService
 ```
 
@@ -59,8 +59,8 @@ sequenceDiagram
     participant P as 生产模块
     Q->>Q: handleDefect()
     Q->>Q: 记录质检不良
-    Q-)P: publishEvent(QualityDefectEvent)
-    P->>P: @EventListener createReworkOrder()
+    Q-)P: publishEvent(QualityDefectEvent) [事务内]
+    P->>P: @TransactionalEventListener(AFTER_COMMIT) createReworkOrder()
     Note over Q: 重构前：跨模块无任何副作用
 ```
 
@@ -68,19 +68,22 @@ sequenceDiagram
 
 ## 关键设计模式
 
-### 1. 发后即忘与错误隔离
+### 1. 事务提交后触发 + 发后即忘
 
-所有监听器都用 try/catch 包裹自身逻辑。失败会被记录日志，但绝不会向上抛给发布方。这样可以避免下游失败导致上游事务回滚。
+所有监听器都声明为 `@TransactionalEventListener(phase = AFTER_COMMIT)`：只有发布方事务**提交成功后**才触发，回滚不会留下幽灵记录（若用 `@EventListener + @Async`，异步线程可能在事务提交前就落库，回滚后产生孤儿应收/库存/返工记录）。
+
+触发后进入 try/catch：失败会被记录日志（带完整业务键与「需人工补偿/对账」字样），但绝不会向上抛给发布方。这样可以避免下游失败导致上游事务回滚。
 
 ```java
-@EventListener
+@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
 @Async("eventAsyncExecutor")
 public void onDeliveryComplete(DeliveryCompleteEvent event) {
     try {
-        // ... 创建应收账款
+        // ... 创建应收账款（日期取事件字段，不用 now()）
     } catch (Exception e) {
-        log.error("Failed: {}", e.getMessage(), e);
-        // 不向上抛出 —— 发后即忘
+        // 不向上抛出 —— 发后即忘；但绝不静默：带业务键，供人工补偿/对账
+        log.error("创建应收失败，需人工补偿/对账：deliveryId={}, orderId={}, amount={}",
+                event.getDeliveryId(), event.getOrderId(), event.getOrderAmount(), e);
     }
 }
 ```
@@ -93,6 +96,7 @@ public void onDeliveryComplete(DeliveryCompleteEvent event) {
 public class DeliveryToReceivableListener {
     private final AccountsReceivableCallback receivableCallback;
 
+    /** 实现方必须以 orderId 做幂等（同一事件可能被投递多次） */
     public interface AccountsReceivableCallback {
         void createReceivable(...);
     }
@@ -101,7 +105,13 @@ public class DeliveryToReceivableListener {
 
 ### 3. 使用 @Async 实现非阻塞处理
 
-`@Async("eventAsyncExecutor")` 注解确保监听器在线程池中运行，不会阻塞发布方的事务。同时需要结合 `@TransactionalEventListener` 来考虑事务感知的处理。
+`@Async("eventAsyncExecutor")` 注解确保监听器在线程池中运行，不会阻塞发布方的事务。与 `@TransactionalEventListener(AFTER_COMMIT)` 组合后：事务提交 → 提交后回调把事件投递到线程池 → 监听器在异步线程执行，发布方既不回滚连带、也不被阻塞。
+
+### 使用前提：必须在事务内发布
+
+`AFTER_COMMIT` 语义决定了使用前提：**事件发布点必须处于活跃事务中**（发布方方法标注 `@Transactional`，或由 `TransactionTemplate` 包裹）。无事务发布时 Spring 会**静默丢弃**事件（`fallbackExecution` 默认为 `false`），监听器不会执行——这是特性而非缺陷：它保证「监听器执行 ⇔ 发布方事务提交成功」。
+
+`EventConfigWiringTest` 用两条用例把该前提钉死：事务内发布 → 提交后触发；无事务发布 → 不触发。
 
 ### 4. 专用线程池
 
@@ -135,7 +145,7 @@ public class DeliveryCompleteEvent extends ApplicationEvent {
 }
 ```
 
-### 2. 发布事件
+### 2. 发布事件（必须在事务内）
 
 ```java
 @Service
@@ -143,11 +153,13 @@ public class DeliveryCompleteEvent extends ApplicationEvent {
 public class DeliveryService {
     private final ApplicationEventPublisher eventPublisher;
 
+    /* @Transactional 是 AFTER_COMMIT 监听器的使用前提，不是可选项 */
+    @Transactional
     public void shipDelivery(Long id) {
         // ... 更新状态
         eventPublisher.publishEvent(new DeliveryCompleteEvent(
-                this, delivery.getId(), order.getId(),
-                order.getOrderNo(), order.getCustomerId(), order.getAmount()));
+                this, delivery.getId(), order.getId(), order.getOrderNo(),
+                order.getCustomerId(), order.getAmount(), LocalDate.now()));
     }
 }
 ```
@@ -157,13 +169,13 @@ public class DeliveryService {
 ```java
 @Slf4j
 public class DeliveryToReceivableListener {
-    @EventListener
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Async("eventAsyncExecutor")
     public void onDeliveryComplete(DeliveryCompleteEvent event) {
         try {
             receivableCallback.createReceivable(...);
         } catch (Exception e) {
-            log.error("Failed", e);
+            log.error("创建应收失败，需人工补偿/对账：orderId={}", event.getOrderId(), e);
         }
     }
 }
@@ -206,13 +218,30 @@ public class WorkOrderServiceImpl {
 // 库存模块 —— 独立监听
 @Slf4j
 public class WorkOrderToInventoryListener {
-    @EventListener
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Async("eventAsyncExecutor")
     public void onWorkOrderFinished(WorkOrderFinishedEvent event) {
         finishedGoodsCallback.createFinishedGoods(...);
     }
 }
 ```
+
+### 接入方式：回调 bean 缺失 = 启动失败（fail-fast）
+
+`EventConfig` 的三个 `@Bean` 方法**直接声明对回调接口的依赖**（方法参数注入）。接入方忘记注册任一回调 bean 时，上下文启动立即失败（`NoSuchBeanDefinitionException`），错误在部署阶段暴露——监听器绝不会「静默不注册」。装配行为由 `EventConfigWiringTest` 锁定（回调齐全 → 三个 listener 注册；缺失任一 → 启动失败）。
+
+## 已知边界
+
+本案例是**教学版**，刻意从简的部分必须在生产落地前补齐：
+
+| 边界 | 本案例现状 | 生产落地需要 |
+|---|---|---|
+| 失败投递 | catch 落 error 日志（带完整业务键 +「需人工补偿/对账」字样）后丢弃 | **outbox 表 + 重试队列**：失败事件持久化，按退避策略重投 |
+| 对账 | 无 | **定时对账任务**：比对发货单/工单/质检记录与下游应收/库存/返工记录，差异告警 |
+| 投递语义 | at-most-once（AFTER_COMMIT 后一次性异步执行） | at-least-once + **回调方幂等**（接口 javadoc 已写明：实现方需以 orderId/workOrderId 做幂等） |
+| 监听丢失 | fail-fast 启动检查（回调缺失拒绝启动） | 同左 + 事件类型注册清单的 CI 校验 |
+
+**为什么教学版不做完整 outbox：** outbox 需要一张持久化表、一个轮询/通知泵、重试与死信策略——这套基础设施会淹没本案例真正要讲的东西（事务感知的事件解耦本身）。完整 outbox 方案见主仓库架构文档；此处只做到「诚实」：失败不静默（日志带全量业务键与补偿指引），前提写明（必须在事务内发布），语义有测试锁定（`EventConfigWiringTest`）。
 
 ## 相关文档
 

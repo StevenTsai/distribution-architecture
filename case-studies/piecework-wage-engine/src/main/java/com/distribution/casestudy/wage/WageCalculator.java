@@ -64,8 +64,12 @@ public class WageCalculator {
         settlement.applyCoefficients();
         settlement.calculateFinalAmount();
 
-        // Settlement metadata
-        settlement.setSettlementPeriod(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM")));
+        // 结算期归属：按报工日期归属月份（跨月补录不能错记到计算当月）；
+        // reportedAt 缺失时退化为按当天归属。
+        LocalDate reportDate = record.getReportedAt() != null
+                ? record.getReportedAt().toLocalDate()
+                : LocalDate.now();
+        settlement.setSettlementPeriod(reportDate.format(DateTimeFormatter.ofPattern("yyyy-MM")));
         settlement.setSettlementDate(LocalDate.now());
 
         return settlement;

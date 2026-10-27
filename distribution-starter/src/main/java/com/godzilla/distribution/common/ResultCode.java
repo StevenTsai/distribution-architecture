@@ -44,6 +44,8 @@ public enum ResultCode {
     DISTRIBUTION_DATA_ACCESS_DENIED(30079, "distribution data access denied"),
     DISTRIBUTION_LEAD_PHONE_EXISTS(30080, "distribution lead phone exists"),
     DISTRIBUTION_LEAD_SOURCE_MEMBER_DISABLED(30081, "distribution lead source member disabled"),
+    DISTRIBUTION_COMPLIANCE_REVIEW_DENIED(30082, "distribution compliance review denied"),
+    DISTRIBUTOR_DELETE_DENIED(30083, "distributor delete denied"),
 
     ;
 

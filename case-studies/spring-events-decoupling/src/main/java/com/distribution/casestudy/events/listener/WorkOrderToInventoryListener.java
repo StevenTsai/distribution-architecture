@@ -2,8 +2,9 @@ package com.distribution.casestudy.events.listener;
 
 import com.distribution.casestudy.events.event.WorkOrderFinishedEvent;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 import java.time.LocalDate;
 
@@ -38,11 +39,14 @@ import java.time.LocalDate;
  *     eventPublisher.publishEvent(new WorkOrderFinishedEvent(this, ...));
  * }
  * // In inventory module (this listener):
- * @EventListener
+ * @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
  * public void onWorkOrderFinished(WorkOrderFinishedEvent event) {
  *     inventoryCallback.createFinishedGoods(...);
  * }
  * </pre>
+ *
+ * <p><b>Precondition:</b> the event must be published inside an active transaction —
+ * AFTER_COMMIT listeners do not fire for non-transactional publishers.</p>
  */
 @Slf4j
 public class WorkOrderToInventoryListener {
@@ -53,31 +57,39 @@ public class WorkOrderToInventoryListener {
         this.finishedGoodsCallback = finishedGoodsCallback;
     }
 
-    @EventListener
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Async("eventAsyncExecutor")
     public void onWorkOrderFinished(WorkOrderFinishedEvent event) {
         try {
+            /* 入库日期取事件携带的完工日期，而非监听线程的 now()——异步延迟不得使日期漂移 */
             finishedGoodsCallback.createFinishedGoods(
                     event.getWorkOrderId(),
                     event.getWorkOrderNo(),
                     event.getProductId(),
                     event.getProductCode(),
                     event.getFinishedQuantity(),
-                    LocalDate.now(),
+                    event.getFinishedDate(),
                     "IN_STOCK"
             );
 
             log.info("Work order finished → created finished goods: woId={}, qty={}",
                     event.getWorkOrderId(), event.getFinishedQuantity());
         } catch (Exception e) {
-            log.error("Failed to create finished goods from work order event: woId={}, error={}",
-                    event.getWorkOrderId(), e.getMessage(), e);
+            /* 发后即忘，但绝不静默：带全量业务键落 error 日志，供人工补偿/对账 */
+            log.error("创建成品入库失败，需人工补偿/对账：workOrderId={}, workOrderNo={}, productCode={}, qty={}, error={}",
+                    event.getWorkOrderId(), event.getWorkOrderNo(), event.getProductCode(),
+                    event.getFinishedQuantity(), e.getMessage(), e);
         }
     }
 
     /**
      * Callback interface for finished goods creation.
      * Decouples production module from inventory module.
+     *
+     * <p><b>Idempotency contract:</b> implementations must be idempotent on
+     * {@code workOrderId} (e.g., unique index + existence check). The same
+     * event may be delivered more than once in production; the callback owns
+     * deduplication.</p>
      */
     public interface FinishedGoodsCallback {
         void createFinishedGoods(Long workOrderId, String workOrderNo,

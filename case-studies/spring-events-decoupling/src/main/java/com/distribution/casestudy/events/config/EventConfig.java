@@ -3,7 +3,6 @@ package com.distribution.casestudy.events.config;
 import com.distribution.casestudy.events.listener.DeliveryToReceivableListener;
 import com.distribution.casestudy.events.listener.QualityToReworkListener;
 import com.distribution.casestudy.events.listener.WorkOrderToInventoryListener;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableAsync;
@@ -19,6 +18,14 @@ import java.util.concurrent.ThreadPoolExecutor;
  * a single {@code asyncExecutor} bean used for both parallel queries and
  * async event listeners. This version provides a dedicated
  * {@code eventAsyncExecutor} bean for event processing.</p>
+ *
+ * <h3>Fail-fast listener registration</h3>
+ * <p>The three {@code @Bean} methods declare their callback dependencies directly
+ * (method parameter injection). A missing callback bean fails context startup with
+ * {@code NoSuchBeanDefinitionException} — the listener is never silently absent.
+ * (An earlier version used {@code @ConditionalOnBean(type = "...Listener.Callback")}
+ * with dotted inner-class names; JVM binary names require {@code '$'}, so the
+ * condition never matched and listeners were silently skipped.)</p>
  *
  * <h3>Thread pool design</h3>
  * <ul>
@@ -49,21 +56,18 @@ public class EventConfig {
     }
 
     @Bean
-    @ConditionalOnBean(type = "com.distribution.casestudy.events.listener.DeliveryToReceivableListener.AccountsReceivableCallback")
     public DeliveryToReceivableListener deliveryToReceivableListener(
             DeliveryToReceivableListener.AccountsReceivableCallback callback) {
         return new DeliveryToReceivableListener(callback);
     }
 
     @Bean
-    @ConditionalOnBean(type = "com.distribution.casestudy.events.listener.WorkOrderToInventoryListener.FinishedGoodsCallback")
     public WorkOrderToInventoryListener workOrderToInventoryListener(
             WorkOrderToInventoryListener.FinishedGoodsCallback callback) {
         return new WorkOrderToInventoryListener(callback);
     }
 
     @Bean
-    @ConditionalOnBean(type = "com.distribution.casestudy.events.listener.QualityToReworkListener.ReworkOrderCallback")
     public QualityToReworkListener qualityToReworkListener(
             QualityToReworkListener.ReworkOrderCallback callback) {
         return new QualityToReworkListener(callback);

@@ -148,6 +148,17 @@ mapper.selectByCondition(...);
 }
 ```
 
+## 已知边界
+
+Starter 刻意裁剪了部分生产级能力，使用前请了解以下边界：
+
+- **Session 签发在外部系统**：本模块只消费 `user_login_session` 表并校验 token（`AuthHeaderInterceptor`），不包含登录/注册端点。真实部署时由外部认证系统签发并维护会话。
+- **角色仅做枚举校验，不参与授权**：`DistributionRoleCode` 只保证写入值合法，运行期授权一律以 `dataScope`（4 级数据权限）为准。为收敛风险，平台级操作已收紧为 ALL 范围专属：合规记录审核（approve/reject）、渠道删除仅 ALL 操作者可执行。
+- **数据范围授予遵循偏序**：SELF < OWN_DISTRIBUTOR < OWN_AND_CHILDREN < ALL。非 ALL 操作者只能授予不超出自身范围的 dataScope；SELF 范围成员不能创建成员或调整数据范围；成员/线索/渠道的变更均为全量 PUT 语义，变更后的归属渠道必须落在操作者授权范围内。
+- **审计/合规租户过滤依赖冗余列**：列表查询按 `distributor_id` 列做行过滤（`biz_id` 是业务对象 ID，与其他表的渠道 ID 独立自增，不可互用）。存量 `distributor_id` 为空的行在列表中不可见（fail-closed），详情查询会回退到业务表解析归属渠道，上线前需按迁移脚本回填。
+- **CORS 来源由配置约束**：允许来源通过 `app.cors.allowed-origins` 配置（默认仅 `http://localhost:*`），不再使用裸 `*` + `allowCredentials(true)` 组合。
+- **PII 密钥 fail-fast**：`app.pii.key` 无默认值，生产 profile 缺失密钥时启动直接失败；仅 `application-dev.properties` 提供开发默认值。
+
 ## 与设计文档的对应关系
 
 | 设计文档 | Starter 中的实现 |

@@ -89,9 +89,9 @@ public void handleDefect(BizDefectHandle defect) {
 
 ## 保留的部分
 
-1. **`@EventListener` 注解** —— Spring 原生的事件机制，无需额外依赖
+1. **Spring 原生事件机制** —— 保留注解驱动的事件模型；监听器升级为 `@TransactionalEventListener(AFTER_COMMIT)`（见「事务相关考量」）
 2. **监听器上的 `@Async`** —— 非阻塞、发后即忘模式
-3. **监听器内的 try/catch** —— 失败只记录日志，绝不向上抛出（避免上游回滚）
+3. **监听器内的 try/catch** —— 失败只记录日志（带完整业务键与人工补偿指引），绝不向上抛出（避免上游回滚）
 4. **线程池配置** —— core 2、max 8、queue 100、CallerRunsPolicy（来自原始的 `AsyncConfig`）
 5. **`ApplicationEvent` 基类** —— 承载事件数据，支持事件层次结构
 
@@ -110,16 +110,17 @@ public void handleDefect(BizDefectHandle defect) {
 
 ## 事务相关考量
 
-原始的 `DeliveryShippedEvent` 是在 `@Transactional` 方法中发布的。这意味着：
+原始的 `DeliveryShippedEvent` 是在 `@Transactional` 方法中发布的。原始实现的时序问题：
 
-- **默认行为：** 监听器在事务提交之前同步触发
-- **配合 `@Async`：** 监听器在独立线程中运行，可能在事务提交之前执行
-- **配合 `@TransactionalEventListener`：** 可以延迟到事务提交之后执行（本案例未使用，但可以选用）
+- **原始行为（`@EventListener + @Async`）：** 监听器在独立线程中运行，可能在发布方事务提交**之前**执行——若发布方随后回滚，下游已落库的记录成为幽灵数据。
+- **本案例的修复（`@TransactionalEventListener(AFTER_COMMIT) + @Async`）：** 事件在发布方事务**提交成功后**才投递到异步线程。「监听器执行 ⇔ 事务提交成功」由框架保证。代价是使用前提：发布点必须处于活跃事务内，无事务发布会被静默丢弃（`fallbackExecution` 默认为 `false`）。
 
-这是一个已知的权衡。原始珠宝系统对这些副作用接受了最终一致性（发后即忘），这对以下场景是合适的：
+这些副作用仍然接受最终一致性（发后即忘），这对以下场景是合适的：
 - 应收账款创建（可以重试）
 - 成品入库（可以对账修正）
 - 返工工单创建（可以人工触发）
+
+生产落地还需 outbox/重试/对账，教学版从简的原因见 README「已知边界」。
 
 ## 经验总结
 

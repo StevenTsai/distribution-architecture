@@ -1,0 +1,69 @@
+/* 打印与 PDF 导出：隐藏站点外壳，只留正文 */
+@media print {
+  @page {
+    size: A4;
+  }
+
+  /* VitePress 类名区分大小写：顶栏是 .VPNavBar（大写 B），
+     本地导航条是 .VPLocalNav —— 写错大小写选择器不生效，
+     曾导致 PDF 每篇首页残留搜索/汉堡菜单/Menu 条。 */
+  .VPSidebar,
+  .VPNavBar,
+  .VPNavScreen,
+  .VPLocalNav,
+  .local-nav,
+  .VPDocAside,
+  .VPDocAsideOutline,
+  .VPDocFooter,
+  .VPFooter,
+  .VPPageFooter,
+  .VPFeature,
+  .VPHomePreview,
+  .VPDocNotFound,
+  .VPDocPrevNext,
+  .outline {
+    display: none !important;
+  }
+
+  .VPDoc {
+    padding: 0 !important;
+    max-width: none !important;
+  }
+
+  .VPDoc .container,
+  .VPDoc .content-container,
+  .VPDoc .content {
+    max-width: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* 正文分页控制：标题不断页、代码块/表格尽量不断页 */
+  h1, h2, h3 {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  /* 表格/引用尽量不断页；代码块与图表（Mermaid 常超过一页高）
+     允许跨页 —— avoid 会把整块推到下一页，留下大片空白页 */
+  table, blockquote {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* 防止超宽内容横向溢出页面边界 */
+  pre {
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+  }
+
+  table {
+    word-break: break-all;
+  }
+
+  a {
+    text-decoration: none;
+    color: inherit;
+    /* PDF 中不追加 URL 后缀：长链接会把孤立的 "(" 挤成单独一页 */
+  }
+}

@@ -73,6 +73,26 @@ class WorkOrderStateMachineTest {
             assertThrows(IllegalArgumentException.class,
                     () -> stateMachine.create("WO-001", "nonexistent-route"));
         }
+
+        @Test
+        @DisplayName("Route with null name in YAML config must not cause NPE")
+        void shouldIgnoreNullNamedRoute() {
+            ProcessRouteConfig.RouteDefinition nullNamed = new ProcessRouteConfig.RouteDefinition();
+            nullNamed.setName(null); // 模拟 YAML 漏配 name
+            nullNamed.setProcesses(List.of());
+            routeConfig.setRoutes(List.of(nullNamed, routeConfig.getRoutes().get(0)));
+
+            WorkOrder wo = stateMachine.create("WO-002", "test-route");
+
+            assertEquals(3, wo.getProcesses().size());
+        }
+
+        @Test
+        @DisplayName("findRoute rejects null/blank route name with clear error")
+        void shouldRejectBlankRouteName() {
+            assertThrows(IllegalArgumentException.class, () -> routeConfig.findRoute(null));
+            assertThrows(IllegalArgumentException.class, () -> routeConfig.findRoute("  "));
+        }
     }
 
     // ========== Schedule ==========
@@ -290,6 +310,180 @@ class WorkOrderStateMachineTest {
 
             assertThrows(IllegalStateException.class,
                     () -> stateMachine.voidWork(wo, "twice"));
+        }
+    }
+
+    // ========== Rework & Resume ==========
+
+    @Nested
+    @DisplayName("rework → resume loop")
+    class ReworkResumeTests {
+
+        @Test
+        @DisplayName("Mid-way rework: complete → rework → resume → complete → finish → close")
+        void reworkMidwayThenResumeAndFinish() {
+            WorkOrder wo = createScheduledProducingWorkOrder();
+
+            stateMachine.finishProcess(wo, 1L);
+            stateMachine.finishProcess(wo, 2L);
+            assertEquals(WorkOrderStatus.PARTIAL_FINISHED, wo.getStatus());
+
+            // 第 2 道工序质检不合格，打回返工
+            stateMachine.reworkProcess(wo, 2L);
+            assertEquals(ProcessStatus.REWORK, wo.getProcesses().get(1).getStatus());
+            assertEquals(WorkOrderStatus.PARTIAL_FINISHED, wo.getStatus());
+
+            // 返工完成 → 恢复为 IN_PROGRESS → 可以再次 complete
+            stateMachine.resumeFromRework(wo, 2L);
+            assertEquals(ProcessStatus.IN_PROGRESS, wo.getProcesses().get(1).getStatus());
+
+            stateMachine.finishProcess(wo, 2L);
+            assertEquals(ProcessStatus.COMPLETED, wo.getProcesses().get(1).getStatus());
+            assertEquals(WorkOrderStatus.PARTIAL_FINISHED, wo.getStatus());
+
+            // 最后一道工序完成 → 自动 ALL_FINISHED → 结案，完整闭环
+            stateMachine.finishProcess(wo, 3L);
+            assertEquals(WorkOrderStatus.ALL_FINISHED, wo.getStatus());
+
+            stateMachine.closeWork(wo);
+            assertEquals(WorkOrderStatus.CLOSED, wo.getStatus());
+        }
+
+        @Test
+        @DisplayName("Rework after ALL_FINISHED regresses work order; finishWork closes the loop")
+        void reworkAfterAllFinishedThenFinishWork() {
+            WorkOrder wo = createScheduledProducingWorkOrder();
+            stateMachine.finishProcess(wo, 1L);
+            stateMachine.finishProcess(wo, 2L);
+            stateMachine.finishProcess(wo, 3L);
+            assertEquals(WorkOrderStatus.ALL_FINISHED, wo.getStatus());
+
+            // 全部完工后打回第 1 道工序：工单必须回退，否则恢复后无路可走
+            stateMachine.reworkProcess(wo, 1L);
+            assertEquals(ProcessStatus.REWORK, wo.getProcesses().get(0).getStatus());
+            assertEquals(WorkOrderStatus.PARTIAL_FINISHED, wo.getStatus());
+            assertNull(wo.getActualEndDate());
+
+            stateMachine.resumeFromRework(wo, 1L);
+            stateMachine.finishWork(wo);
+            assertEquals(WorkOrderStatus.ALL_FINISHED, wo.getStatus());
+
+            stateMachine.closeWork(wo);
+            assertEquals(WorkOrderStatus.CLOSED, wo.getStatus());
+        }
+
+        @Test
+        @DisplayName("resumeFromRework guards: non-REWORK process, unknown id, closed work order")
+        void resumeGuards() {
+            WorkOrder wo = createScheduledProducingWorkOrder();
+            stateMachine.finishProcess(wo, 1L);
+
+            // 工序处于 COMPLETED（非 REWORK）→ 拒绝
+            assertThrows(IllegalStateException.class, () -> stateMachine.resumeFromRework(wo, 1L));
+            // 未知工序 → 拒绝
+            assertThrows(IllegalArgumentException.class, () -> stateMachine.resumeFromRework(wo, 999L));
+
+            stateMachine.finishWork(wo);
+            stateMachine.closeWork(wo);
+            // 终态工单 → 拒绝
+            assertThrows(IllegalStateException.class, () -> stateMachine.resumeFromRework(wo, 1L));
+        }
+
+        private WorkOrder createScheduledProducingWorkOrder() {
+            WorkOrder wo = stateMachine.create("WO-001", "test-route");
+            for (int i = 0; i < wo.getProcesses().size(); i++) {
+                wo.getProcesses().get(i).setId((long) (i + 1));
+            }
+            stateMachine.schedule(wo, new WorkCenter(1L, "W1"), new Worker(1L, "John"));
+            stateMachine.startWork(wo);
+            return wo;
+        }
+    }
+
+    // ========== Mark Warehoused ==========
+
+    @Nested
+    @DisplayName("markWarehoused()")
+    class MarkWarehousedTests {
+
+        @Test
+        @DisplayName("ALL_FINISHED → WAREHOUSED → CLOSED")
+        void shouldWarehouseThenClose() {
+            WorkOrder wo = stateMachine.create("WO-001", "test-route");
+            stateMachine.schedule(wo, new WorkCenter(1L, "W1"), new Worker(1L, "John"));
+            stateMachine.startWork(wo);
+            stateMachine.finishWork(wo);
+
+            stateMachine.markWarehoused(wo);
+            assertEquals(WorkOrderStatus.WAREHOUSED, wo.getStatus());
+
+            stateMachine.closeWork(wo);
+            assertEquals(WorkOrderStatus.CLOSED, wo.getStatus());
+        }
+
+        @Test
+        @DisplayName("Should throw when not ALL_FINISHED")
+        void shouldThrowWhenNotAllFinished() {
+            WorkOrder wo = stateMachine.create("WO-001", "test-route");
+            assertThrows(IllegalStateException.class, () -> stateMachine.markWarehoused(wo));
+        }
+    }
+
+    // ========== Reorder Processes ==========
+
+    @Nested
+    @DisplayName("reorderProcesses()")
+    class ReorderProcessesTests {
+
+        @Test
+        @DisplayName("Should reorder by given process ID order")
+        void shouldReorder() {
+            WorkOrder wo = stateMachine.create("WO-001", "test-route");
+            for (int i = 0; i < wo.getProcesses().size(); i++) {
+                wo.getProcesses().get(i).setId((long) (i + 1));
+            }
+
+            stateMachine.reorderProcesses(wo, List.of(3L, 1L, 2L));
+
+            assertEquals(3, wo.getProcesses().get(0).getId());
+            assertEquals(1, wo.getProcesses().get(0).getSortOrder());
+            assertEquals(1, wo.getProcesses().get(1).getId());
+            assertEquals(2, wo.getProcesses().get(2).getId());
+        }
+
+        @Test
+        @DisplayName("Should reject terminal (CLOSED) work order")
+        void shouldRejectClosed() {
+            WorkOrder wo = stateMachine.create("WO-001", "test-route");
+            stateMachine.schedule(wo, new WorkCenter(1L, "W1"), new Worker(1L, "John"));
+            stateMachine.startWork(wo);
+            stateMachine.finishWork(wo);
+            stateMachine.closeWork(wo);
+
+            assertThrows(IllegalStateException.class,
+                    () -> stateMachine.reorderProcesses(wo, List.of(1L, 2L, 3L)));
+        }
+
+        @Test
+        @DisplayName("Should reject terminal (VOID) work order")
+        void shouldRejectVoid() {
+            WorkOrder wo = stateMachine.create("WO-001", "test-route");
+            stateMachine.voidWork(wo, "cancelled");
+
+            assertThrows(IllegalStateException.class,
+                    () -> stateMachine.reorderProcesses(wo, List.of(1L, 2L, 3L)));
+        }
+
+        @Test
+        @DisplayName("Should throw on unknown process ID instead of silently skipping")
+        void shouldRejectUnknownProcessId() {
+            WorkOrder wo = stateMachine.create("WO-001", "test-route");
+            for (int i = 0; i < wo.getProcesses().size(); i++) {
+                wo.getProcesses().get(i).setId((long) (i + 1));
+            }
+
+            assertThrows(IllegalStateException.class,
+                    () -> stateMachine.reorderProcesses(wo, List.of(1L, 999L)));
         }
     }
 

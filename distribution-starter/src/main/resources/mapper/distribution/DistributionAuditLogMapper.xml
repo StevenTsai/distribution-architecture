@@ -5,6 +5,7 @@
         <id column="id" jdbcType="BIGINT" property="id"/>
         <result column="biz_type" jdbcType="VARCHAR" property="bizType"/>
         <result column="biz_id" jdbcType="BIGINT" property="bizId"/>
+        <result column="distributor_id" jdbcType="BIGINT" property="distributorId"/>
         <result column="action" jdbcType="VARCHAR" property="action"/>
         <result column="before_snapshot" jdbcType="LONGVARCHAR" property="beforeSnapshot"/>
         <result column="after_snapshot" jdbcType="LONGVARCHAR" property="afterSnapshot"/>
@@ -15,7 +16,7 @@
     </resultMap>
 
     <sql id="BaseColumnList">
-        id, biz_type, biz_id, action, before_snapshot, after_snapshot, operator_user_id, operator_name, remark, create_time
+        id, biz_type, biz_id, distributor_id, action, before_snapshot, after_snapshot, operator_user_id, operator_name, remark, create_time
     </sql>
 
     <sql id="ConditionWhere">
@@ -64,8 +65,9 @@
         <if test="action != null and action != ''">
             and action = #{action}
         </if>
+        <!-- 租户行过滤必须用冗余的 distributor_id 列；biz_id 是各业务对象ID，与渠道ID独立自增会碰撞 -->
         <if test="authorizedDistributorIds != null and authorizedDistributorIds.size() > 0">
-            and biz_id in
+            and distributor_id in
             <foreach collection="authorizedDistributorIds" item="id" open="(" separator="," close=")">
                 #{id}
             </foreach>
@@ -96,6 +98,9 @@
             <if test="bizId != null">
                 biz_id,
             </if>
+            <if test="distributorId != null">
+                distributor_id,
+            </if>
             <if test="action != null">
                 action,
             </if>
@@ -124,6 +129,9 @@
             </if>
             <if test="bizId != null">
                 #{bizId,jdbcType=BIGINT},
+            </if>
+            <if test="distributorId != null">
+                #{distributorId,jdbcType=BIGINT},
             </if>
             <if test="action != null">
                 #{action,jdbcType=VARCHAR},

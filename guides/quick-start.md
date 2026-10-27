@@ -10,16 +10,15 @@
 
 | 工具 | 版本要求 | 说明 |
 |------|---------|------|
-| Java | 8+ | `java -version` 检查 |
+| Java | 17+ | `java -version` 检查 |
 | Maven | 3.6+ | `mvn -version` 检查 |
 | MySQL | 8.0 | 本地或远程均可 |
-| Redis | 5.0+ | 本项目配置了 Redis 但核心功能不强依赖 |
 
 ## 第一步：克隆项目
 
 ```bash
-git clone <repo-url>
-cd distribution-server
+git clone https://github.com/StevenTsai/distribution-architecture.git
+cd distribution-architecture/distribution-starter
 ```
 
 ## 第二步：创建数据库
@@ -29,23 +28,23 @@ cd distribution-server
 mysql -u root -p
 
 # 创建数据库
-CREATE DATABASE distribution_server DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE distribution_starter DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
 ## 第三步：执行建表脚本
 
 ```bash
-# 共享表（用户、联系人、管理员、会话）
-mysql -u root -p distribution_server < 01_shared_tables.sql
+# 共享表（3 张：用户档案、管理员、登录会话）
+mysql -u root -p distribution_starter < src/main/script/sql/01_shared_tables.sql
 
-# 分销业务表（19 张）
-mysql -u root -p distribution_server < 02_distribution_tables.sql
+# 分销业务表（6 张）
+mysql -u root -p distribution_starter < src/main/script/sql/02_distribution_tables.sql
 ```
 
-执行完成后应该有 23 张表：
+执行完成后应该有 9 张表：
 
 ```sql
-mysql -u root -p -e "USE distribution_server; SHOW TABLES;"
+mysql -u root -p -e "USE distribution_starter; SHOW TABLES;"
 ```
 
 ## 第四步：配置数据库连接
@@ -54,33 +53,14 @@ mysql -u root -p -e "USE distribution_server; SHOW TABLES;"
 
 ```properties
 # 修改为你的数据库连接
-spring.datasource.url=jdbc:mysql://localhost:3306/distribution_server?useUnicode=true&characterEncoding=utf8mb4&useSSL=false&serverTimezone=Asia/Shanghai
+spring.datasource.url=jdbc:mysql://localhost:3306/distribution_starter?useUnicode=true&characterEncoding=utf8mb4&useSSL=false&serverTimezone=Asia/Shanghai
 spring.datasource.username=root
 spring.datasource.password=your_password
 ```
 
 > **注意**：该文件中可能包含远程测试数据库的连接信息，请替换为你本地的配置。
 
-## 第五步：配置 Redis（可选）
-
-`application.properties` 中配置了 Redis 连接池。如果本地没有 Redis，可以：
-
-**方案 A：启动 Redis**
-
-```bash
-# macOS
-brew install redis
-brew services start redis
-
-# Docker
-docker run -d -p 6379:6379 redis:7
-```
-
-**方案 B：注释掉 Redis 配置**
-
-如果暂时不需要 Redis，可以在 `application.properties` 中注释掉 Redis 相关配置。Spring Boot 在找不到 Redis 连接时会降级（但某些功能可能报错）。
-
-## 第六步：启动应用
+## 第五步：启动应用
 
 ```bash
 # 方式 1：Maven 启动
@@ -96,7 +76,7 @@ mvn spring-boot:run
 Started DistributionApplication in X.XXX seconds
 ```
 
-## 第七步：验证
+## 第六步：验证
 
 ### 访问 Swagger UI
 
@@ -156,18 +136,17 @@ curl -H "Authorization: test-token-123" \
 src/main/java/com/godzilla/distribution/
 ├── DistributionApplication.java     ← 启动类
 ├── controller/                      ← API 层
-│   ├── admin/distribution/          ← 管理端 13 个 Controller
-│   └── partner/                     ← 合作方门户 1 个 Controller
+│   └── admin/distribution/          ← 管理端 5 个 Controller
 ├── service/                         ← 业务逻辑层
-│   └── distribution/impl/           ← 13 个 Service 实现
+│   └── distribution/impl/           ← 6 个 Service 实现
 ├── mapper/                          ← 数据访问层
-│   └── distribution/                ← 19 个 MyBatis Mapper
+│   └── distribution/                ← 9 个 MyBatis Mapper
 ├── entity/                          ← 数据库实体
 ├── dto/                             ← 请求/响应 DTO
 ├── enums/                           ← 业务枚举
 ├── common/                          ← 公共类（Result、注解、异常）
 ├── config/                          ← 配置类
-└── exception/                       ← 异常类
+└── enums/                          ← 业务枚举（已列见上）
 
 
 ├── application.properties           ← 主配置
@@ -185,7 +164,7 @@ src/main/java/com/godzilla/distribution/
 - `application-dev.properties` 中的连接信息是否正确
 - 端口是否正确（默认 3306）
 
-### Q: 启动报 `Unknown database 'distribution_server'`
+### Q: 启动报 `Unknown database 'distribution_starter'`
 
 先执行第二步创建数据库。
 
@@ -203,10 +182,6 @@ http://localhost:9030/swagger-ui.html
 Authorization: <token>
 x-biz: distribution-starter
 ```
-
-### Q: Redis 连接失败
-
-Redis 不是核心功能的强依赖。如果暂时不需要，可以忽略 Redis 相关的错误，或启动一个本地 Redis 实例。
 
 ## 下一步
 

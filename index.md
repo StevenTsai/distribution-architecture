@@ -31,7 +31,7 @@ features:
 
   - icon: 🔧
     title: 4 个实战案例
-    details: 从珠宝 ERP 和 IoT 后端提取的可运行案例，82 个测试全部通过
+    details: 从珠宝 ERP 和 IoT 后端提取的可运行案例，124 个测试全部通过
     link: /case-studies/mto-workflow-engine/
 
   - icon: 📚

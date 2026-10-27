@@ -43,7 +43,7 @@ class EventListenerTest {
 
         inventoryListener = new WorkOrderToInventoryListener(
                 (workOrderId, workOrderNo, productId, productCode, quantity, producedDate, status) ->
-                        finishedGoodsCaptures.add(new FinishedGoodsCapture(workOrderId, workOrderNo, productCode, quantity, status))
+                        finishedGoodsCaptures.add(new FinishedGoodsCapture(workOrderId, workOrderNo, productCode, quantity, producedDate, status))
         );
 
         reworkListener = new QualityToReworkListener(
@@ -54,11 +54,14 @@ class EventListenerTest {
 
     // ========== Delivery → Receivable ==========
 
+    private static final LocalDate DELIVERY_DATE = LocalDate.of(2026, 10, 20);
+    private static final LocalDate FINISHED_DATE = LocalDate.of(2026, 10, 21);
+
     @Test
-    @DisplayName("Delivery event creates receivable with correct fields")
+    @DisplayName("Delivery event creates receivable; dueDate anchored to event deliveryDate")
     void onDeliveryComplete_createsReceivable() {
         DeliveryCompleteEvent event = new DeliveryCompleteEvent(
-                this, 100L, 200L, "ORD-2024-001", 300L, new BigDecimal("5000.00"));
+                this, 100L, 200L, "ORD-2024-001", 300L, new BigDecimal("5000.00"), DELIVERY_DATE);
 
         deliveryListener.onDeliveryComplete(event);
 
@@ -69,19 +72,20 @@ class EventListenerTest {
         assertEquals(300L, r.customerId);
         assertEquals(new BigDecimal("5000.00"), r.amount);
         assertEquals("PENDING", r.status);
-        assertEquals(LocalDate.now().plusDays(30), r.dueDate);
+        /* 账期锚定事件携带的发货日期，而非监听线程执行时刻的 now() */
+        assertEquals(DELIVERY_DATE.plusDays(30), r.dueDate);
     }
 
     @Test
-    @DisplayName("Delivery event handles null amount gracefully")
+    @DisplayName("Delivery event with null amount is rejected (fail-fast, no 0-yuan receivable)")
     void onDeliveryComplete_nullAmount() {
         DeliveryCompleteEvent event = new DeliveryCompleteEvent(
-                this, 100L, 200L, "ORD-002", 300L, null);
+                this, 100L, 200L, "ORD-002", 300L, null, DELIVERY_DATE);
 
-        deliveryListener.onDeliveryComplete(event);
-
-        assertEquals(1, receivableCaptures.size());
-        assertEquals(BigDecimal.ZERO, receivableCaptures.get(0).amount);
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                () -> deliveryListener.onDeliveryComplete(event));
+        assertTrue(e.getMessage().contains("orderAmount"));
+        assertEquals(0, receivableCaptures.size(), "拒绝后不得产生任何应收记录");
     }
 
     @Test
@@ -91,7 +95,7 @@ class EventListenerTest {
                 (a, b, c, d, e, f, g, h) -> { throw new RuntimeException("DB down"); }
         );
         DeliveryCompleteEvent event = new DeliveryCompleteEvent(
-                this, 100L, 200L, "ORD-003", 300L, BigDecimal.ONE);
+                this, 100L, 200L, "ORD-003", 300L, BigDecimal.ONE, DELIVERY_DATE);
 
         // Should NOT throw
         assertDoesNotThrow(() -> failingListener.onDeliveryComplete(event));
@@ -100,10 +104,10 @@ class EventListenerTest {
     // ========== Work Order → Inventory ==========
 
     @Test
-    @DisplayName("Work order finished event creates finished goods record")
+    @DisplayName("Work order finished event creates finished goods record with event finishedDate")
     void onWorkOrderFinished_createsInventory() {
         WorkOrderFinishedEvent event = new WorkOrderFinishedEvent(
-                this, 500L, "WO-2024-001", 600L, "PROD-001", 100, 2, LocalDate.now());
+                this, 500L, "WO-2024-001", 600L, "PROD-001", 100, 2, FINISHED_DATE);
 
         inventoryListener.onWorkOrderFinished(event);
 
@@ -114,6 +118,8 @@ class EventListenerTest {
         assertEquals("PROD-001", fg.productCode);
         assertEquals(100, fg.quantity);
         assertEquals("IN_STOCK", fg.status);
+        /* 入库日期取事件携带的完工日期，而非监听线程执行时刻的 now() */
+        assertEquals(FINISHED_DATE, fg.producedDate);
     }
 
     @Test
@@ -123,7 +129,7 @@ class EventListenerTest {
                 (a, b, c, d, e, f, g) -> { throw new RuntimeException("Inventory service down"); }
         );
         WorkOrderFinishedEvent event = new WorkOrderFinishedEvent(
-                this, 500L, "WO-002", 600L, "PROD-002", 50, 0, LocalDate.now());
+                this, 500L, "WO-002", 600L, "PROD-002", 50, 0, FINISHED_DATE);
 
         assertDoesNotThrow(() -> failingListener.onWorkOrderFinished(event));
     }
@@ -167,7 +173,7 @@ class EventListenerTest {
     record ReceivableCapture(Long orderId, String orderNo, Long customerId,
                              BigDecimal amount, LocalDate dueDate, String status) {}
     record FinishedGoodsCapture(Long workOrderId, String workOrderNo,
-                                String productCode, int quantity, String status) {}
+                                String productCode, int quantity, LocalDate producedDate, String status) {}
     record ReworkOrderCapture(Long workOrderId, String defectType,
                               String processName, int quantity, String recommendedAction) {}
 }

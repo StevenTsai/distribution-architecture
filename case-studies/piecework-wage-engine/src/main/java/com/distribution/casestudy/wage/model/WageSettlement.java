@@ -66,28 +66,32 @@ public class WageSettlement {
     }
 
     /**
-     * Calculate base wage: unitPrice × completedQuantity.
-     * Uses HALF_UP rounding with scale 2 for currency precision.
+     * 计算基础工资：baseWage = unitPrice × completedQuantity。
+     *
+     * <p>不在中途舍入——金额在 {@link #calculateFinalAmount()} 一次性舍入到
+     * 2 位小数，避免「先截断再乘系数」的双重舍入误差。</p>
+     *
+     * @throws IllegalArgumentException 如果数量为负或合格数大于完工数
      */
     public void calculateBaseWage() {
-        this.baseWage = unitPrice
-                .multiply(BigDecimal.valueOf(completedQuantity))
-                .setScale(2, RoundingMode.HALF_UP);
+        validateQuantities();
+        this.baseWage = unitPrice.multiply(BigDecimal.valueOf(completedQuantity));
     }
 
     /**
-     * Apply difficulty and quality coefficients to base wage.
-     * adjustedWage = baseWage × difficultyCoefficient × qualityCoefficient
+     * 应用难度与质量系数：adjustedWage = baseWage × difficultyCoefficient × qualityCoefficient。
+     *
+     * <p>同样不在中途舍入，保留全精度，统一在最终金额处舍入。</p>
      */
     public void applyCoefficients() {
         this.adjustedWage = baseWage
                 .multiply(difficultyCoefficient)
-                .multiply(qualityCoefficient)
-                .setScale(2, RoundingMode.HALF_UP);
+                .multiply(qualityCoefficient);
     }
 
     /**
-     * Calculate final amount: adjustedWage + adjustmentAmount.
+     * 计算最终金额：finalAmount = adjustedWage + adjustmentAmount，
+     * 仅在此处统一 HALF_UP 舍入到 2 位小数（货币精度）。
      */
     public void calculateFinalAmount() {
         this.finalAmount = adjustedWage
@@ -96,19 +100,48 @@ public class WageSettlement {
     }
 
     /**
-     * Apply a manual adjustment.
+     * 追加一笔调整（累加语义，不是覆盖）。
      *
-     * @param amount adjustment amount (positive = bonus, negative = deduction)
-     * @param reason reason for adjustment
-     * @throws IllegalStateException if settlement is not in PENDING status
+     * <p>多次调用会累加：先 adjust(+50) 再 adjust(+30)，adjustmentAmount 为 +80。
+     * 覆盖语义会静默吞掉前一笔调整，是典型的结算事故来源。</p>
+     *
+     * @param amount 本笔调整金额（正数 = 奖励，负数 = 扣减）
+     * @param reason 本笔调整原因（多笔调整的原因以「; 」追加记录）
+     * @throws IllegalArgumentException 如果 amount 为 null
+     * @throws IllegalStateException    如果结算单不是 PENDING 状态
      */
     public void adjust(BigDecimal amount, String reason) {
         if (status != WageStatus.PENDING) {
             throw new IllegalStateException("Cannot adjust settlement in status: " + status);
         }
-        this.adjustmentAmount = amount;
-        this.adjustmentReason = reason;
+        if (amount == null) {
+            throw new IllegalArgumentException("adjustment amount must not be null");
+        }
+        this.adjustmentAmount = (this.adjustmentAmount != null ? this.adjustmentAmount : BigDecimal.ZERO)
+                .add(amount);
+        this.adjustmentReason = (this.adjustmentReason == null || this.adjustmentReason.isBlank())
+                ? reason
+                : this.adjustmentReason + "; " + reason;
         calculateFinalAmount();
+    }
+
+    /**
+     * 校验数量字段的合法性：完工数、合格数均不能为负，且合格数不能超过完工数。
+     */
+    private void validateQuantities() {
+        if (completedQuantity < 0) {
+            throw new IllegalArgumentException(
+                    "completedQuantity must not be negative: " + completedQuantity);
+        }
+        if (qualifiedQuantity < 0) {
+            throw new IllegalArgumentException(
+                    "qualifiedQuantity must not be negative: " + qualifiedQuantity);
+        }
+        if (qualifiedQuantity > completedQuantity) {
+            throw new IllegalArgumentException(
+                    "qualifiedQuantity (%d) must not exceed completedQuantity (%d)"
+                            .formatted(qualifiedQuantity, completedQuantity));
+        }
     }
 
     /**

@@ -117,6 +117,21 @@ public class WorkOrderProcess {
         this.status = ProcessStatus.REWORK;
     }
 
+    /**
+     * 返工完成后恢复工序：REWORK → IN_PROGRESS。
+     *
+     * <p>没有这一步，REWORK 状态的工序无法再走 {@link #complete()}
+     * （complete 只接受 PENDING / IN_PROGRESS），工单会永远卡死。</p>
+     *
+     * @throws IllegalStateException 如果当前不是 REWORK 状态
+     */
+    public void resume() {
+        if (this.status != ProcessStatus.REWORK) {
+            throw new IllegalStateException("Cannot resume process in status: " + this.status);
+        }
+        this.status = ProcessStatus.IN_PROGRESS;
+    }
+
     public boolean isCompleted() {
         return this.status == ProcessStatus.COMPLETED;
     }

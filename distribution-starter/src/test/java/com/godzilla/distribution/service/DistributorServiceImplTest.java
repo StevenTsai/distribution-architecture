@@ -1,6 +1,7 @@
 package com.godzilla.distribution.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.godzilla.distribution.common.ResultCode;
 import com.godzilla.distribution.common.pii.PiiCipher;
 import com.godzilla.distribution.dto.PageResponseDTO;
 import com.godzilla.distribution.dto.distribution.request.CreateDistributorRequestDTO;
@@ -157,6 +158,61 @@ class DistributorServiceImplTest {
         ArgumentCaptor<DistributionDistributorEntity> captor = ArgumentCaptor.forClass(DistributionDistributorEntity.class);
         verify(distributorMapper).updateByPrimaryKeySelective(captor.capture());
         assertEquals(Integer.valueOf(1), captor.getValue().getDeleted());
+    }
+
+    @Test
+    void deleteDistributor_NonAllOperator_IsDenied() {
+        when(distributorMapper.selectByPrimaryKey(1L)).thenReturn(encryptedDistributor());
+        when(memberMapper.selectByUserId(OPERATOR_USER_ID))
+                .thenReturn(memberWith(1L, DistributionDataScope.OWN_DISTRIBUTOR.getCode()));
+
+        BizException ex = assertThrows(BizException.class, () -> distributorService.deleteDistributor(1L));
+
+        assertEquals(ResultCode.DISTRIBUTOR_DELETE_DENIED.getCode(), ex.getCode());
+        verify(distributorMapper, never()).updateByPrimaryKeySelective(any());
+    }
+
+    @Test
+    void createDistributor_NonAllOperatorWithoutParent_IsDenied() {
+        when(distributorMapper.selectByCode("DIST-001")).thenReturn(null);
+        when(memberMapper.selectByUserId(OPERATOR_USER_ID))
+                .thenReturn(memberWith(1L, DistributionDataScope.OWN_DISTRIBUTOR.getCode()));
+
+        // parentId 为空（创建根渠道）对非全局操作者一律拒绝，保证 fail-closed
+        BizException ex = assertThrows(BizException.class, () -> distributorService.createDistributor(createRequest()));
+
+        assertEquals(ResultCode.DISTRIBUTION_DATA_ACCESS_DENIED.getCode(), ex.getCode());
+        verify(distributorMapper, never()).insertSelective(any());
+    }
+
+    @Test
+    void updateDistributor_ParentChangeOutsideScope_IsDenied() {
+        when(distributorMapper.selectByPrimaryKey(1L)).thenReturn(encryptedDistributor());
+        when(distributorMapper.selectByPrimaryKey(2L)).thenReturn(distributorWithId(2L));
+        when(memberMapper.selectByUserId(OPERATOR_USER_ID))
+                .thenReturn(memberWith(1L, DistributionDataScope.OWN_DISTRIBUTOR.getCode()));
+
+        UpdateDistributorRequestDTO request = new UpdateDistributorRequestDTO();
+        request.setName("华东总代理");
+        request.setLevelCode("L1");
+        request.setParentId(2L);
+
+        BizException ex = assertThrows(BizException.class, () -> distributorService.updateDistributor(1L, request));
+
+        assertEquals(ResultCode.DISTRIBUTION_DATA_ACCESS_DENIED.getCode(), ex.getCode());
+        verify(distributorMapper, never()).updateByPrimaryKeySelective(any());
+    }
+
+    @Test
+    void listDistributors_LikeWildcardsInNameAreEscaped() {
+        when(distributorMapper.countByConditionWithScope(any(), any(), any(), any(), isNull())).thenReturn(0L);
+        when(distributorMapper.selectByConditionWithScope(any(), any(), any(), any(), isNull(), anyInt(), anyInt()))
+                .thenReturn(Collections.emptyList());
+
+        distributorService.listDistributors("张%", null, null, null, 1, 10);
+
+        // % 必须以字面量匹配，不能变成通配符
+        verify(distributorMapper).countByConditionWithScope(eq("张\\%"), isNull(), isNull(), isNull(), isNull());
     }
 
     private DistributionDistributorEntity encryptedDistributor() {

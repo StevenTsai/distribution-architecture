@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Process route configuration loaded from YAML.
@@ -45,12 +46,19 @@ public class ProcessRouteConfig {
     /**
      * Find a route by name.
      *
+     * <p>使用 {@link Objects#equals} 做 null 安全比较：YAML 中漏配 name 的路线
+     * 不会触发 NPE，而是被安全跳过；非法的查询参数则给出明确报错。</p>
+     *
      * @param routeName the route name
      * @return the route definition, or null if not found
+     * @throws IllegalArgumentException if routeName is null or blank
      */
     public RouteDefinition findRoute(String routeName) {
+        if (routeName == null || routeName.isBlank()) {
+            throw new IllegalArgumentException("routeName must not be null or blank");
+        }
         return routes.stream()
-                .filter(r -> r.getName().equals(routeName))
+                .filter(r -> Objects.equals(r.getName(), routeName))
                 .findFirst()
                 .orElse(null);
     }
