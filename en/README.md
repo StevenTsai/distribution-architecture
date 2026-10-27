@@ -11,7 +11,7 @@
 
 This is a collection of **architecture design documents** + a **reusable Starter library** + **production-validated case studies** + a **full-lifecycle methodology**, covering an enterprise system from build, selection, and verification through takeover, portfolio governance, and production operations.
 
-Beyond code, it distills five directly applicable methods: **takeover engineering** (should you accept it, how much to invest, when to stop), **system portfolio governance** (what to shut down or remediate), **production operations** (observability, change management, incident response), **engineering consistency standards** (naming, interfaces, release, and glossary baselines), and **open-source compliance** (what stays private, leak scanning, pre-push checks). The playbooks are written in Chinese; see the [playbooks index](playbooks.md).
+Beyond code, it distills seven directly applicable methods: **takeover engineering** (should you accept it, how much to invest, when to stop), **system portfolio governance** (what to shut down or remediate), **production operations** (observability, change management, incident response), **AI engineering** (structured output, model routing, and long-document pipelines), **enterprise architecture** (DDD and practical TOGAF tailoring), **engineering consistency standards** (naming, interfaces, release, and glossary baselines), and **open-source compliance** (what stays private, leak scanning, pre-push checks). The playbooks are written in Chinese; see the [playbooks index](playbooks.md).
 
 > I encountered generic problems in a production system: data permissions, workflow engines, event-driven decoupling, piecework wages.
 > I first implemented these patterns with Spring Boot + MyBatis in a real project,
@@ -29,14 +29,21 @@ Beyond code, it distills five directly applicable methods: **takeover engineerin
 - [Cell-based architecture](architecture/cell-based-architecture.md) — blast radius, unit keys, data sharding, failure drills
 - [Three forms of service governance](architecture/service-governance-forms.md) — SDK / Agent / Sidecar decision matrix
 
+### AI Engineering (Chinese)
+- [AI Agent architecture](../architecture/agent-architecture-patterns.md) — declarative orchestration, state machines, risk-based guardrails (Chinese)
+- [AI Engineering Playbook](../playbooks/ai-engineering/) — structured output, multi-model routing, and long-document pipelines
+- [GroundedRAG failure modes](../architecture/verifier-failure-modes.md) — component correctness versus end-to-end effectiveness
+- [Claim-level verifier](../architecture/claim-level-verifier.md) — evidence-bound claims and deterministic gates
+
 ### Reusable Library
 - [spring-data-permission-starter](https://github.com/StevenTsai/spring-data-permission-starter) — Spring Boot Starter for data permissions, ready to import
 
-### Production-Validated Case Studies (4 cases, 124 tests)
+### Production-Validated Case Studies (4 code cases, 124 tests + 1 evolution narrative)
 - [MTO Workflow Engine](case-studies/mto-workflow-engine/) — Generic work order state machine extracted from a jewelry ERP, reusable across furniture/electronics/apparel industries
 - [Spring Events Decoupling](case-studies/spring-events-decoupling/) — Event-driven cross-module decoupling: delivery→receivable / work order→inventory / quality→rework
 - [Piecework Wage Engine](case-studies/piecework-wage-engine/) — Pipeline-based piecework wage calculation with configurable difficulty and quality coefficients
 - [Production Guardrails: fail-fast startup + pluggable state store](case-studies/production-guardrails/) — Mandatory middleware 2→1, zero-code rollback, contract tests filled in (from an IoT backend, not the jewelry ERP)
+- [OncoHub Architecture Evolution](../case-studies/oncohub-architecture-evolution.md) — A design document rewritten eight times: reading code to correct assumptions, auth decoupling, data-flow direction, and staged rollout (narrative case, Chinese)
 
 ### Architecture Decision Records (6)
 - Session vs JWT, MyBatis vs JPA, Logical vs Physical Delete
@@ -48,11 +55,14 @@ Beyond code, it distills five directly applicable methods: **takeover engineerin
 - **7-Step Build-from-Scratch Tutorial**: Complete narrative from domain model to compliance checks
 - **4 Practical Guides**: Quick start, extending new modules, customizing permissions, Spring Boot 3 migration
 
-### Methodology Playbooks (4, Chinese)
+### Methodology Playbooks (7, Chinese)
 - [Takeover Engineering](../playbooks/takeover-engineering/) — should you take it, how much to invest, when to stop
 - [System Portfolio Governance](../playbooks/system-portfolio-governance/) — inventory, diagnosis, shutdown/merge decisions, anti-backslide
 - [Production Operations](../playbooks/production-operations/) — observability, change, incident response, drills
+- [AI Engineering](../playbooks/ai-engineering/) — structured output, model routing, and long-document orchestration
+- [Enterprise Architecture](../playbooks/enterprise-architecture/) — DDD landing and practical TOGAF tailoring
 - [Engineering Consistency Standards](../playbooks/engineering-consistency-standards.md) — naming, interface, release, and glossary baselines
+- [Open-Source Compliance](../playbooks/open-source-compliance.md) — split lines, leak scanning, and pre-push checks
 
 ## Production Source
 
@@ -125,10 +135,11 @@ The fourth case study, [production-guardrails](case-studies/production-guardrail
 │   │   ├── WageCalculator           Wage calculation engine
 │   │   ├── WageSettlementPipeline   Pipeline orchestrator
 │   │   └── 4 Pipeline Stages        Calculate → Adjust → Confirm → Summary
-│   └── production-guardrails/       Production guardrails (fail-fast startup + pluggable state store)
-│       ├── StartupGuard             Config red-line rejection matrix
-│       ├── StateStore               Six-primitive contract, three impls (mysql/redis/memory)
-│       └── Contract test suite      51 tests, zero external services (H2 MODE=MySQL)
+│   ├── production-guardrails/       Production guardrails (fail-fast startup + pluggable state store)
+│   │   ├── StartupGuard             Config red-line rejection matrix
+│   │   ├── StateStore               Six-primitive contract, three impls (mysql/redis/memory)
+│   │   └── Contract test suite      51 tests, zero external services (H2 MODE=MySQL)
+│   └── oncohub-architecture-evolution.md  Architecture evolution narrative: eight design-doc revisions (Chinese)
 │
 ├── playbooks/                       Methodology playbooks (Chinese-only)
 │   ├── takeover-engineering/        Takeover toolkit: 21 questions + 10 templates
@@ -156,7 +167,7 @@ The fourth case study, [production-guardrails](case-studies/production-guardrail
 
 ## English Documentation
 
-This directory mirrors the Chinese book: the preface, all 9 Java-era architecture patterns, all 6 ADRs, all 4 practical guides, the 7-step tutorial, and the case-study READMEs plus their evolution notes. The five methodology playbooks and the two AI architecture articles (added 2026-10) are Chinese-only for now; see the [playbooks index](playbooks.md) for what the playbooks cover and how to navigate them.
+This directory mirrors the Chinese book: the preface, all 9 Java-era architecture patterns, all 6 ADRs, all 4 practical guides, the 7-step tutorial, and the case-study READMEs plus their evolution notes. The seven methodology playbooks and the AI architecture and engineering articles (added 2026-10) are Chinese-only for now; see the [playbooks index](playbooks.md) for what they cover and how to navigate them.
 
 | Section | Documents |
 |---------|-----------|
@@ -166,7 +177,7 @@ This directory mirrors the Chinese book: the preface, all 9 Java-era architectur
 | Decisions | [Session vs JWT](decisions/why-session-not-jwt.md) · [MyBatis vs JPA](decisions/why-mybatis-not-jpa.md) · [Logical Delete](decisions/why-logical-delete.md) · [Spring Boot over NestJS](decisions/why-spring-boot-not-nestjs.md) · [Redis Optional](decisions/why-redis-optional.md) · [JavaScript over TypeScript](decisions/why-javascript-not-typescript.md) |
 | Guides | [Quick Start](guides/quick-start.md) · [Extend a New Module](guides/extend-new-module.md) · [Customize Permissions](guides/customize-permission.md) · [Spring Boot 3 Migration](guides/spring-boot-3-migration.md) |
 | Tutorial | [01 Domain Model](tutorial/01-domain-model.md) · [02 Data Permissions](tutorial/02-data-permission.md) · [03 CRUD Scaffolding](tutorial/03-crud-scaffolding.md) · [04 Audit Logging](tutorial/04-audit-logging.md) · [05 Commission Flow](tutorial/05-commission-flow.md) · [06 Settlement](tutorial/06-settlement.md) · [07 Compliance](tutorial/07-compliance.md) |
-| Case studies | [MTO Workflow Engine](case-studies/mto-workflow-engine/) · [Piecework Wage Engine](case-studies/piecework-wage-engine/) · [Spring Events Decoupling](case-studies/spring-events-decoupling/) · [Production Guardrails](case-studies/production-guardrails/) |
+| Case studies | [MTO Workflow Engine](case-studies/mto-workflow-engine/) · [Piecework Wage Engine](case-studies/piecework-wage-engine/) · [Spring Events Decoupling](case-studies/spring-events-decoupling/) · [Production Guardrails](case-studies/production-guardrails/) · [OncoHub Evolution (Chinese)](../case-studies/oncohub-architecture-evolution.md) |
 
 Each English page links back to its Chinese original at the top. Translations track the Chinese source; if you change either version, update both.
 
@@ -176,9 +187,9 @@ Project-level documents are also available in English: [Contributing](CONTRIBUTI
 
 **If you want to try it out**: Go to `distribution-starter/`, follow the README to initialize MySQL, and start the application.
 
-**If you want a quick overview**: Start with the four foundational design pattern documents in `architecture/` (data permissions, event-driven flows, audit, and MyBatis), then read the other five.
+**If you want a quick overview**: Start with the four foundational design pattern documents in `architecture/` (data permissions, event-driven flows, audit, and MyBatis), then read the other six.
 
-**If you want to see production-validated case studies**: Go to `case-studies/` — each case study has a README and an evolution document.
+**If you want to see production-validated case studies**: Go to `case-studies/` — each code case study has a README and an evolution document; the OncoHub entry is a narrative case.
 
 **If you want to understand from the beginning**: Read `tutorial/` in order (01→07) — this is the complete build-from-scratch narrative.
 

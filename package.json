@@ -1,7 +1,7 @@
 {
   "name": "distribution-architecture",
   "version": "1.0.0",
-  "description": "《架构炼金术：从真实系统提炼可复用的架构模式》— 企业级架构模式与方法论库：生产实证 + 跨语言交付 + 架构治理 + AI 系统验证",
+  "description": "《架构炼金术：从真实系统提炼可复用的架构模式》— 企业级架构模式与方法论库：生产实证 + 跨语言交付 + 架构治理 + AI 工程与系统验证",
   "type": "module",
   "scripts": {
     "docs:dev": "vitepress dev",

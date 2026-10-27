@@ -3,7 +3,7 @@ import { withMermaid } from 'vitepress-plugin-mermaid'
 export default withMermaid({
   // 导航栏使用短书名，完整书名在首页 hero 和 description 中展示
   title: '架构炼金术',
-  description: '《架构炼金术：从真实系统提炼可复用的架构模式》—— 生产系统实证与方法论，11 个可复用模式 + 6 篇 ADR + 可运行代码与测试，跨语言交付方法论，以及 AI 系统的可判定性验证',
+  description: '《架构炼金术：从真实系统提炼可复用的架构模式》—— 生产系统实证与方法论，12 个可复用模式 + 6 篇 ADR + 可运行代码与测试，跨语言交付方法论，以及 AI 工程与可判定性验证',
   lang: 'zh-CN',
 
   locales: {
@@ -163,6 +163,8 @@ export default withMermaid({
     'playbooks/takeover-engineering/README.md': 'playbooks/takeover-engineering/index.md',
     'playbooks/system-portfolio-governance/README.md': 'playbooks/system-portfolio-governance/index.md',
     'playbooks/production-operations/README.md': 'playbooks/production-operations/index.md',
+    'playbooks/ai-engineering/README.md': 'playbooks/ai-engineering/index.md',
+    'playbooks/enterprise-architecture/README.md': 'playbooks/enterprise-architecture/index.md',
     'en/README.md': 'en/index.md',
     'en/case-studies/mto-workflow-engine/README.md': 'en/case-studies/mto-workflow-engine/index.md',
     'en/case-studies/piecework-wage-engine/README.md': 'en/case-studies/piecework-wage-engine/index.md',
@@ -237,6 +239,7 @@ export default withMermaid({
           { text: '计件工资引擎', link: '/case-studies/piecework-wage-engine/' },
           { text: 'Spring Events 解耦', link: '/case-studies/spring-events-decoupling/' },
           { text: '生产护栏', link: '/case-studies/production-guardrails/' },
+          { text: 'OncoHub 架构演进', link: '/case-studies/oncohub-architecture-evolution' },
         ],
       },
       {
@@ -275,6 +278,7 @@ export default withMermaid({
           },
           { text: '钩子：21 个问题', link: '/playbooks/takeover-engineering/hooks/21-questions' },
           { text: '附录：虚构案例串跑', link: '/playbooks/takeover-engineering/case-walkthrough' },
+          { text: '深水区：三轮安全审计', link: '/playbooks/takeover-engineering/deep-dives/legacy-security-audit' },
         ],
       },
       {
@@ -304,10 +308,23 @@ export default withMermaid({
         ],
       },
       {
-        text: '第九部分：AI 系统',
+        text: '第九部分：AI 系统与工程',
         items: [
+          { text: 'AI Agent 架构：声明式与状态机', link: '/architecture/agent-architecture-patterns' },
           { text: '组件正确 ≠ 系统有效：失败复盘', link: '/architecture/verifier-failure-modes' },
           { text: '声明级校验门', link: '/architecture/claim-level-verifier' },
+          { text: 'AI 工程实践', link: '/playbooks/ai-engineering/' },
+          { text: '结构化输出治理', link: '/playbooks/ai-engineering/structured-output-governance' },
+          { text: '多模型路由与故障隔离', link: '/playbooks/ai-engineering/model-routing-and-resilience' },
+          { text: '长文档多阶段生成', link: '/playbooks/ai-engineering/long-document-pipeline' },
+        ],
+      },
+      {
+        text: '第十部分：企业架构实践',
+        items: [
+          { text: '企业架构实践', link: '/playbooks/enterprise-architecture/' },
+          { text: 'DDD 七步落地', link: '/playbooks/enterprise-architecture/ddd-seven-step-landing' },
+          { text: 'TOGAF 实践', link: '/playbooks/enterprise-architecture/togaf-in-practice' },
         ],
       },
       {

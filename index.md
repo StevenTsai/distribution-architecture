@@ -6,7 +6,7 @@ titleTemplate: false
 hero:
   name: 架构炼金术
   text: 从真实系统提炼可复用的架构模式
-  tagline: 架构模式与方法论 · 生产系统实证 · 11 个模式 · 6 篇 ADR · 可运行案例与测试
+  tagline: 架构模式与方法论 · 生产系统实证 · 12 个模式 · 6 篇 ADR · 可运行案例与测试
   image:
     src: /logo.svg
     alt: Distribution Architecture
@@ -25,9 +25,9 @@ features:
     link: /architecture/data-permission-model
 
   - icon: 🤖
-    title: AI 系统：可判定性与失败面
-    details: 声明级校验门、端到端失败复盘、开源提取纪律——证据来自开源参考实现 GroundedRAG
-    link: /architecture/verifier-failure-modes
+    title: AI 系统与工程
+    details: AI Agent 架构与代码守卫、结构化输出、多模型路由、长文档编排与声明级校验——从生成到交付的可控链路
+    link: /playbooks/ai-engineering/
 
   - icon: 📋
     title: 6 篇技术决策
@@ -35,8 +35,8 @@ features:
     link: /decisions/why-session-not-jwt
 
   - icon: 🔧
-    title: 4 个实战案例
-    details: 从珠宝 ERP 和 IoT 后端提取的可运行案例，124 个测试全部通过
+    title: 5 个实战案例
+    details: 珠宝 ERP 与 IoT 后端提取的可运行案例（124 个测试）+ OncoHub 架构演进复盘
     link: /case-studies/mto-workflow-engine/
 
   - icon: 📚
@@ -58,6 +58,11 @@ features:
     title: 生产运维
     details: 运行期怎么观测、变更、救火——告警分级、全链路灰度、复盘与容量演练
     link: /playbooks/production-operations/
+
+  - icon: 🏛️
+    title: 企业架构实践
+    details: BA/DA/AA/TA、端到端业务主线、DDD 七步落地与轻量架构评估——让方法进入系统和代码
+    link: /playbooks/enterprise-architecture/
 
   - icon: 📐
     title: 工程一致性

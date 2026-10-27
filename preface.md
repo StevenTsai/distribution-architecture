@@ -40,11 +40,15 @@
 
 ### 如果你关心 AI 系统的输出可靠性
 
-先读 [组件正确 ≠ 系统有效](/architecture/verifier-failure-modes)，再读 [声明级校验门](/architecture/claim-level-verifier)；开源前的提取纪律见 [开源发布止血带](/playbooks/open-source-compliance)。
+先读 [AI Agent 架构](/architecture/agent-architecture-patterns)，再从 [AI 工程实践](/playbooks/ai-engineering/)进入结构化输出、多模型路由和长文档生成；最后读 [组件正确 ≠ 系统有效](/architecture/verifier-failure-modes)与[声明级校验门](/architecture/claim-level-verifier)。开源前的提取纪律见[开源发布止血带](/playbooks/open-source-compliance)。
+
+### 如果你要落地 DDD 或企业架构
+
+先读 [TOGAF 实践](/playbooks/enterprise-architecture/togaf-in-practice)，再读 [DDD 七步落地](/playbooks/enterprise-architecture/ddd-seven-step-landing)，最后接入[架构组合治理](/playbooks/system-portfolio-governance/)。
 
 ## 内容来源
 
-本书的架构模式来自两个真实生产系统，AI 系统章节来自一个公开参考实现：
+本书的架构模式来自两个真实生产系统；AI 系统可靠性章节来自一个公开参考实现，AI Agent 架构与 AI 工程实践章节来自高风险 AI 应用的实际工程结构；实战案例中的 [OncoHub 架构演进](/case-studies/oncohub-architecture-evolution)与接手工程的三轮安全审计深水区，素材取自作者已公开发表的个人项目复盘：
 
 ### 系统一：珠宝加工 ERP
 
@@ -71,12 +75,12 @@
 
 | 维度 | 数据 |
 |------|------|
-| 定位 | 声明级校验门 RAG 参考实现（本书 AI 章节的证据源） |
+| 定位 | 声明级校验门 RAG 参考实现（本书 AI 系统可靠性章节的证据源） |
 | 许可 | MIT · [github.com/StevenTsai/grounded-rag](https://github.com/StevenTsai/grounded-rag) |
 | 测试 | 247 个单元测试，覆盖率 95%（`v1.0.0`） |
 | 证据档位 | **提炼参考实现**：仓库内为合成数据，真实评测集本地维护、不分发、可应请求供审阅 |
 
-> 前两个系统为私有仓库，仅提取通用架构模式；GroundedRAG 为公开仓库，可 clone 复现。本书 AI 章节（校验门、失败复盘、开源提取纪律）的全部证据来自它，引用数字均 pin 至 `v1.0.0`。
+> 前两个系统为私有仓库，仅提取通用架构模式；GroundedRAG 为公开仓库，可 clone 复现。声明级校验门、双口径评测等可复现量化证据 pin 至 `v1.0.0`。AI Agent 架构与 AI 工程实践相关的私有业务代码、提示词和运营数据未公开，页面中的实现与阈值均已泛化，不构成行业基准。OncoHub 案例与安全审计深水区的素材首发于个人主页（2026-04-11 / 2026-09-18），本文为其知识库改写版，业务数据未收录。
 
 ## 开源许可
 
