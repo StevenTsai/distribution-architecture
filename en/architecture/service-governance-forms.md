@@ -4,6 +4,8 @@
 
 > Every organization's service-governance capability list is roughly the same: discovery, routing, load balancing, rate limiting, circuit breaking, retries, timeouts, authentication, canary routing, observability. What separates systems is not *what* is supported but **the form in which those capabilities enter the process**.
 
+> **Verification**: no runnable implementation in this repository ｜ **Evidence boundary**: engineering trade-off summary across three forms; not a selection benchmark.
+
 ---
 
 ## 1. Start With the Capability List
@@ -49,7 +51,7 @@ Application process
 - **Upgrade-bound**: upgrading the SDK means changing a dependency and redeploying; version fragmentation is nearly unavoidable;
 - **Failures are in-process**: an SDK bug hits the business process directly and cannot be isolated.
 
-### 2.2 Agent: capability beside the process, injected at the bytecode layer
+### 2.2 Agent: capability in-process, injected at the bytecode layer
 
 A Java Agent is the canonical example: attached at startup, it weaves governance logic into target methods via bytecode instrumentation—zero changes to business code.
 

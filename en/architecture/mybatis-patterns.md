@@ -4,6 +4,8 @@
 
 > Through compositional reuse of `<sql>` fragments, cross-cutting concerns such as data permissions, pagination, and sorting are pushed down from the Service layer to the SQL layer, achieving "write the query once, get permission filtering automatically."
 
+> **Verification**: [distribution-starter](../../distribution-starter/README.md) (55 unit tests, `mvn test`) ｜ **Evidence boundary**: single-team production implementation, not an industry-wide study.
+
 ---
 
 ## Architecture Overview

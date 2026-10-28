@@ -4,6 +4,8 @@
 
 > Role-based data scope control, pushing permission enforcement down to the SQL layer for zero business code intrusion in row-level data filtering.
 
+> **Verification**: [distribution-starter](../../distribution-starter/README.md) (55 unit tests, `mvn test`) ｜ **Evidence boundary**: single-team production implementation, not an industry-wide study.
+
 ---
 
 ## Architecture Overview
@@ -94,7 +96,7 @@ public enum DistributionDataScope {
 }
 ```
 
-**Why not make it configurable to any level?** Because 4 levels already cover 95% of B2B scenarios. Excessive flexibility increases comprehension cost and testing complexity.
+**Why not make it configurable to any level?** In this project's B2B distribution scenario, four levels cover the existing roles; finer levels would significantly increase comprehension and testing cost, so they are not introduced.
 
 ### Decision 3: Permission Resolution Cached as Immutable Object
 

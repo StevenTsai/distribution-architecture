@@ -145,10 +145,9 @@ src/main/java/com/godzilla/distribution/
 ├── dto/                             ← 请求/响应 DTO
 ├── enums/                           ← 业务枚举
 ├── common/                          ← 公共类（Result、注解、异常）
-├── config/                          ← 配置类
-└── enums/                          ← 业务枚举（已列见上）
+└── config/                          ← 配置类
 
-
+src/main/resources/
 ├── application.properties           ← 主配置
 ├── application-dev.properties       ← 开发环境配置
 ├── mybatis-config.xml               ← MyBatis 全局配置

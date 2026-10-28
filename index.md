@@ -6,7 +6,7 @@ titleTemplate: false
 hero:
   name: 架构炼金术
   text: 从真实系统提炼可复用的架构模式
-  tagline: 架构模式与方法论 · 生产系统实证 · 12 个模式 · 6 篇 ADR · 可运行案例与测试
+  tagline: 架构模式与方法论 · 生产系统实证 · 9 个架构模式 + 3 篇 AI 验证 · 6 篇 ADR · 可运行案例与测试
   image:
     src: /logo.svg
     alt: Distribution Architecture

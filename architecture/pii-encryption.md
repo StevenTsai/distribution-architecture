@@ -2,6 +2,8 @@
 
 > 对手机号等个人数据实施 AES-GCM 加密落库，配合 HMAC 检索键和统一脱敏，满足 GDPR / PIPL 合规要求。
 
+> **验证入口**：[distribution-starter](../distribution-starter/README.md)（55 个单元测试，`mvn test`）｜**证据边界**：单团队生产实现，未做跨行业统计。
+
 ---
 
 ## 架构总览

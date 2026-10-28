@@ -4,6 +4,8 @@
 
 > 从线索到结算的全链路资金流转，通过事件驱动的状态机 + 规则快照 + 自动冲回机制，保证佣金计算的可追溯性和一致性。
 
+> **验证入口**：本仓库无可运行实现｜**证据边界**：来自私有分销系统的生产实现，状态机抽取自真实代码，未做独立评测。
+
 ---
 
 ## 架构总览
@@ -12,11 +14,13 @@
 flowchart TB
     subgraph 业务单状态机
         A[DRAFT] -->|visited| B[VISITING]
+        A -->|signed| C[SIGNED]
         B -->|signed| C[SIGNED]
         C -->|first_payment| D[FIRST_PAID]
         D -->|full_payment| E[FULL_PAID]
         E -->|service_completed| F[SERVICE_COMPLETED]
-        B -->|cancelled| G[CLOSED]
+        A -->|cancelled| G[CANCELLED]
+        B -->|cancelled| G
         C -->|cancelled| G
         D -->|cancelled| G
         E -->|cancelled| G
@@ -77,7 +81,7 @@ flowchart TB
 businessOrder.setStatus("signed");
 
 // 而是通过事件推进：
-createEvent(businessOrderId, eventType: "signed", eventAmount: 50000, eventTime: now());
+createEvent(businessOrderId, "signed", new BigDecimal("50000"), now());
 // → 自动生成事件记录
 // → 自动更新业务单状态
 // → 自动生成佣金流水
@@ -210,24 +214,28 @@ flowchart TB
 stateDiagram-v2
     [*] --> DRAFT
     DRAFT --> VISITING: visited
+    DRAFT --> SIGNED: signed
     VISITING --> SIGNED: signed
     SIGNED --> FIRST_PAID: first_payment
     FIRST_PAID --> FULL_PAID: full_payment
     FULL_PAID --> SERVICE_COMPLETED: service_completed
-    VISITING --> CLOSED: cancelled
-    SIGNED --> CLOSED: cancelled
-    FIRST_PAID --> CLOSED: cancelled
-    FULL_PAID --> CLOSED: cancelled
+    DRAFT --> CANCELLED: cancelled
+    VISITING --> CANCELLED: cancelled
+    SIGNED --> CANCELLED: cancelled
+    FIRST_PAID --> CANCELLED: cancelled
+    FULL_PAID --> CANCELLED: cancelled
     SERVICE_COMPLETED --> [*]
-    CLOSED --> [*]
+    CANCELLED --> [*]
 
     classDef warning fill:#fef9c3,stroke:#eab308,color:#713f12,stroke-width:1.5px
     classDef success fill:#dcfce7,stroke:#22c55e,color:#14532d,stroke-width:1.5px
     classDef danger fill:#fee2e2,stroke:#ef4444,color:#7f1d1d,stroke-width:1.5px
     class DRAFT warning
     class SERVICE_COMPLETED success
-    class CLOSED danger
+    class CANCELLED danger
 ```
+
+> 业务单终态为 `CANCELLED`；事件层同时接受 `CANCELLED` 和 `CLOSED` 两种取消事件类型。
 
 #### 佣金流水状态转换
 

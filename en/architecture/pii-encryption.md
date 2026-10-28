@@ -4,6 +4,8 @@
 
 > AES-GCM encryption at rest for personal data such as mobile numbers, combined with HMAC lookup keys and unified masking, meeting GDPR / PIPL compliance requirements.
 
+> **Verification**: [distribution-starter](../../distribution-starter/README.md) (55 unit tests, `mvn test`) ｜ **Evidence boundary**: single-team production implementation, not an industry-wide study.
+
 ---
 
 ## Architecture Overview

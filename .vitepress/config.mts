@@ -3,7 +3,7 @@ import { withMermaid } from 'vitepress-plugin-mermaid'
 export default withMermaid({
   // 导航栏使用短书名，完整书名在首页 hero 和 description 中展示
   title: '架构炼金术',
-  description: '《架构炼金术：从真实系统提炼可复用的架构模式》—— 生产系统实证与方法论，12 个可复用模式 + 6 篇 ADR + 可运行代码与测试，跨语言交付方法论，以及 AI 工程与可判定性验证',
+  description: '《架构炼金术：从真实系统提炼可复用的架构模式》—— 生产系统实证与方法论，9 个可复用架构模式 + 3 篇 AI 系统验证 + 6 篇 ADR + 可运行代码与测试，跨语言交付方法论，以及 AI 工程与可判定性验证',
   lang: 'zh-CN',
 
   locales: {
@@ -190,10 +190,8 @@ export default withMermaid({
     `,
   },
 
-  // 忽略死链接：试跑 ignoreDeadLinks: false 时共 5 处死链，均为误报——
-  // localhost 本地服务地址（starter README 中英文各 1 处）与
-  // 指向仓库根 LICENSE 的相对链接（3 个 playbook README，LICENSE 非站点页面）
-  ignoreDeadLinks: true,
+  // 仅忽略本地服务地址（starter README 中英文各 1 处）；其余站内链接由构建强制校验。
+  ignoreDeadLinks: 'localhostLinks',
 
   themeConfig: {
     nav: [

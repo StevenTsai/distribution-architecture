@@ -4,6 +4,8 @@
 
 > Use JSON snapshots to record the before and after state of every data change, together with a unified audit service entry point, to achieve zero-intrusion, full-chain operation traceability.
 
+> **Verification**: [distribution-starter](../../distribution-starter/README.md) (55 unit tests, `mvn test`) ｜ **Evidence boundary**: single-team production implementation, not an industry-wide study.
+
 ---
 
 ## Architecture Overview

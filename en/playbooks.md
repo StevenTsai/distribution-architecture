@@ -43,7 +43,7 @@ Ten fillable templates plus a free hook.
 | [21 questions](../playbooks/takeover-engineering/hooks/21-questions.md) | What to ask before accepting a system (free, start here) |
 | [Methodology](../playbooks/takeover-engineering/00-methodology.md) | Four principles, six stages, stop-loss gates |
 | [Investment discipline](../playbooks/takeover-engineering/01-investment-discipline.md) | L0–L3 effort caps and leverage symmetry |
-| [Templates 01–10](../playbooks/takeover-engineering/) | Inventory, risk map, dependency graph, estimation, contract, and more |
+| [Templates 01–10](../playbooks/takeover-engineering/) | Asset inventory, reuse assessment, gap/risk ledger, responsibility matrix, exit checklist, pricing model, contract-first rebuild, acceptance traceability, quality review ledger, documentation system |
 | [Case walkthrough](../playbooks/takeover-engineering/case-walkthrough.md) | A fictional end-to-end run (evidence level E5: teaching example, not experience) |
 | [Three-round security audit deep dive](../playbooks/takeover-engineering/deep-dives/legacy-security-audit.md) | 46 findings across three audit rounds, four-element closure, and a rate limit that deleted its own evidence (Chinese) |
 

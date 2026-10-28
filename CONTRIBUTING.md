@@ -73,7 +73,8 @@ cd distribution-architecture
 ```bash
 npm install
 npm run docs:dev    # 开发模式（热重载）
-npm run docs:build  # 构建生产版本
+npm run lint:md     # Markdown 结构检查
+npm run docs:build  # 构建生产版本（同时校验站内死链）
 npm run docs:preview # 预览构建产物
 ```
 
