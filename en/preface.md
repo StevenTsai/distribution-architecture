@@ -26,7 +26,7 @@ Unlike architecture books on the market, this book has the following characteris
 
 ### If You Want a Quick Overview
 
-Start with [Part 1: Foundation Patterns](architecture/data-permission-model.md). These 4 patterns cover 80% of enterprise requirements.
+Start with [Part 1: Foundation Patterns](architecture/data-permission-model.md). These 4 patterns are the shared foundation for the commission, settlement, and compliance chapters that follow.
 
 ### If You Are Preparing for Technology Selection
 
@@ -43,6 +43,8 @@ Browse [Part 4: Case Studies](../case-studies/mto-workflow-engine/) to find a ca
 ## Content Sources
 
 The architecture patterns in this book come from two real production systems:
+
+> Each architecture chapter carries a **Verification** / **Evidence boundary** line under its title: runnable implementations link to their test entry point; the rest state their source and limits explicitly, so single-team experience is not mistaken for an industry conclusion.
 
 ### System One: Jewelry Processing ERP
 

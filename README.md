@@ -165,39 +165,33 @@ AI Agent 架构与 AI 工程实践提炼自高风险 AI 应用和长文档任务
 │   └── oncohub-architecture-evolution.md  架构演进复盘：设计文档改 8 次（叙事案例）
 │
 ├── playbooks/                       方法论 playbook（架构师全周期实践）
-│   └── takeover-engineering/        接手工程工具箱
-│       ├── README.md                导言：与主仓库的关系 + 三层用法
-│       ├── 00-methodology.md        方法论总纲：四原则 + 六阶段 + 止损闸门
-│       ├── 01-investment-discipline.md  签约前投入纪律：L0–L3 封顶 + 杠杆对称
-│       ├── case-walkthrough.md      附录：虚构案例串跑（教学示例，走完六阶段）
-│       ├── deep-dives/legacy-security-audit.md  三轮安全审计：46 项发现与限频自噬
-│       ├── templates/               可直接填写的模板 01–10
-│       └── hooks/21-questions.md    接手前必须问清的 21 个问题（免费钩子）
-│
-├── playbooks/system-portfolio-governance/  架构组合治理（姊妹篇：系统群怎么管）
-│   ├── 00-methodology.md            四阶段：清点 → 诊断 → 决策 → 执行与防回潮
-│   ├── 05-architecture-review.md    架构评审机制：三级评审 + 一页纸 + 例外台账
-│   └── templates/                   组合清单 / 诊断卡 / 决策记录 / 路线图与闸门
-│
-├── playbooks/ai-engineering/        AI 工程实践
-│   ├── README.md                    生成链路可控性总览
-│   ├── structured-output-governance.md  结构化输出五层失败边界
-│   ├── model-routing-and-resilience.md  模型目录、Provider 隔离与故障降级
-│   └── long-document-pipeline.md    分段审阅、可审查改写与全文重组
-│
-├── playbooks/enterprise-architecture/  企业架构实践
-│   ├── README.md                    企业架构方法总览
-│   ├── ddd-seven-step-landing.md    从领域语言到聚合代码
-│   └── togaf-in-practice.md         BA/DA/AA/TA 与方法裁剪
-│
-├── playbooks/engineering-consistency-standards.md  工程一致性规范（团队可直接套用）
-│
-├── playbooks/open-source-compliance.md  开源发布止血带（提取纪律 + 推送前清单）
-│
-├── playbooks/production-operations/  生产运维（第三姊妹篇：系统运行期怎么稳住）
-│   ├── 00-methodology.md            五原则 + 四能力域（观测/变更/响应/演练）
-│   ├── deep-dives/                  全链路灰度：标记透传、消息灰度、数据兼容
-│   └── templates/                   告警规范 / 变更与灰度 / 故障复盘 / 容量与演练
+│   ├── takeover-engineering/        接手工程工具箱
+│   │   ├── README.md                导言：与主仓库的关系 + 三层用法
+│   │   ├── 00-methodology.md        方法论总纲：四原则 + 六阶段 + 止损闸门
+│   │   ├── 01-investment-discipline.md  签约前投入纪律：L0–L3 封顶 + 杠杆对称
+│   │   ├── case-walkthrough.md      附录：虚构案例串跑（教学示例，走完六阶段）
+│   │   ├── deep-dives/legacy-security-audit.md  三轮安全审计：46 项发现与限频自噬
+│   │   ├── templates/               可直接填写的模板 01–10
+│   │   └── hooks/21-questions.md    接手前必须问清的 21 个问题（免费钩子）
+│   ├── system-portfolio-governance/ 架构组合治理（姊妹篇：系统群怎么管）
+│   │   ├── 00-methodology.md        四阶段：清点 → 诊断 → 决策 → 执行与防回潮
+│   │   ├── 05-architecture-review.md  架构评审机制：三级评审 + 一页纸 + 例外台账
+│   │   └── templates/               组合清单 / 诊断卡 / 决策记录 / 路线图与闸门
+│   ├── ai-engineering/              AI 工程实践
+│   │   ├── README.md                生成链路可控性总览
+│   │   ├── structured-output-governance.md  结构化输出五层失败边界
+│   │   ├── model-routing-and-resilience.md  模型目录、Provider 隔离与故障降级
+│   │   └── long-document-pipeline.md  分段审阅、可审查改写与全文重组
+│   ├── enterprise-architecture/     企业架构实践
+│   │   ├── README.md                企业架构方法总览
+│   │   ├── ddd-seven-step-landing.md  从领域语言到聚合代码
+│   │   └── togaf-in-practice.md     BA/DA/AA/TA 与方法裁剪
+│   ├── engineering-consistency-standards.md  工程一致性规范（团队可直接套用）
+│   ├── open-source-compliance.md    开源发布止血带（提取纪律 + 推送前清单）
+│   └── production-operations/       生产运维（第三姊妹篇：系统运行期怎么稳住）
+│       ├── 00-methodology.md        五原则 + 四能力域（观测/变更/响应/演练）
+│       ├── deep-dives/              全链路灰度：标记透传、消息灰度、数据兼容
+│       └── templates/               告警规范 / 变更与灰度 / 故障复盘 / 容量与演练
 │
 ├── CONTRIBUTING.md                  贡献指南
 │
@@ -325,6 +319,6 @@ English translations of the core documents are available in the [`en/`](en/) dir
 | [en/SECURITY.md](en/SECURITY.md) | Security policy |
 | [en/distribution-starter/README.md](en/distribution-starter/README.md) | Starter quick start and project structure |
 
-The English directory covers every book page except the VitePress homepage (`index.md`) and the AI architecture and engineering articles (added 2026-10, Chinese-only for now). The seven methodology playbooks are Chinese-only by design; [en/playbooks.md](en/playbooks.md) indexes what they cover and links to each one. The internal `doc/open-source-strategy.md` also remains Chinese-only.
+The English directory covers every book page except the VitePress homepage (`index.md`) and the AI architecture and engineering articles (added 2026-10, Chinese-only for now). The seven methodology playbooks are Chinese-only by design; [en/playbooks.md](en/playbooks.md) indexes what they cover and links to each one. The internal extraction-strategy notes also remain private.
 
 For Spring Boot 2.7 users, see the [migration guide](guides/spring-boot-3-migration.md) (also available in [English](en/guides/spring-boot-3-migration.md)).

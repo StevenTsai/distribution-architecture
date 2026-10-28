@@ -4,6 +4,8 @@
 
 > Use the "outside-the-repo arbiter" pattern to verify consistency across multi-language implementations: freeze a baseline implementation, generate fixtures, and perform bit-for-bit cross-implementation comparison on both ends.
 
+> **Verification**: no runnable implementation in this repository ｜ **Evidence boundary**: methodology distilled from cross-language migration work; not independently benchmarked.
+
 ---
 
 ## Architecture Overview

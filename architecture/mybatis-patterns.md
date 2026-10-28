@@ -2,6 +2,8 @@
 
 > 通过 `<sql>` 片段的组合式复用，将数据权限、分页、排序等横切关注点从 Service 层下沉到 SQL 层，实现"写一次查询，自动获得权限过滤能力"。
 
+> **验证入口**：[distribution-starter](../distribution-starter/README.md)（55 个单元测试，`mvn test`）｜**证据边界**：单团队生产实现，未做跨行业统计。
+
 ---
 
 ## 架构总览

@@ -177,7 +177,7 @@ stateMachine.closeWork(wo);
 - [Data Permission Model](../../architecture/data-permission-model.md) — The permission pattern used in the original system
 - [Commission Pipeline](../../architecture/commission-pipeline.md) — Event-driven pattern for side effects
 - [MyBatis Patterns](../../architecture/mybatis-patterns.md) — SQL patterns used in the original implementation
-- [Open Source Strategy](https://github.com/StevenTsai/distribution-architecture/blob/main/doc/open-source-strategy.md) — The strategy behind this extraction
+- [Open Source Release Discipline](../../../playbooks/open-source-compliance.md) — The strategy behind this extraction (Chinese)
 
 ## Source
 

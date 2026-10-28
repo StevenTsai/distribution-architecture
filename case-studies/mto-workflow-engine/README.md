@@ -178,7 +178,7 @@ stateMachine.closeWork(wo);
 - [数据权限模型](../../architecture/data-permission-model.md) — 原始系统中使用的权限模式
 - [佣金流转流水线](../../architecture/commission-pipeline.md) — 事件驱动的副作用模式
 - [MyBatis 模式](../../architecture/mybatis-patterns.md) — 原始实现中使用的 SQL 模式
-- [开源策略](https://github.com/StevenTsai/distribution-architecture/blob/main/doc/open-source-strategy.md) — 本次抽取背后的策略
+- [开源发布纪律](../../playbooks/open-source-compliance.md) — 本次抽取背后的策略
 
 ## 来源
 

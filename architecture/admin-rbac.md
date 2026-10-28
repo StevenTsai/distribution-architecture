@@ -2,6 +2,8 @@
 
 > 基于权限码的管理端访问控制，支持模块级读写分离、敏感操作独立授权、即时生效的角色变更。
 
+> **验证入口**：本仓库无可运行实现｜**证据边界**：来自 IoT 设备管理后端的生产实现，示例已泛化，未做独立评测。
+
 ---
 
 ## 架构总览
@@ -64,7 +66,7 @@ flowchart TB
 ### 决策 1：注解声明 + 拦截器统一校验
 
 ```java
-@RequirePermission("device")      // 写操作：需要模块码
+@RequirePermission("device")      // 读操作：模块管理员或只读权限均可
 @GetMapping("/devices")
 public R<List<Device>> list() { ... }
 

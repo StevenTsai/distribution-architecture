@@ -4,6 +4,8 @@
 
 > End-to-end fund flow from lead to settlement, driven by an event-driven state machine with rule snapshots and automatic reversal mechanisms, ensuring commission calculation traceability and consistency.
 
+> **Verification**: no runnable implementation in this repository ｜ **Evidence boundary**: extracted from a private distribution system in production; not independently benchmarked.
+
 ---
 
 ## Architecture Overview
@@ -12,11 +14,13 @@
 flowchart TB
     subgraph Business Order State Machine
         A[DRAFT] -->|visited| B[VISITING]
+        A -->|signed| C[SIGNED]
         B -->|signed| C[SIGNED]
         C -->|first_payment| D[FIRST_PAID]
         D -->|full_payment| E[FULL_PAID]
         E -->|service_completed| F[SERVICE_COMPLETED]
-        B -->|cancelled| G[CLOSED]
+        A -->|cancelled| G[CANCELLED]
+        B -->|cancelled| G
         C -->|cancelled| G
         D -->|cancelled| G
         E -->|cancelled| G
@@ -77,7 +81,7 @@ Business order status changes are driven by "events," not direct state modificat
 businessOrder.setStatus("signed");
 
 // But driving through events:
-createEvent(businessOrderId, eventType: "signed", eventAmount: 50000, eventTime: now());
+createEvent(businessOrderId, "signed", new BigDecimal("50000"), now());
 // → Auto-generates event record
 // → Auto-updates business order status
 // → Auto-generates commission ledger
@@ -210,24 +214,28 @@ flowchart TB
 stateDiagram-v2
     [*] --> DRAFT
     DRAFT --> VISITING: visited
+    DRAFT --> SIGNED: signed
     VISITING --> SIGNED: signed
     SIGNED --> FIRST_PAID: first_payment
     FIRST_PAID --> FULL_PAID: full_payment
     FULL_PAID --> SERVICE_COMPLETED: service_completed
-    VISITING --> CLOSED: cancelled
-    SIGNED --> CLOSED: cancelled
-    FIRST_PAID --> CLOSED: cancelled
-    FULL_PAID --> CLOSED: cancelled
+    DRAFT --> CANCELLED: cancelled
+    VISITING --> CANCELLED: cancelled
+    SIGNED --> CANCELLED: cancelled
+    FIRST_PAID --> CANCELLED: cancelled
+    FULL_PAID --> CANCELLED: cancelled
     SERVICE_COMPLETED --> [*]
-    CLOSED --> [*]
+    CANCELLED --> [*]
 
     classDef warning fill:#fef9c3,stroke:#eab308,color:#713f12,stroke-width:1.5px
     classDef success fill:#dcfce7,stroke:#22c55e,color:#14532d,stroke-width:1.5px
     classDef danger fill:#fee2e2,stroke:#ef4444,color:#7f1d1d,stroke-width:1.5px
     class DRAFT warning
     class SERVICE_COMPLETED success
-    class CLOSED danger
+    class CANCELLED danger
 ```
+
+> The terminal business-order status is `CANCELLED`; the event layer accepts both `CANCELLED` and `CLOSED` as cancellation event types.
 
 #### Commission Ledger State Transitions
 

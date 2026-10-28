@@ -4,6 +4,8 @@
 
 > Splitting solves "the system is too big to change." Cell-based architecture solves "the system is so big that one failure takes everything down." The first is a productivity problem; the second is a survival problem.
 
+> **Verification**: no runnable implementation in this repository ｜ **Evidence boundary**: architecture method drawn from production evolution experience; thresholds require per-business calibration.
+
 ---
 
 ## 1. The Problem: You Only Have One Failure Domain

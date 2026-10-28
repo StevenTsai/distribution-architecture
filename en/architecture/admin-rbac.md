@@ -4,6 +4,8 @@
 
 > Permission-code-based access control for the admin console, supporting module-level read/write separation, independent authorization for sensitive operations, and role changes that take effect immediately.
 
+> **Verification**: no runnable implementation in this repository ｜ **Evidence boundary**: extracted from a production IoT device-management backend; examples generalized and not independently benchmarked.
+
 ---
 
 ## Architecture Overview
@@ -66,7 +68,7 @@ Problems with traditional RBAC:
 ### Decision 1: Annotation Declarations + Unified Interceptor Validation
 
 ```java
-@RequirePermission("device")      // Write operation: requires module code
+@RequirePermission("device")      // Read operation: module admin or read-only
 @GetMapping("/devices")
 public R<List<Device>> list() { ... }
 

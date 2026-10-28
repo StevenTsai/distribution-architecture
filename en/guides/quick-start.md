@@ -13,7 +13,6 @@
 | Java | 17+ | `java -version` |
 | Maven | 3.6+ | `mvn -version` |
 | MySQL | 8.0 | Local or remote |
-| Redis | 5.0+ | Optional — core features don't heavily depend on it |
 
 ## Step 1: Clone the Project
 
@@ -61,26 +60,7 @@ spring.datasource.password=your_password
 
 > **Note**: This file may contain remote test database connection info. Replace with your local configuration.
 
-## Step 5: Configure Redis (Optional)
-
-`application.properties` configures a Redis connection pool. If you don't have Redis locally:
-
-**Option A: Start Redis**
-
-```bash
-# macOS
-brew install redis
-brew services start redis
-
-# Docker
-docker run -d -p 6379:6379 redis:7
-```
-
-**Option B: Comment Out Redis Configuration**
-
-If you don't need Redis temporarily, comment out the Redis-related configuration in `application.properties`. Spring Boot will degrade gracefully (though some features may throw errors).
-
-## Step 6: Start the Application
+## Step 5: Start the Application
 
 ```bash
 # Option 1: Maven
@@ -96,7 +76,7 @@ On successful startup, you'll see:
 Started DistributionApplication in X.XXX seconds
 ```
 
-## Step 7: Verify
+## Step 6: Verify
 
 ### Access Swagger UI
 
@@ -156,19 +136,18 @@ curl -H "Authorization: test-token-123" \
 src/main/java/com/godzilla/distribution/
 ├── DistributionApplication.java     ← Entry point
 ├── controller/                      ← API layer
-│   ├── admin/distribution/          ← Admin side: 13 Controllers
-│   └── partner/                     ← Partner portal: 1 Controller
+│   └── admin/distribution/          ← Admin side: 5 Controllers
 ├── service/                         ← Business logic layer
-│   └── distribution/impl/           ← 13 Service implementations
+│   └── distribution/impl/           ← 6 Service implementations
 ├── mapper/                          ← Data access layer
-│   └── distribution/                ← 19 MyBatis Mappers
+│   └── distribution/                ← 9 MyBatis Mappers
 ├── entity/                          ← Database entities
 ├── dto/                             ← Request/Response DTOs
 ├── enums/                           ← Business enums
 ├── common/                          ← Common classes (Result, annotations, exceptions)
-├── config/                          ← Configuration classes
-└── exception/                       ← Exception classes
+└── config/                          ← Configuration classes
 
+src/main/resources/
 ├── application.properties           ← Main config
 ├── application-dev.properties       ← Dev environment config
 ├── mybatis-config.xml               ← MyBatis global config
@@ -202,10 +181,6 @@ You need to include `Authorization` and `x-biz` in the request headers:
 Authorization: <token>
 x-biz: distribution-starter
 ```
-
-### Q: Redis connection failure
-
-Redis is not a hard dependency for core features. If you don't need it temporarily, you can ignore Redis-related errors or start a local Redis instance.
 
 ## Next Steps
 

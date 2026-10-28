@@ -2,6 +2,8 @@
 
 > 用 JSON 快照记录每次数据变更的前后状态，配合统一的审计服务入口，实现零侵入的全链路操作追溯。
 
+> **验证入口**：[distribution-starter](../distribution-starter/README.md)（55 个单元测试，`mvn test`）｜**证据边界**：单团队生产实现，未做跨行业统计。
+
 ---
 
 ## 架构总览
