@@ -2,6 +2,8 @@
 
 > 前面 4 步搭建了基础设施。本章实现核心业务：业务单事件推进 → 自动生成佣金流水。
 
+> **代码范围说明**：本章的佣金服务（如 `commissionService`）与佣金流水表（`distribution_commission_ledger`）来自生产系统，**未随仓库开源**——`distribution-starter` 中没有这些类与表，本章验证 SQL 无法在 starter 库上执行。事件与审计的可运行实践见 [Step 04](04-audit-logging.md)；本章按设计文档口径阅读，价值在规则快照、冲正与幂等的判断。
+
 ---
 
 ## 本章目标
@@ -59,7 +61,7 @@ private String resolveAfterStatus(String currentStatus, String eventType) {
 ## 第二步：创建事件
 
 ```java
-// (source file)
+// 生产系统源码节选（未随仓库开源）
 
 @Override
 @Transactional(rollbackFor = Exception.class)
@@ -115,7 +117,7 @@ public Long createEvent(Long businessOrderId, CreateDistributionBusinessOrderEve
 当事件发生时，自动匹配佣金规则并生成流水：
 
 ```java
-// (source file)
+// 生产系统源码节选（未随仓库开源）
 
 @Override
 @Transactional(rollbackFor = Exception.class)
@@ -256,6 +258,8 @@ stateDiagram-v2
 ```
 
 ## 验证
+
+> 以下 SQL 依赖生产系统的佣金流水表，starter 库中不存在，仅作核对清单使用。
 
 ```sql
 -- 1. 创建业务单

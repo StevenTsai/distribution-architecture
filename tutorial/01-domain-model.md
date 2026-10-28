@@ -3,6 +3,8 @@
 > 在写任何业务代码之前，先搞清楚"系统里有哪些东西、它们之间是什么关系"。
 > 本章定义分销系统的核心实体，建立数据库表结构。
 
+> **代码范围说明**：本章按生产完整版定义 6 个实体。仓库内 `distribution-starter` 实现其中渠道、成员、线索三实体，另有跟进、审计、合规表（共 9 张，见[快速开始](../guides/quick-start.md)）；归因、业务单、业务单事件三实体属生产系统未开源部分，按设计文档口径呈现。手机号等 PII 字段在 starter 中为密文存储，下文 DDL 已按 starter 口径标注。
+
 ---
 
 ## 本章目标
@@ -55,7 +57,7 @@ CREATE TABLE distribution_distributor (
     level_code      VARCHAR(32) NOT NULL COMMENT '渠道等级 L1/L2/L3',
     owner_user_id   BIGINT DEFAULT NULL COMMENT '平台负责人',
     contact_name    VARCHAR(64),
-    contact_phone   VARCHAR(32),
+    contact_phone   VARCHAR(512) COMMENT '联系电话（AES-GCM 密文 enc:v1:...，兼容历史明文）',
     province        VARCHAR(32),
     city            VARCHAR(32),
     settlement_type VARCHAR(32) COMMENT '结算方式',
@@ -111,7 +113,8 @@ public class DistributionDistributorEntity {
 - `distributor_id` 外键关联渠道
 - `role_code` 定义角色（超级管理员、运营、销售、财务等）
 - `data_scope` 定义数据可见范围（ALL/OWN_DISTRIBUTOR/OWN_AND_CHILDREN/SELF）
-- 唯一索引 `(distributor_id, phone, deleted)` 保证同一渠道下手机号不重复
+- 手机号密文存储 + `phone_lookup` HMAC 检索键（见[PII 加密与脱敏](../architecture/pii-encryption.md)）
+- 唯一索引 `(distributor_id, phone_lookup, deleted)` 保证同一渠道下手机号不重复——手机号以检索键参与索引，密文列不进索引
 
 ```sql
 CREATE TABLE distribution_distributor_member (
@@ -119,7 +122,8 @@ CREATE TABLE distribution_distributor_member (
     distributor_id  BIGINT NOT NULL COMMENT '所属渠道ID',
     user_id         BIGINT DEFAULT NULL COMMENT '系统用户ID',
     name            VARCHAR(64) NOT NULL,
-    phone           VARCHAR(32) NOT NULL,
+    phone           VARCHAR(512) NOT NULL COMMENT '成员手机号（AES-GCM 密文 enc:v1:...）',
+    phone_lookup    VARCHAR(32) COMMENT '手机号 HMAC 检索键（截断 32hex）',
     role_code       VARCHAR(32) NOT NULL COMMENT '分销角色',
     data_scope      VARCHAR(32) NOT NULL DEFAULT 'SELF' COMMENT '数据范围',
     manager_member_id BIGINT DEFAULT NULL COMMENT '直属上级',
@@ -129,7 +133,7 @@ CREATE TABLE distribution_distributor_member (
     deleted         TINYINT NOT NULL DEFAULT 0,
     -- ...
     PRIMARY KEY (id),
-    UNIQUE KEY uk_phone_distributor (distributor_id, phone, deleted),
+    UNIQUE KEY uk_phone_distributor (distributor_id, phone_lookup, deleted),
     KEY idx_user_id (user_id),
     KEY idx_role_code (role_code)
 );
@@ -150,7 +154,8 @@ CREATE TABLE distribution_lead (
     id                  BIGINT NOT NULL AUTO_INCREMENT,
     lead_no             VARCHAR(32) NOT NULL COMMENT '线索编号',
     contact_name        VARCHAR(64) NOT NULL,
-    contact_phone       VARCHAR(32) NOT NULL,
+    contact_phone       VARCHAR(512) NOT NULL COMMENT '联系人手机号（AES-GCM 密文 enc:v1:...）',
+    contact_phone_lookup VARCHAR(32) COMMENT '手机号 HMAC 检索键（截断 32hex）',
     source_distributor_id BIGINT NOT NULL COMMENT '来源渠道',
     source_member_id    BIGINT COMMENT '推荐成员',
     intent_product_line VARCHAR(32) NOT NULL COMMENT '意向产品线',
@@ -163,7 +168,7 @@ CREATE TABLE distribution_lead (
     -- ...
     PRIMARY KEY (id),
     UNIQUE KEY uk_lead_no (lead_no),
-    KEY idx_contact_phone (contact_phone),
+    KEY idx_contact_phone_lookup (contact_phone_lookup),
     KEY idx_source_distributor (source_distributor_id),
     KEY idx_stage (stage)
 );
@@ -329,7 +334,7 @@ mysql -u root -p distribution_server -e "
 "
 ```
 
-你应该看到 6 张表（加上之前的共享表共 10 张）。
+starter 库中你会看到 9 张表：3 张共享表 + 6 张分销表（渠道、成员、线索、跟进、审计、合规）。本章定义的归因、业务单、业务单事件属生产完整版，starter 的 `02_distribution_tables.sql` 未包含——按上方 DDL 自行补建后，两部分合计才是生产口径的表集。
 
 ## 下一步
 

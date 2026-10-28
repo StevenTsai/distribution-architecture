@@ -15,6 +15,8 @@ This is a collection of **architecture design documents** + a **reusable Starter
 
 Beyond code, it distills seven directly applicable methods: **takeover engineering** (should you accept it, how much to invest, when to stop), **system portfolio governance** (what to shut down or remediate), **production operations** (observability, change management, incident response), **AI engineering** (structured output, model routing, and long-document pipelines), **enterprise architecture** (DDD and practical TOGAF tailoring), **engineering consistency standards** (naming, interfaces, release, and glossary baselines), and **open-source compliance** (what stays private, leak scanning, pre-push checks). The playbooks are written in Chinese; see the [playbooks index](playbooks.md).
 
+The current scope focuses on Java/Spring modular monoliths and cell-based evolution, B2B security and compliance, takeover/portfolio/operations methodology, and AI reliability engineering. Microservice consistency patterns (Saga/CQRS) and data architecture are not yet covered; they will be added as real source material accumulates.
+
 > I encountered generic problems in a production system: data permissions, workflow engines, event-driven decoupling, piecework wages.
 > I first implemented these patterns with Spring Boot + MyBatis in a real project,
 > then summarized them as design documents and ADRs,
@@ -189,7 +191,7 @@ Project-level documents are also available in English: [Contributing](CONTRIBUTI
 
 **If you want to try it out**: Go to `distribution-starter/`, follow the README to initialize MySQL, and start the application.
 
-**If you want a quick overview**: Start with the four foundational design pattern documents in `architecture/` (data permissions, event-driven flows, audit, and MyBatis), then read the other six.
+**If you want a quick overview**: Start with the four foundational design pattern documents in `architecture/` (data permissions, event-driven flows, audit, and MyBatis), then read the other five.
 
 **If you want to see production-validated case studies**: Go to `case-studies/` — each code case study has a README and an evolution document; the OncoHub entry is a narrative case.
 

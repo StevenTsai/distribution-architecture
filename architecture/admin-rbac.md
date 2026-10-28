@@ -104,6 +104,8 @@ audit      审计日志
 | GET / HEAD | `*` / `{module}` / `{module}:r` |
 | POST / PUT / DELETE | `*` / `{module}` |
 
+`sensitive` 不参与上表匹配：`*` 与 `{module}:r` 均不覆盖，只接受显式 `sensitive` 码（决策 3，实现见文末 `checkPermission`）。
+
 ### 决策 3：sensitive 独立于 *
 
 ```java
@@ -222,6 +224,14 @@ public class AdminAuthInterceptor implements HandlerInterceptor {
 
         String module = required.value();
         Set<String> permissions = principal.permissions();
+
+        // sensitive 独立校验（决策 3）：* 不覆盖，必须显式持有
+        if ("sensitive".equals(module)) {
+            if (!permissions.contains("sensitive")) {
+                throw new ForbiddenException("无 sensitive 权限");
+            }
+            return;
+        }
 
         // 全局管理员或模块管理员
         if (permissions.contains("*") || permissions.contains(module)) return;
