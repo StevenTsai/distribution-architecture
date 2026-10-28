@@ -45,6 +45,7 @@ jobs:
           GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}
         run: |
           git remote add gitee "https://oauth2:${GITEE_TOKEN}@gitee.com/steven27/distribution-architecture.git"
-          git push gitee "+refs/heads/*:refs/heads/*"
-          git push gitee "+refs/tags/*:refs/tags/*"
+          # actions/checkout 仅将触发分支建为本地 refs/heads/*，其余分支在 refs/remotes/origin/*
+          # 因此统一从 remote-tracking 引用推全部分支，避免只同步触发分支
+          git push gitee "+refs/remotes/origin/*:refs/heads/*" "+refs/tags/*:refs/tags/*"
           echo "已同步 $(git ls-remote --heads gitee | wc -l) 个分支到 Gitee" >> "$GITHUB_STEP_SUMMARY"
