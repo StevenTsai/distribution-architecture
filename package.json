@@ -7,6 +7,7 @@
     "docs:dev": "vitepress dev",
     "docs:build": "vitepress build",
     "docs:preview": "vitepress preview",
+    "lint:md": "markdownlint-cli2",
     "docs:pdf": "python scripts/export-pdf.py --build",
     "docs:pdf:merge": "python scripts/export-pdf.py --skip-print"
   },
@@ -21,6 +22,7 @@
   "author": "Steven Tsai",
   "license": "Apache-2.0",
   "devDependencies": {
+    "markdownlint-cli2": "^0.17.2",
     "mermaid": "^11.17.2",
     "vitepress": "1.6.4",
     "vitepress-plugin-mermaid": "^2.0.17"

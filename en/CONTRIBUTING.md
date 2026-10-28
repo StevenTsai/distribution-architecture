@@ -75,7 +75,8 @@ This project uses VitePress to build the online book, deployed to GitHub Pages.
 ```bash
 npm install
 npm run docs:dev    # Development mode (hot reload)
-npm run docs:build  # Production build
+npm run lint:md     # Markdown structure check
+npm run docs:build  # Production build (also checks dead links)
 npm run docs:preview # Preview the build output
 ```
 

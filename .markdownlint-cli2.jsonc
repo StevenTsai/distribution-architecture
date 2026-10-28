@@ -1,0 +1,18 @@
+{
+  // 只启用结构性规则：标题层级、页内锚点。
+  // MD040（代码块语言）暂不启用：playbook 中约 120 处 ASCII 图示需要补 `text` 标签，另行清理。
+  "config": {
+    "default": false,
+    "MD001": true,
+    "MD051": true
+  },
+  "globs": [
+    "**/*.md"
+  ],
+  "ignores": [
+    "node_modules/**",
+    ".vitepress/dist/**",
+    "dist-pdf/**",
+    "**/target/**"
+  ]
+}
