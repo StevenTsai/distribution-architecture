@@ -2,6 +2,8 @@
 
 > 佣金流水生成了，但还没有"把钱给渠道"的流程。本章实现结算单的创建、审核、打款。
 
+> **代码范围说明**：结算单与打款流程为生产系统完整实现，**未随仓库开源**——`distribution-starter` 不含结算相关表与服务，本章验证 SQL 无法在 starter 库上执行。本章按设计文档口径阅读，价值在结算状态机、审核分离与幂等设计。
+
 ---
 
 ## 本章目标
@@ -268,6 +270,8 @@ private void markPaidSettlementReversed(DistributionCommissionLedgerEntity sourc
 ```
 
 ## 验证
+
+> 以下 SQL 依赖生产系统的结算与佣金表，starter 库中不存在，仅作核对清单使用。
 
 ```sql
 -- 1. 录入回款后，检查结算单是否自动创建

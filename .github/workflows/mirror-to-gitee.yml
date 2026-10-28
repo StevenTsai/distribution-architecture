@@ -1,0 +1,51 @@
+# GitHub → Gitee 单向镜像：GitHub 为权威源，Gitee 为只读副本
+# 前置条件（仓库 Settings → Secrets and variables → Actions）：
+#   GITEE_TOKEN — Gitee 私人令牌（gitee.com/profile/personal_access_token，勾选 projects 权限）
+#   Gitee 侧需先创建空仓库 https://gitee.com/steven27/distribution-architecture（不要初始化 README）
+name: Mirror to Gitee
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mirror-gitee
+  cancel-in-progress: false
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      # 令牌未配置时优雅跳过，避免 Actions 出现失败红叉
+      - name: Check Gitee token
+        id: gate
+        env:
+          GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}
+        run: |
+          if [ -z "$GITEE_TOKEN" ]; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "GITEE_TOKEN 未配置，跳过镜像同步（配置后自动生效）" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout (full history)
+        if: steps.gate.outputs.ready == 'true'
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # 强制 refspec：GitHub 侧为准，分支与标签整体覆盖到 Gitee（含删除与回退）
+      - name: Push all branches and tags to Gitee
+        if: steps.gate.outputs.ready == 'true'
+        env:
+          GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}
+        run: |
+          git remote add gitee "https://oauth2:${GITEE_TOKEN}@gitee.com/steven27/distribution-architecture.git"
+          # actions/checkout 仅将触发分支建为本地 refs/heads/*，其余分支在 refs/remotes/origin/*
+          # 因此统一从 remote-tracking 引用推全部分支，避免只同步触发分支
+          git push gitee "+refs/remotes/origin/*:refs/heads/*" "+refs/tags/*:refs/tags/*"
+          echo "已同步 $(git ls-remote --heads gitee | wc -l) 个分支到 Gitee" >> "$GITHUB_STEP_SUMMARY"
