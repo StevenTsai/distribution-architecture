@@ -7,6 +7,8 @@
 
 📖 **[在线阅读《架构炼金术：从真实系统提炼可复用的架构模式》](https://steventsai.github.io/distribution-architecture/)** | 企业级架构模式与方法论库，从真实生产系统中提炼（生产实证 + 跨语言交付 + 架构治理 + AI 系统验证）。
 
+📦 **Gitee 镜像**：[gitee.com/steven27/distribution-architecture](https://gitee.com/steven27/distribution-architecture) — GitHub 为权威源，push 自动单向同步，国内克隆走这里更快。
+
 ## 这是什么
 
 这是一套**架构设计文档** + **可复用 Starter 库** + **生产验证案例** + **全生命周期方法论**，覆盖一个企业级系统从构建、选型、验证，到接手、治理、运维的完整过程。

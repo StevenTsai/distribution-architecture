@@ -7,6 +7,8 @@
 
 📖 **[Read Online](https://steventsai.github.io/distribution-architecture/)** | B2B enterprise architecture design pattern library — reusable architecture solutions and full-lifecycle methodology refined from production systems.
 
+📦 **Gitee mirror** (auto-synced, GitHub is the source of truth): [gitee.com/steven27/distribution-architecture](https://gitee.com/steven27/distribution-architecture) — faster cloning for readers in China.
+
 ## What Is This
 
 This is a collection of **architecture design documents** + a **reusable Starter library** + **production-validated case studies** + a **full-lifecycle methodology**, covering an enterprise system from build, selection, and verification through takeover, portfolio governance, and production operations.
