@@ -15,21 +15,19 @@ This is a collection of **architecture design documents** + a **reusable Starter
 
 Beyond code, it distills seven directly applicable methods: **takeover engineering** (should you accept it, how much to invest, when to stop), **system portfolio governance** (what to shut down or remediate), **production operations** (observability, change management, incident response), **AI engineering** (structured output, model routing, and long-document pipelines), **enterprise architecture** (DDD and practical TOGAF tailoring), **engineering consistency standards** (naming, interfaces, release, and glossary baselines), and **open-source compliance** (what stays private, leak scanning, pre-push checks). The playbooks are written in Chinese; see the [playbooks index](playbooks.md).
 
-The current scope focuses on Java/Spring modular monoliths and cell-based evolution, B2B security and compliance, takeover/portfolio/operations methodology, and AI reliability engineering. Microservice consistency patterns (Saga/CQRS) and data architecture are not yet covered; they will be added as real source material accumulates.
-
 > I encountered generic problems in a production system: data permissions, workflow engines, event-driven decoupling, piecework wages.
 > I first implemented these patterns with Spring Boot + MyBatis in a real project,
 > then summarized them as design documents and ADRs,
 > and finally abstracted them into reusable components and open-sourced them.
 
 ### Design Patterns and Architecture Methods (9)
-- Data permissions at the SQL layer
-- Event-driven state machine (commission pipeline)
-- Audit logging with JSON snapshots
-- MyBatis engineering patterns
-- PII encryption & masking (AES-GCM + HMAC lookup keys)
-- Admin RBAC (module-level permissions + sensitive operation control)
-- Cross-language contract testing (outside-the-arbiter + fixture comparison)
+- [Data permissions at the SQL layer](architecture/data-permission-model.md)
+- [Event-driven state machine (commission pipeline)](architecture/commission-pipeline.md)
+- [Audit logging with JSON snapshots](architecture/audit-and-compliance.md)
+- [MyBatis engineering patterns](architecture/mybatis-patterns.md)
+- [PII encryption & masking (AES-GCM + HMAC lookup keys)](architecture/pii-encryption.md)
+- [Admin RBAC (module-level permissions + sensitive operation control)](architecture/admin-rbac.md)
+- [Cross-language contract testing (outside-the-arbiter + fixture comparison)](architecture/cross-language-contract-testing.md)
 - [Cell-based architecture](architecture/cell-based-architecture.md) — blast radius, unit keys, data sharding, failure drills
 - [Three forms of service governance](architecture/service-governance-forms.md) — SDK / Agent / Sidecar decision matrix
 
@@ -41,6 +39,7 @@ The current scope focuses on Java/Spring modular monoliths and cell-based evolut
 
 ### Reusable Library
 - [spring-data-permission-starter](https://github.com/StevenTsai/spring-data-permission-starter) — Spring Boot Starter for data permissions, ready to import
+- [grounded-rag](https://github.com/StevenTsai/grounded-rag) — Claim-level verification gate RAG reference implementation (Python / MIT), the evidence source for the AI systems reliability chapters
 
 ### Production-Validated Case Studies (4 code cases, 124 tests + 1 evolution narrative)
 - [MTO Workflow Engine](case-studies/mto-workflow-engine/) — Generic work order state machine extracted from a jewelry ERP, reusable across furniture/electronics/apparel industries
@@ -50,7 +49,7 @@ The current scope focuses on Java/Spring modular monoliths and cell-based evolut
 - [OncoHub Architecture Evolution](case-studies/oncohub-architecture-evolution.md) — A design document rewritten eight times: reading code to correct assumptions, auth decoupling, data-flow direction, and staged rollout (narrative case)
 
 ### Architecture Decision Records (6)
-- Session vs JWT, MyBatis vs JPA, Logical vs Physical Delete
+- [Session vs JWT](decisions/why-session-not-jwt.md), [MyBatis vs JPA](decisions/why-mybatis-not-jpa.md), [Logical vs Physical Delete](decisions/why-logical-delete.md)
 - [Spring Boot single track over planned NestJS](decisions/why-spring-boot-not-nestjs.md) — Four mechanism-level benefits of the framework switch, not preference narratives
 - [State storage in MySQL, Redis pluggable](decisions/why-redis-optional.md) — Mandatory middleware 2→1, zero-code rollback
 - [Zero build chain: JavaScript over TypeScript](decisions/why-javascript-not-typescript.md) — Honest record of realized costs and root-cause revision
@@ -84,13 +83,27 @@ The case study code is extracted and abstracted from a **real production system*
 
 The fourth case study, [production-guardrails](case-studies/production-guardrails/), is extracted from **a second private production system** (an IoT device-management backend, battery-telemetry domain): ~600k registered-user capacity envelope, 24 REST endpoints, and 155 source-system unit tests; the extracted guardrails case contains 51 tests. Only generic architecture patterns are carried over.
 
+## Case Study Abstraction Methodology
+
+Four principles for extracting generic patterns from domain-specific systems:
+
+| Principle | Description | Example |
+|-----------|-------------|---------|
+| **Identify specialization anchors** | Find fields/logic that clearly belong only to the current business | Gold/Stone → `InventoryQueryService` interface |
+| **Interface-isolate variations** | Use interfaces to encapsulate changeable parts | 17 fixed processes → YAML-configurable route |
+| **Preserve patterns, replace details** | Keep architectural patterns, replace business specifics | State machine pattern kept, specific state values replaced |
+| **Make it work first, then generic** | Get it running first, validate, then abstract | Implement `piecePrice × qty` first, add coefficients later |
+
 ## Who Is This For
 
 | Role | What You'll Get |
 |------|----------------|
 | **Backend Architect** | Production-ready patterns for data permissions, work order state machines, event-driven decoupling |
 | **Mid-level Java Developer** | How to build business systems that go beyond CRUD, and how to design a Starter library |
-| **Tech Lead** | Trade-off analysis for technology decisions (ADRs) |
+| **Tech Lead** | Trade-off analysis for technology decisions (ADRs), plus portfolio governance decisions ([System Portfolio Governance](playbooks.md)) |
+| **AI application engineers / architects** | AI agent architecture patterns, component-correct ≠ system-effective, and the [claim-level verification gate](architecture/claim-level-verifier.md) |
+| **Operations / SRE** | [Production operations](playbooks.md) — observability, change and staged rollout, incident response, capacity and drills |
+| **Pre-sales / business decision-makers** | [Takeover engineering](playbooks.md) — how to assess, price, and when to walk away before accepting a system |
 | **Developers needing data permissions** | Directly use [spring-data-permission-starter](https://github.com/StevenTsai/spring-data-permission-starter) |
 
 ## Document Structure
@@ -166,12 +179,6 @@ The fourth case study, [production-guardrails](case-studies/production-guardrail
     └── 07-compliance.md             Compliance checks: review process and business integration
 ```
 
-### Reusable Library (Separate Repository)
-
-| Library | Description | Repository |
-|---------|-------------|------------|
-| `spring-data-permission-starter` | Spring Boot Starter for data permissions, ready to import | [GitHub](https://github.com/StevenTsai/spring-data-permission-starter) |
-
 ## English Documentation
 
 This directory mirrors the Chinese book: the preface, all 9 Java-era architecture patterns, the 3 AI systems articles, all 6 ADRs, all 4 practical guides, the 7-step tutorial, and the case-study READMEs plus their evolution notes (including the OncoHub narrative). The seven methodology playbooks (including the AI engineering playbook) remain Chinese-only; see the [playbooks index](playbooks.md) for what they cover and how to navigate them.
@@ -208,44 +215,11 @@ Project-level documents are also available in English: [Contributing](CONTRIBUTI
 
 **If you're building on top of this**: Read the practical guides in `guides/`.
 
-## Core Design Philosophy
-
-### 1. Data Permissions at the SQL Layer
-
-Instead of manually filtering data in each Service method, permission conditions are automatically injected into SQL via MyBatis `<sql>` fragments. Developers only need to choose between "query with permissions" or "query without permissions."
-
-### 2. Event-Driven, Not State-Driven
-
-Business order status changes are driven by "events," not direct state modifications. Each event automatically triggers: status update → commission calculation → lead synchronization → audit logging, all within a single transaction.
-
-### 3. Rule Snapshots, Not References
-
-Commission ledger entries store "what the rule was at that time" (JSON snapshot), not "what the rule ID is." This ensures that even if policies change, generated commissions remain fully traceable.
-
-### 4. Reversal, Not Deletion
-
-When a business order is cancelled, generated commissions are not deleted. Instead, negative reversal entries are created. Commissions that have already been settled generate offset entries to be deducted in the next period, following the accounting convention of "red-letter reversal."
-
-### 5. Audit Logs Separated from Compliance Records
-
-Audit logs are "passive recording" (all operations automatically recorded), while compliance records are "active management" (requiring approval workflows). The two complement each other, meeting different dimensions of traceability requirements.
-
-## Case Study Abstraction Methodology
-
-Four principles for extracting generic patterns from domain-specific systems:
-
-| Principle | Description | Example |
-|-----------|-------------|---------|
-| **Identify specialization anchors** | Find fields/logic that clearly belong only to the current business | Gold/Stone → `InventoryQueryService` interface |
-| **Interface-isolate variations** | Use interfaces to encapsulate changeable parts | 17 fixed processes → YAML-configurable route |
-| **Preserve patterns, replace details** | Keep architectural patterns, replace business specifics | State machine pattern kept, specific state values replaced |
-| **Make it work first, then generic** | Get it running first, validate, then abstract | Implement `piecePrice × qty` first, add coefficients later |
-
 ## Tech Stack
 
 - **Framework**: Spring Boot 3.2.5
 - **Language**: Java 17
-- **ORM**: MyBatis 3.0.3
+- **ORM**: MyBatis (mybatis-spring-boot-starter 3.0.3)
 - **Database**: MySQL 8.0
 - **Cache**: Redis (optional)
 - **API Docs**: SpringDoc 2.3.0 (OpenAPI 3)

@@ -5,7 +5,7 @@
 
 中文 | [English](en/README.md)
 
-📖 **[在线阅读《架构炼金术：从真实系统提炼可复用的架构模式》](https://steventsai.github.io/distribution-architecture/)** | 企业级架构模式与方法论库，从真实生产系统中提炼（生产实证 + 跨语言交付 + 架构治理 + AI 系统验证）。
+📖 **[在线阅读《架构炼金术：从真实系统提炼可复用的架构模式》](https://steventsai.github.io/distribution-architecture/)** | 企业级架构模式与方法论库：生产实证 + 跨语言交付 + 架构治理 + AI 系统验证。
 
 📦 **Gitee 镜像**：[gitee.com/steven27/distribution-architecture](https://gitee.com/steven27/distribution-architecture) — GitHub 为权威源，push 自动单向同步，国内克隆走这里更快。
 
@@ -15,21 +15,19 @@
 
 代码之外，这里还沉淀了七套可以直接套用的方法：**接手工程**（进入时该不该接、投多少、何时停）、**组合治理**（持有期哪些该关、哪些该治）、**生产运维**（运行期怎么观测、怎么变更、怎么救火）、**AI 工程实践**（生成链路怎么控制失败）、**企业架构实践**（领域边界怎么进入代码）、**工程一致性规范**（团队共用的命名、接口、发布与术语基线）、**开源提取纪律**（私有模式怎么安全地进公开仓库）。
 
-当前谱系聚焦 Java/Spring 模块化单体与单元化演进、B2B 安全合规、接手/组合/运维方法论与 AI 工程可靠性；微服务通信一致性（Saga/CQRS）与数据架构（分库分表、数据治理）尚未成章，将按实录素材补充。
-
 > 我在生产系统中遇到了数据权限、工作流引擎、事件驱动解耦、计件工资等通用问题。
 > 我先在真实项目中用 Spring Boot + MyBatis 实现了这些模式，
 > 然后总结为设计文档和 ADR，
 > 最后抽象为可复用的组件并开源。
 
 ### 设计模式与架构方法（9 篇）
-- 数据权限下沉到 SQL 层
-- 事件驱动状态机（佣金流转）
-- 审计日志 JSON 快照
-- MyBatis 工程化
-- PII 加密与脱敏（AES-GCM + HMAC 检索键）
-- 管理端 RBAC（模块级权限 + 敏感操作独立授权）
-- 跨语言契约测试（仓外裁判 + fixture 对拍）
+- [数据权限下沉到 SQL 层](architecture/data-permission-model.md)
+- [事件驱动状态机（佣金流转）](architecture/commission-pipeline.md)
+- [审计日志 JSON 快照](architecture/audit-and-compliance.md)
+- [MyBatis 工程化](architecture/mybatis-patterns.md)
+- [PII 加密与脱敏（AES-GCM + HMAC 检索键）](architecture/pii-encryption.md)
+- [管理端 RBAC（模块级权限 + 敏感操作独立授权）](architecture/admin-rbac.md)
+- [跨语言契约测试（仓外裁判 + fixture 对拍）](architecture/cross-language-contract-testing.md)
 - [单元化架构](architecture/cell-based-architecture.md) — 爆炸半径、单元键、数据分片与「拔电验证」
 - [服务治理的三种形态](architecture/service-governance-forms.md) — SDK / Agent / Sidecar 的取舍矩阵
 
@@ -61,7 +59,7 @@
 - [OncoHub 架构演进](case-studies/oncohub-architecture-evolution.md) — 一份设计文档改了 8 次：读代码纠假设、认证解耦、数据流向与灰度四阶段（无配套代码，叙事案例）
 
 ### 架构决策记录（6 个）
-- Session vs JWT、MyBatis vs JPA、逻辑删除 vs 物理删除
+- [Session vs JWT](decisions/why-session-not-jwt.md)、[MyBatis vs JPA](decisions/why-mybatis-not-jpa.md)、[逻辑删除 vs 物理删除](decisions/why-logical-delete.md)
 - [Spring Boot 单轨 vs NestJS 计划](decisions/why-spring-boot-not-nestjs.md) — 框架替换的四条机制性收益，非偏好叙事
 - [状态存储进 MySQL，Redis 可插拔](decisions/why-redis-optional.md) — 生产中间件 2→1，回切零代码
 - [客户端零构建链：JS 而非 TS](decisions/why-javascript-not-typescript.md) — 代价已兑现的诚实记录与根因修正
@@ -99,6 +97,19 @@ AI 系统可靠性章节的证据源是一个**公开参考实现** [grounded-ra
 
 AI Agent 架构与 AI 工程实践提炼自高风险 AI 应用和长文档任务的实际工程结构；相关业务代码、提示词和运营数据未公开，文中的阈值与实现示例均已泛化，不构成行业基准。
 
+## Case Study 抽象方法论
+
+从珠宝 ERP 提取通用模式的四个原则：
+
+| 原则 | 说明 | 示例 |
+|------|------|------|
+| **识别特化锚点** | 找出明显只属于当前业务的字段/逻辑 | 金料/石料 → `InventoryQueryService` 接口 |
+| **接口隔离变化** | 用接口封装可变部分 | 17 道固定工序 → YAML 配置路由 |
+| **保留模式替换细节** | 保留架构模式，替换业务细节 | 状态机模式保留，具体状态值替换 |
+| **先工作再通用** | 先让它跑起来，验证后再抽象 | 先实现 `piecePrice × qty`，再加系数 |
+
+开源侧的提取纪律（切分线怎么画、泄露扫描、推送前清单）单独沉淀为[开源发布止血带](playbooks/open-source-compliance.md)。
+
 ## 适合谁看
 
 | 角色 | 你能得到什么 |
@@ -106,6 +117,8 @@ AI Agent 架构与 AI 工程实践提炼自高风险 AI 应用和长文档任务
 | **后端架构师** | 数据权限、工单状态机、事件驱动解耦等通用模式的落地方案 |
 | **中级 Java 开发者** | "不只是 CRUD"的业务系统怎么写，以及如何设计 Starter 库 |
 | **技术负责人** | 技术选型的 trade-off 分析（ADR），以及系统群的治理与关停并转决策（[架构组合治理](playbooks/system-portfolio-governance/)） |
+| **AI 应用工程师 / 架构师** | AI Agent 架构模式、组件正确 ≠ 系统有效、[声明级校验门](architecture/claim-level-verifier.md)的落地方案 |
+| **运维 / SRE** | [生产运维](playbooks/production-operations/)：观测、变更与灰度、故障响应与容量演练 |
 | **售前 / 商务 / 决策者** | [接手工程工具箱](playbooks/takeover-engineering/)：接手前怎么评估、怎么报价、什么时候止损 |
 | **需要数据权限的开发者** | 直接使用 [spring-data-permission-starter](https://github.com/StevenTsai/spring-data-permission-starter) |
 
@@ -205,17 +218,11 @@ AI Agent 架构与 AI 工程实践提炼自高风险 AI 应用和长文档任务
     └── 07-compliance.md             合规检查：审查流程与业务嵌入
 ```
 
-### 可复用库（独立仓库）
-
-| 库 | 说明 | 仓库 |
-|---|------|------|
-| `spring-data-permission-starter` | 数据权限 Spring Boot Starter，可直接导入使用 | [GitHub](https://github.com/StevenTsai/spring-data-permission-starter) |
-
 ## 阅读建议
 
 **如果你想跑起来看看**：进入 `distribution-starter/` 目录，按 README.md 的步骤初始化 MySQL 并启动。
 
-**如果你想快速了解**：先读 `architecture/` 下的 4 篇基础模式（数据权限、事件驱动、审计、MyBatis），再看其余 8 篇。
+**如果你想快速了解**：先读 `architecture/` 下的 4 篇基础模式（数据权限、事件驱动、审计、MyBatis），再看其余 5 篇进阶模式。
 
 **如果你想看生产验证案例**：进入 `case-studies/` 目录，每个案例都有 README 和演进文档。
 
@@ -235,46 +242,11 @@ AI Agent 架构与 AI 工程实践提炼自高风险 AI 应用和长文档任务
 
 **如果你要基于此做二次开发**：读 `guides/` 下的实操指南。
 
-## 核心设计理念
-
-### 1. 数据权限下沉到 SQL 层
-
-不在每个 Service 方法中手动过滤数据，而是通过 MyBatis 的 `<sql>` 片段将权限条件自动注入 SQL。开发者只需要选择"用带权限的查询"还是"不带权限的查询"。
-
-### 2. 事件驱动而非状态驱动
-
-业务单的状态变更通过"事件"推进，而非直接修改状态。每个事件自动触发：状态更新 → 佣金计算 → 线索联动 → 审计日志，全部在同一个事务中。
-
-### 3. 规则快照而非引用
-
-佣金流水保存的是"当时的规则是什么"（JSON 快照），而非"规则 ID 是什么"。这样即使政策变更，已生成的佣金仍然可追溯。
-
-### 4. 冲回而非删除
-
-业务单取消时，已生成的佣金不删除，而是生成负数流水。已结算的佣金生成挂账，下期抵扣。符合财务系统"红字冲销"的惯例。
-
-### 5. 审计日志与合规记录分离
-
-审计日志是"被动记录"（所有操作自动记录），合规记录是"主动管理"（需要审批流程）。两者互补，满足不同维度的追溯需求。
-
-## Case Study 抽象方法论
-
-从珠宝 ERP 提取通用模式的四个原则：
-
-| 原则 | 说明 | 示例 |
-|------|------|------|
-| **识别特化锚点** | 找出明显只属于当前业务的字段/逻辑 | 金料/石料 → `InventoryQueryService` 接口 |
-| **接口隔离变化** | 用接口封装可变部分 | 17 道固定工序 → YAML 配置路由 |
-| **保留模式替换细节** | 保留架构模式，替换业务细节 | 状态机模式保留，具体状态值替换 |
-| **先工作再通用** | 先让它跑起来，验证后再抽象 | 先实现 `piecePrice × qty`，再加系数 |
-
-开源侧的提取纪律（切分线怎么画、泄露扫描、推送前清单）单独沉淀为[开源发布止血带](playbooks/open-source-compliance.md)。
-
 ## 技术栈
 
 - **框架**：Spring Boot 3.2.5
 - **语言**：Java 17
-- **ORM**：MyBatis 3.0.3
+- **ORM**：MyBatis（mybatis-spring-boot-starter 3.0.3）
 - **数据库**：MySQL 8.0
 - **缓存**：Redis（可选）
 - **API 文档**：SpringDoc 2.3.0（OpenAPI 3）
@@ -302,6 +274,9 @@ English translations of the core documents are available in the [`en/`](en/) dir
 | [en/architecture/cross-language-contract-testing.md](en/architecture/cross-language-contract-testing.md) | Cross-Language Contract Testing |
 | [en/architecture/cell-based-architecture.md](en/architecture/cell-based-architecture.md) | Cell-Based Architecture: Confining the Blast Radius |
 | [en/architecture/service-governance-forms.md](en/architecture/service-governance-forms.md) | Three Forms of Service Governance: SDK, Agent, Sidecar |
+| [en/architecture/agent-architecture-patterns.md](en/architecture/agent-architecture-patterns.md) | AI Agent Architecture: Declarative vs. State Machine |
+| [en/architecture/verifier-failure-modes.md](en/architecture/verifier-failure-modes.md) | Component-Right ≠ System-Effective: Verifier Failure Modes |
+| [en/architecture/claim-level-verifier.md](en/architecture/claim-level-verifier.md) | Claim-Level Verifier: Asserts, Four-Step Gate, Invariants |
 | [en/playbooks.md](en/playbooks.md) | Methodology playbooks index (the playbooks themselves are Chinese-only) |
 | [en/decisions/why-javascript-not-typescript.md](en/decisions/why-javascript-not-typescript.md) | ADR: Zero Build Chain — JavaScript over TypeScript |
 | [en/decisions/why-logical-delete.md](en/decisions/why-logical-delete.md) | ADR: Why Logical Delete |
@@ -319,6 +294,6 @@ English translations of the core documents are available in the [`en/`](en/) dir
 | [en/SECURITY.md](en/SECURITY.md) | Security policy |
 | [en/distribution-starter/README.md](en/distribution-starter/README.md) | Starter quick start and project structure |
 
-The English directory covers every book page except the VitePress homepage (`index.md`) and the AI architecture and engineering articles (added 2026-10, Chinese-only for now). The seven methodology playbooks are Chinese-only by design; [en/playbooks.md](en/playbooks.md) indexes what they cover and links to each one. The internal extraction-strategy notes also remain private.
+The English directory covers every book page except the VitePress homepage (`index.md`). The seven methodology playbooks (including the AI engineering playbook) remain Chinese-only by design; [en/playbooks.md](en/playbooks.md) indexes what they cover and links to each one. The internal extraction-strategy notes also remain private.
 
 For Spring Boot 2.7 users, see the [migration guide](guides/spring-boot-3-migration.md) (also available in [English](en/guides/spring-boot-3-migration.md)).
