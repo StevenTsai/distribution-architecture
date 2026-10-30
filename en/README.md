@@ -33,11 +33,11 @@ The current scope focuses on Java/Spring modular monoliths and cell-based evolut
 - [Cell-based architecture](architecture/cell-based-architecture.md) — blast radius, unit keys, data sharding, failure drills
 - [Three forms of service governance](architecture/service-governance-forms.md) — SDK / Agent / Sidecar decision matrix
 
-### AI Engineering (Chinese)
-- [AI Agent architecture](../architecture/agent-architecture-patterns.md) — declarative orchestration, state machines, risk-based guardrails (Chinese)
-- [AI Engineering Playbook](../playbooks/ai-engineering/) — structured output, multi-model routing, and long-document pipelines
-- [GroundedRAG failure modes](../architecture/verifier-failure-modes.md) — component correctness versus end-to-end effectiveness
-- [Claim-level verifier](../architecture/claim-level-verifier.md) — evidence-bound claims and deterministic gates
+### AI Systems & Engineering
+- [AI Agent Architecture](architecture/agent-architecture-patterns.md) — declarative orchestration, state machines, risk-based guardrails
+- [Component-Correct ≠ System-Effective](architecture/verifier-failure-modes.md) — an end-to-end failure postmortem: offline 100% vs E2E 30–46%
+- [Claim-Level Verification](architecture/claim-level-verifier.md) — evidence-bound claims and deterministic gates, backed by [GroundedRAG](https://github.com/StevenTsai/grounded-rag)
+- [AI Engineering Playbook](../playbooks/ai-engineering/) (Chinese) — structured output, multi-model routing, and long-document pipelines
 
 ### Reusable Library
 - [spring-data-permission-starter](https://github.com/StevenTsai/spring-data-permission-starter) — Spring Boot Starter for data permissions, ready to import
@@ -47,7 +47,7 @@ The current scope focuses on Java/Spring modular monoliths and cell-based evolut
 - [Spring Events Decoupling](case-studies/spring-events-decoupling/) — Event-driven cross-module decoupling: delivery→receivable / work order→inventory / quality→rework
 - [Piecework Wage Engine](case-studies/piecework-wage-engine/) — Pipeline-based piecework wage calculation with configurable difficulty and quality coefficients
 - [Production Guardrails: fail-fast startup + pluggable state store](case-studies/production-guardrails/) — Mandatory middleware 2→1, zero-code rollback, contract tests filled in (from an IoT backend, not the jewelry ERP)
-- [OncoHub Architecture Evolution](../case-studies/oncohub-architecture-evolution.md) — A design document rewritten eight times: reading code to correct assumptions, auth decoupling, data-flow direction, and staged rollout (narrative case, Chinese)
+- [OncoHub Architecture Evolution](case-studies/oncohub-architecture-evolution.md) — A design document rewritten eight times: reading code to correct assumptions, auth decoupling, data-flow direction, and staged rollout (narrative case)
 
 ### Architecture Decision Records (6)
 - Session vs JWT, MyBatis vs JPA, Logical vs Physical Delete
@@ -110,7 +110,10 @@ The fourth case study, [production-guardrails](case-studies/production-guardrail
 │   ├── admin-rbac.md                Admin RBAC: module-level permissions + sensitive operation control
 │   ├── cross-language-contract-testing.md  Cross-language contract testing: outside-the-arbiter + fixture comparison
 │   ├── cell-based-architecture.md   Cell-based architecture: blast radius, unit keys, sharding, failure drills
-│   └── service-governance-forms.md  Service governance forms: SDK / Agent / Sidecar decision matrix
+│   ├── service-governance-forms.md  Service governance forms: SDK / Agent / Sidecar decision matrix
+│   ├── agent-architecture-patterns.md  AI agent architecture: declarative vs imperative, risk-tiered guardrails
+│   ├── verifier-failure-modes.md    Component-correct ≠ system-effective: E2E failure postmortem
+│   └── claim-level-verifier.md      Claim-level verification: four-step gate + same-source invariants
 │
 ├── decisions/                       Architecture Decision Records (ADR)
 │   ├── why-session-not-jwt.md       Why Session Token over JWT
@@ -143,7 +146,7 @@ The fourth case study, [production-guardrails](case-studies/production-guardrail
 │   │   ├── StartupGuard             Config red-line rejection matrix
 │   │   ├── StateStore               Six-primitive contract, three impls (mysql/redis/memory)
 │   │   └── Contract test suite      51 tests, zero external services (H2 MODE=MySQL)
-│   └── oncohub-architecture-evolution.md  Architecture evolution narrative: eight design-doc revisions (Chinese)
+│   └── oncohub-architecture-evolution.md  Architecture evolution narrative: eight design-doc revisions
 │
 ├── playbooks/                       Methodology playbooks (Chinese-only)
 │   ├── takeover-engineering/        Takeover toolkit: 21 questions + 10 templates
@@ -171,17 +174,17 @@ The fourth case study, [production-guardrails](case-studies/production-guardrail
 
 ## English Documentation
 
-This directory mirrors the Chinese book: the preface, all 9 Java-era architecture patterns, all 6 ADRs, all 4 practical guides, the 7-step tutorial, and the case-study READMEs plus their evolution notes. The seven methodology playbooks and the AI architecture and engineering articles (added 2026-10) are Chinese-only for now; see the [playbooks index](playbooks.md) for what they cover and how to navigate them.
+This directory mirrors the Chinese book: the preface, all 9 Java-era architecture patterns, the 3 AI systems articles, all 6 ADRs, all 4 practical guides, the 7-step tutorial, and the case-study READMEs plus their evolution notes (including the OncoHub narrative). The seven methodology playbooks (including the AI engineering playbook) remain Chinese-only; see the [playbooks index](playbooks.md) for what they cover and how to navigate them.
 
 | Section | Documents |
 |---------|-----------|
 | Overview | [Preface](preface.md) |
-| Architecture | [Data Permission Model](architecture/data-permission-model.md) · [Commission Pipeline](architecture/commission-pipeline.md) · [Audit Snapshot](architecture/audit-and-compliance.md) · [MyBatis Engineering](architecture/mybatis-patterns.md) · [PII Encryption](architecture/pii-encryption.md) · [Admin RBAC](architecture/admin-rbac.md) · [Cross-Language Contract Testing](architecture/cross-language-contract-testing.md) · [Cell-Based Architecture](architecture/cell-based-architecture.md) · [Service Governance Forms](architecture/service-governance-forms.md) |
+| Architecture | [Data Permission Model](architecture/data-permission-model.md) · [Commission Pipeline](architecture/commission-pipeline.md) · [Audit Snapshot](architecture/audit-and-compliance.md) · [MyBatis Engineering](architecture/mybatis-patterns.md) · [PII Encryption](architecture/pii-encryption.md) · [Admin RBAC](architecture/admin-rbac.md) · [Cross-Language Contract Testing](architecture/cross-language-contract-testing.md) · [Cell-Based Architecture](architecture/cell-based-architecture.md) · [Service Governance Forms](architecture/service-governance-forms.md) · [AI Agent Architecture](architecture/agent-architecture-patterns.md) · [Verifier Failure Modes](architecture/verifier-failure-modes.md) · [Claim-Level Verification](architecture/claim-level-verifier.md) |
 | Playbooks | [Methodology Playbooks Index (Chinese)](playbooks.md) |
 | Decisions | [Session vs JWT](decisions/why-session-not-jwt.md) · [MyBatis vs JPA](decisions/why-mybatis-not-jpa.md) · [Logical Delete](decisions/why-logical-delete.md) · [Spring Boot over NestJS](decisions/why-spring-boot-not-nestjs.md) · [Redis Optional](decisions/why-redis-optional.md) · [JavaScript over TypeScript](decisions/why-javascript-not-typescript.md) |
 | Guides | [Quick Start](guides/quick-start.md) · [Extend a New Module](guides/extend-new-module.md) · [Customize Permissions](guides/customize-permission.md) · [Spring Boot 3 Migration](guides/spring-boot-3-migration.md) |
 | Tutorial | [01 Domain Model](tutorial/01-domain-model.md) · [02 Data Permissions](tutorial/02-data-permission.md) · [03 CRUD Scaffolding](tutorial/03-crud-scaffolding.md) · [04 Audit Logging](tutorial/04-audit-logging.md) · [05 Commission Flow](tutorial/05-commission-flow.md) · [06 Settlement](tutorial/06-settlement.md) · [07 Compliance](tutorial/07-compliance.md) |
-| Case studies | [MTO Workflow Engine](case-studies/mto-workflow-engine/) · [Piecework Wage Engine](case-studies/piecework-wage-engine/) · [Spring Events Decoupling](case-studies/spring-events-decoupling/) · [Production Guardrails](case-studies/production-guardrails/) · [OncoHub Evolution (Chinese)](../case-studies/oncohub-architecture-evolution.md) |
+| Case studies | [MTO Workflow Engine](case-studies/mto-workflow-engine/) · [Piecework Wage Engine](case-studies/piecework-wage-engine/) · [Spring Events Decoupling](case-studies/spring-events-decoupling/) · [Production Guardrails](case-studies/production-guardrails/) · [OncoHub Evolution](case-studies/oncohub-architecture-evolution.md) |
 
 Each English page links back to its Chinese original at the top. Translations track the Chinese source; if you change either version, update both.
 
@@ -200,6 +203,8 @@ Project-level documents are also available in English: [Contributing](CONTRIBUTI
 **If you're making technology decisions**: Read the 6 ADRs in `decisions/` for trade-off analysis. For platform-level choices, see [Three Forms of Service Governance](architecture/service-governance-forms.md); for capacity ceilings or shrinking a failure domain, see [Cell-Based Architecture](architecture/cell-based-architecture.md).
 
 **If you run systems in production**: The [methodology playbooks](playbooks.md) cover takeovers, portfolio governance, and production operations. They are written in Chinese.
+
+**If you're building AI systems**: Start with [AI Agent Architecture](architecture/agent-architecture-patterns.md), then [Component-Correct ≠ System-Effective](architecture/verifier-failure-modes.md) and [Claim-Level Verification](architecture/claim-level-verifier.md) for output reliability; both are backed by the open-source reference implementation [GroundedRAG](https://github.com/StevenTsai/grounded-rag).
 
 **If you're building on top of this**: Read the practical guides in `guides/`.
 
