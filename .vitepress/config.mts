@@ -63,6 +63,7 @@ export default withMermaid({
               { text: 'Piecework Wage Engine', link: '/en/case-studies/piecework-wage-engine/' },
               { text: 'Spring Events Decoupling', link: '/en/case-studies/spring-events-decoupling/' },
               { text: 'Production Guardrails', link: '/en/case-studies/production-guardrails/' },
+              { text: 'OncoHub Architecture Evolution', link: '/en/case-studies/oncohub-architecture-evolution' },
             ],
           },
           {
@@ -75,6 +76,15 @@ export default withMermaid({
               { text: '05 Commission Flow', link: '/en/tutorial/05-commission-flow' },
               { text: '06 Settlement', link: '/en/tutorial/06-settlement' },
               { text: '07 Compliance', link: '/en/tutorial/07-compliance' },
+            ],
+          },
+          {
+            text: 'AI Systems & Engineering',
+            items: [
+              { text: 'AI Agent Architecture', link: '/en/architecture/agent-architecture-patterns' },
+              { text: 'Component-Correct ≠ System-Effective', link: '/en/architecture/verifier-failure-modes' },
+              { text: 'Claim-Level Verification', link: '/en/architecture/claim-level-verifier' },
+              { text: 'AI Engineering Playbook (Chinese)', link: '/en/playbooks' },
             ],
           },
           {
